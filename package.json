@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "node lib/seed.cjs"
+    "seed": "node lib/seed.cjs",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",

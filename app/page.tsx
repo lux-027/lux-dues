@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
 import { BuildingIllustration } from '@/components/BuildingIllustration';
@@ -56,21 +56,32 @@ const FEATURES = [
   },
 ];
 
-export default function LandingPage() {
+// useSearchParams() opts a component out of static rendering unless it is
+// wrapped in a <Suspense> boundary — isolated here so only this tiny piece
+// of the page is dynamic, per Next.js's recommended pattern.
+function AuthQueryHandler({
+  onAuthParam,
+}: {
+  onAuthParam: (tab: 'login' | 'register') => void;
+}) {
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const auth = searchParams.get('auth');
+    if (auth === 'login' || auth === 'register') {
+      onAuthParam(auth);
+    }
+  }, [searchParams, onAuthParam]);
+
+  return null;
+}
+
+export default function LandingPage() {
   const [authModal, setAuthModal] = useState<{
     open: boolean;
     context: 'admin' | 'resident';
     tab: 'login' | 'register';
   }>({ open: false, context: 'resident', tab: 'login' });
-
-  // Support deep-linking to the auth modal, e.g. /?auth=login or /?auth=register
-  useEffect(() => {
-    const auth = searchParams.get('auth');
-    if (auth === 'login' || auth === 'register') {
-      setAuthModal({ open: true, context: 'resident', tab: auth });
-    }
-  }, [searchParams]);
 
   const openAuth = (context: 'admin' | 'resident', tab: 'login' | 'register' = 'login') => {
     setAuthModal({ open: true, context, tab });
@@ -117,8 +128,14 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Suspense fallback={null}>
+        <AuthQueryHandler
+          onAuthParam={(tab) => setAuthModal({ open: true, context: 'resident', tab })}
+        />
+      </Suspense>
+
       {/* Top bar */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-zinc-200">
+      <header className="sticky top-0 z-40 bg-white border-b border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Logo size={48} />
@@ -386,7 +403,7 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Logo size={36} wordmarkClassName="text-sm" />
+            <Logo size={52} wordmarkClassName="text-sm" />
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
