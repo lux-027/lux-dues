@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  BLOCK_ADMIN
+  RESIDENT
+}
+
+enum BuildingType {
+  APARTMENT
+  SITE
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String   @unique
+  password  String
+  role      UserRole @default(RESIDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  buildingId String?
+  building   Building? @relation("BuildingAdmins", fields: [buildingId], references: [id])
+  unitId     String?
+  unit       Unit?     @relation("UnitResidents", fields: [unitId], references: [id])
+  complaints Complaint[] @relation("UserComplaints")
+
+  @@index([email])
+  @@index([role])
+  @@index([buildingId])
+  @@index([unitId])
+}
+
+model Building {
+  id          String        @id @default(cuid())
+  name        String
+  type        BuildingType
+  totalBlocks Int
+  address     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  units          Unit[]           @relation("BuildingUnits")
+  admins         User[]           @relation("BuildingAdmins")
+  specialProjects SpecialProject[] @relation("BuildingProjects")
+  complaints     Complaint[]       @relation("BuildingComplaints")
+
+  @@index([type])
+}
+
+model Unit {
+  id           String   @id @default(cuid())
+  buildingId   String
+  blockName    String
+  doorNo       String
+  floor        String
+  ownerName    String
+  residentPhone String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  building     Building  @relation("BuildingUnits", fields: [buildingId], references: [id], onDelete: Cascade)
+  residents    User[]    @relation("UnitResidents")
+  dues         Dues[]    @relation("UnitDues")
+  projectPayments ProjectPayment[] @relation("UnitProjectPayments")
+
+  @@unique([buildingId, blockName, doorNo])
+  @@index([buildingId])
+  @@index([blockName])
+}
+
+model Dues {
+  id        String        @id @default(cuid())
+  unitId    String
+  amount    Decimal       @db.Decimal(10, 2)
+  month     Int
+  year      Int
+  status    PaymentStatus @default(UNPAID)
+  dueDate   DateTime
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  unit Unit @relation("UnitDues", fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, month, year])
+  @@index([unitId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model SpecialProject {
+  id            String         @id @default(cuid())
+  buildingId    String
+  title         String
+  totalAmount   Decimal        @db.Decimal(10, 2)
+  perUnitAmount Decimal        @db.Decimal(10, 2)
+  description   String?
+  status        ProjectStatus  @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  building Building         @relation("BuildingProjects", fields: [buildingId], references: [id], onDelete: Cascade)
+  payments ProjectPayment[] @relation("ProjectPayments")
+
+  @@index([buildingId])
+  @@index([status])
+}
+
+model ProjectPayment {
+  id        String        @id @default(cuid())
+  projectId String
+  unitId    String
+  status    PaymentStatus @default(UNPAID)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  project SpecialProject @relation("ProjectPayments", fields: [projectId], references: [id], onDelete: Cascade)
+  unit    Unit           @relation("UnitProjectPayments", fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, unitId])
+  @@index([projectId])
+  @@index([unitId])
+  @@index([status])
+}
+
+model Complaint {
+  id          String          @id @default(cuid())
+  buildingId  String
+  userId      String?
+  subject     String
+  description String
+  status      ComplaintStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  building Building @relation("BuildingComplaints", fields: [buildingId], references: [id], onDelete: Cascade)
+  user     User?    @relation("UserComplaints", fields: [userId], references: [id])
+
+  @@index([buildingId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
