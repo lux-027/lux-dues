@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input } from '@/components/ui';
+import { signInWithGoogle, sendPhoneOtp, confirmPhoneOtp } from '@/lib/firebase';
+import type { ConfirmationResult } from 'firebase/auth';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,8 +17,17 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
   const router = useRouter();
   const [tab, setTab] = useState<'login' | 'register'>(initialTab);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Phone number sign-in (SMS OTP via Firebase)
+  const [showPhoneForm, setShowPhoneForm] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Admin self-registration is only possible before the very first SUPER_ADMIN
   // exists (fresh install bootstrap). We check this once when the modal opens.
@@ -83,6 +94,86 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
       setError('Giriş yapılırken bir hata oluştu');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Google sign-in is only offered to residents. Admin accounts are always
+  // created explicitly (bootstrap or by an existing SUPER_ADMIN), never
+  // auto-provisioned via a third-party identity provider.
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError('');
+
+    try {
+      const idToken = await signInWithGoogle();
+
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        setError(data.error || 'Google ile giriş yapılamadı');
+      }
+    } catch (err: any) {
+      if (err?.code !== 'auth/popup-closed-by-user') {
+        setError('Google ile giriş yapılamadı');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  // Phone sign-in is only offered to residents, same rationale as Google.
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhoneLoading(true);
+    setError('');
+
+    try {
+      const result = await sendPhoneOtp(phoneNumber, 'recaptcha-container');
+      setConfirmationResult(result);
+      setOtpSent(true);
+    } catch (err: any) {
+      setError(
+        err?.code === 'auth/invalid-phone-number'
+          ? 'Geçersiz telefon numarası. Örn: +905551234567'
+          : 'Doğrulama kodu gönderilemedi'
+      );
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleConfirmOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmationResult) return;
+    setPhoneLoading(true);
+    setError('');
+
+    try {
+      const idToken = await confirmPhoneOtp(confirmationResult, otpCode);
+
+      const response = await fetch('/api/auth/phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        setError(data.error || 'Telefon ile giriş yapılamadı');
+      }
+    } catch {
+      setError('Doğrulama kodu yanlış veya süresi dolmuş');
+    } finally {
+      setPhoneLoading(false);
     }
   };
 
@@ -161,6 +252,115 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
           </div>
 
           <div className="px-6 py-6">
+            {context === 'resident' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                >
+                  {googleLoading ? (
+                    <span className="h-4 w-4 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
+                  ) : (
+                    <svg className="h-4 w-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v2.98h3.86c2.26-2.08 3.56-5.16 3.56-8.8z" />
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-2.98c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.24v3.09C3.21 21.3 7.26 24 12 24z" />
+                      <path fill="#FBBC05" d="M5.27 14.31c-.24-.72-.38-1.49-.38-2.31s.14-1.59.38-2.31V6.6H1.24C.45 8.24 0 10.06 0 12s.45 3.76 1.24 5.4l4.03-3.09z" />
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.94 1.19 15.24 0 12 0 7.26 0 3.21 2.7 1.24 6.6l4.03 3.09c.95-2.85 3.6-4.94 6.73-4.94z" />
+                    </svg>
+                  )}
+                  Google ile Giriş Yap
+                </button>
+
+                {!showPhoneForm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowPhoneForm(true)}
+                    className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors mb-4"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Telefon Numarası ile Giriş Yap
+                  </button>
+                ) : (
+                  <div className="border border-zinc-200 rounded-xl p-4 mb-4">
+                    {!otpSent ? (
+                      <form onSubmit={handleSendOtp}>
+                        <div className="form-group">
+                          <Input
+                            label="Telefon Numarası"
+                            placeholder="+905551234567"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button type="submit" fullWidth loading={phoneLoading} size="sm">
+                            Doğrulama Kodu Gönder
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowPhoneForm(false)}
+                          >
+                            Vazgeç
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleConfirmOtp}>
+                        <p className="text-xs text-zinc-500 mb-3">
+                          {phoneNumber} numarasına gönderilen 6 haneli kodu girin.
+                        </p>
+                        <div className="form-group">
+                          <Input
+                            label="Doğrulama Kodu"
+                            placeholder="123456"
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value)}
+                            maxLength={6}
+                            required
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button type="submit" fullWidth loading={phoneLoading} size="sm">
+                            Doğrula ve Giriş Yap
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setShowPhoneForm(false);
+                              setOtpSent(false);
+                              setOtpCode('');
+                            }}
+                          >
+                            Vazgeç
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+                {/* Invisible reCAPTCHA container required by Firebase phone auth */}
+                <div id="recaptcha-container" />
+
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-zinc-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-3 text-zinc-400">veya e-posta ile</span>
+                  </div>
+                </div>
+              </>
+            )}
+
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {error}

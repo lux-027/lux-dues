@@ -7,6 +7,8 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/register-admin',
+  '/api/auth/google',
+  '/api/auth/phone',
   '/api/stats',
 ];
 
