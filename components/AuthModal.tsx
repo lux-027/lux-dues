@@ -12,11 +12,20 @@ interface AuthModalProps {
   onClose: () => void;
   initialTab?: 'login' | 'register';
   context?: 'admin' | 'resident';
+  /** Show role selection cards at the top of the register tab (for free sign-up). */
+  showRoleSelector?: boolean;
 }
 
-export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 'resident' }: AuthModalProps) {
+export function AuthModal({
+  isOpen,
+  onClose,
+  initialTab = 'login',
+  context = 'resident',
+  showRoleSelector = false,
+}: AuthModalProps) {
   const router = useRouter();
   const [tab, setTab] = useState<'login' | 'register'>(initialTab);
+  const [activeContext, setActiveContext] = useState<'admin' | 'resident'>(context);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,13 +52,18 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
   });
 
   useEffect(() => {
-    if (isOpen && context === 'admin' && adminRegisterAvailable === null) {
+    if (isOpen && activeContext === 'admin' && adminRegisterAvailable === null) {
       fetch('/api/auth/register-admin')
         .then((res) => res.json())
         .then((data) => setAdminRegisterAvailable(Boolean(data.available)))
         .catch(() => setAdminRegisterAvailable(false));
     }
-  }, [isOpen, context, adminRegisterAvailable]);
+  }, [isOpen, activeContext, adminRegisterAvailable]);
+
+  // Reset admin availability when switching role in the role selector.
+  useEffect(() => {
+    setAdminRegisterAvailable(null);
+  }, [activeContext]);
 
   if (!isOpen) return null;
 
@@ -176,7 +190,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
     setError('');
     setSuccess('');
 
-    const endpoint = context === 'admin' ? '/api/auth/register-admin' : '/api/auth/register';
+    const endpoint = activeContext === 'admin' ? '/api/auth/register-admin' : '/api/auth/register';
 
     try {
       const response = await fetch(endpoint, {
@@ -187,7 +201,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
       const data = await response.json();
 
       if (response.ok) {
-        router.push(context === 'admin' ? '/admin' : '/dashboard');
+        router.push(activeContext === 'admin' ? '/admin' : '/dashboard');
       } else {
         setError(data.error || 'Kayıt olurken bir hata oluştu');
       }
@@ -207,7 +221,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
           <div className="flex items-center justify-between px-6 pt-6">
             <div>
               <h3 className="text-lg font-medium text-zinc-900">
-                {context === 'admin' ? 'Yönetici Girişi' : 'Site Sakini'}
+                {activeContext === 'admin' ? 'Yönetici Girişi' : 'Site Sakini'}
               </h3>
               <p className="text-sm text-zinc-500 mt-0.5">LuxDues hesabınıza erişin</p>
             </div>
@@ -245,7 +259,49 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
           </div>
 
           <div className="px-6 py-6">
-            {context === 'resident' && (
+            {tab === 'register' && showRoleSelector && (
+              <div className="mb-5">
+                <p className="text-sm text-zinc-500 mb-3">Kayıt türünü seçin</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveContext('resident')}
+                    className={`text-left p-4 rounded-xl border transition-all ${
+                      activeContext === 'resident'
+                        ? 'border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900'
+                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-zinc-900">Site Sakini</span>
+                      {activeContext === 'resident' && (
+                        <span className="h-2 w-2 rounded-full bg-zinc-900" />
+                      )}
+                    </div>
+                    <span className="text-xs text-zinc-500">Daire sakinleri için kayıt</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveContext('admin')}
+                    className={`text-left p-4 rounded-xl border transition-all ${
+                      activeContext === 'admin'
+                        ? 'border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900'
+                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-zinc-900">Yönetici</span>
+                      {activeContext === 'admin' && (
+                        <span className="h-2 w-2 rounded-full bg-zinc-900" />
+                      )}
+                    </div>
+                    <span className="text-xs text-zinc-500">Blok/site yöneticisi kaydı</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeContext === 'resident' && (
               <>
                 <button
                   type="button"
@@ -389,7 +445,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
                 <Button type="submit" fullWidth loading={loading} className="mt-2">
                   Giriş Yap
                 </Button>
-                {context === 'admin' && !canRegister && (
+                {activeContext === 'admin' && !canRegister && (
                   <p className="text-center text-xs text-zinc-500 mt-4">
                     Yönetici hesabınız yoksa sistem yöneticinizle iletişime geçin.
                   </p>
@@ -397,13 +453,13 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
               </form>
             ) : (
               <form onSubmit={handleRegister}>
-                {context === 'admin' && adminRegisterAvailable === true && (
+                {activeContext === 'admin' && adminRegisterAvailable === true && (
                   <div className="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-700">
                     Sistemde henüz bir yönetici hesabı yok. Oluşturacağınız hesap
                     otomatik olarak <strong>Ana Yönetici</strong> yetkisi alacak.
                   </div>
                 )}
-                {context === 'admin' && adminRegisterAvailable === false && (
+                {activeContext === 'admin' && adminRegisterAvailable === false && (
                   <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-700">
                     Sistemde zaten bir yönetici hesabı varsa kendi başınıza kayıt yapamazsınız.
                     Yeni yönetici eklenmesi için mevcut yöneticinizle iletişime geçin.
@@ -450,7 +506,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
                   Kayıt Ol
                 </Button>
                 <p className="text-center text-xs text-zinc-500 mt-4">
-                  {context === 'admin'
+                  {activeContext === 'admin'
                     ? 'Bu adım sadece ilk kurulumda kullanılabilir.'
                     : 'Kayıt sonrası yöneticiniz sizi dairenizle eşleştirecektir.'}
                 </p>

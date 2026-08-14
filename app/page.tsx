@@ -81,10 +81,15 @@ export default function LandingPage() {
     open: boolean;
     context: 'admin' | 'resident';
     tab: 'login' | 'register';
-  }>({ open: false, context: 'resident', tab: 'login' });
+    showRoleSelector: boolean;
+  }>({ open: false, context: 'resident', tab: 'login', showRoleSelector: false });
 
-  const openAuth = (context: 'admin' | 'resident', tab: 'login' | 'register' = 'login') => {
-    setAuthModal({ open: true, context, tab });
+  const openAuth = (
+    context: 'admin' | 'resident',
+    tab: 'login' | 'register' = 'login',
+    showRoleSelector: boolean = false
+  ) => {
+    setAuthModal({ open: true, context, tab, showRoleSelector });
   };
 
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
@@ -130,7 +135,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white">
       <Suspense fallback={null}>
         <AuthQueryHandler
-          onAuthParam={(tab) => setAuthModal({ open: true, context: 'resident', tab })}
+          onAuthParam={(tab) => setAuthModal({ open: true, context: 'resident', tab, showRoleSelector: false })}
         />
       </Suspense>
 
@@ -183,7 +188,7 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <button
-                onClick={() => openAuth('resident', 'register')}
+                onClick={() => openAuth('resident', 'register', true)}
                 className="btn-primary"
               >
                 Ücretsiz Hesap Oluştur
@@ -313,7 +318,7 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center justify-center gap-4">
             <button
-              onClick={() => openAuth('resident', 'register')}
+              onClick={() => openAuth('resident', 'register', true)}
               className="bg-white text-zinc-900 px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-sm"
             >
               Ücretsiz Başlayın
@@ -420,10 +425,11 @@ export default function LandingPage() {
       </footer>
 
       <AuthModal
-        key={`${authModal.context}-${authModal.tab}-${authModal.open}`}
+        key={`${authModal.context}-${authModal.tab}-${authModal.open}-${authModal.showRoleSelector}`}
         isOpen={authModal.open}
         context={authModal.context}
         initialTab={authModal.tab}
+        showRoleSelector={authModal.showRoleSelector}
         onClose={() => setAuthModal((prev) => ({ ...prev, open: false }))}
       />
     </div>
