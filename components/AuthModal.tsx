@@ -445,8 +445,18 @@ export function AuthModal({
                 <Button type="submit" fullWidth loading={loading} className="mt-2">
                   Giriş Yap
                 </Button>
+                <p className="text-center text-sm text-zinc-500 mt-4">
+                  Hesabın yok mu?{' '}
+                  <button
+                    type="button"
+                    onClick={() => switchTab('register')}
+                    className="text-zinc-900 font-medium hover:underline"
+                  >
+                    Kayıt Ol
+                  </button>
+                </p>
                 {activeContext === 'admin' && !canRegister && (
-                  <p className="text-center text-xs text-zinc-500 mt-4">
+                  <p className="text-center text-xs text-zinc-500 mt-2">
                     Yönetici hesabınız yoksa sistem yöneticinizle iletişime geçin.
                   </p>
                 )}
@@ -505,7 +515,17 @@ export function AuthModal({
                 <Button type="submit" fullWidth loading={loading} className="mt-2">
                   Kayıt Ol
                 </Button>
-                <p className="text-center text-xs text-zinc-500 mt-4">
+                <p className="text-center text-sm text-zinc-500 mt-4">
+                  Hesabın var mı?{' '}
+                  <button
+                    type="button"
+                    onClick={() => switchTab('login')}
+                    className="text-zinc-900 font-medium hover:underline"
+                  >
+                    Giriş Yap
+                  </button>
+                </p>
+                <p className="text-center text-xs text-zinc-500 mt-2">
                   {activeContext === 'admin'
                     ? 'Bu adım sadece ilk kurulumda kullanılabilir.'
                     : 'Kayıt sonrası yöneticiniz sizi dairenizle eşleştirecektir.'}
