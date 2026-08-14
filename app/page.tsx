@@ -82,14 +82,16 @@ export default function LandingPage() {
     context: 'admin' | 'resident';
     tab: 'login' | 'register';
     showRoleSelector: boolean;
-  }>({ open: false, context: 'resident', tab: 'login', showRoleSelector: false });
+    registerOnly: boolean;
+  }>({ open: false, context: 'resident', tab: 'login', showRoleSelector: false, registerOnly: false });
 
   const openAuth = (
     context: 'admin' | 'resident',
     tab: 'login' | 'register' = 'login',
-    showRoleSelector: boolean = false
+    showRoleSelector: boolean = false,
+    registerOnly: boolean = false
   ) => {
-    setAuthModal({ open: true, context, tab, showRoleSelector });
+    setAuthModal({ open: true, context, tab, showRoleSelector, registerOnly });
   };
 
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
@@ -135,7 +137,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white">
       <Suspense fallback={null}>
         <AuthQueryHandler
-          onAuthParam={(tab) => setAuthModal({ open: true, context: 'resident', tab, showRoleSelector: false })}
+          onAuthParam={(tab) => setAuthModal({ open: true, context: 'resident', tab, showRoleSelector: false, registerOnly: false })}
         />
       </Suspense>
 
@@ -188,7 +190,7 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <button
-                onClick={() => openAuth('resident', 'register', true)}
+                onClick={() => openAuth('resident', 'register', true, true)}
                 className="btn-primary"
               >
                 Ücretsiz Hesap Oluştur
@@ -318,7 +320,7 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center justify-center gap-4">
             <button
-              onClick={() => openAuth('resident', 'register', true)}
+              onClick={() => openAuth('resident', 'register', true, true)}
               className="bg-white text-zinc-900 px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-sm"
             >
               Ücretsiz Başlayın
@@ -425,11 +427,12 @@ export default function LandingPage() {
       </footer>
 
       <AuthModal
-        key={`${authModal.context}-${authModal.tab}-${authModal.open}-${authModal.showRoleSelector}`}
+        key={`${authModal.context}-${authModal.tab}-${authModal.open}-${authModal.showRoleSelector}-${authModal.registerOnly}`}
         isOpen={authModal.open}
         context={authModal.context}
         initialTab={authModal.tab}
         showRoleSelector={authModal.showRoleSelector}
+        registerOnly={authModal.registerOnly}
         onClose={() => setAuthModal((prev) => ({ ...prev, open: false }))}
       />
     </div>

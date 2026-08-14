@@ -1,23 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, generateToken } from '@/lib/auth';
+import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { idToken, email, password } = body;
 
-    // Validation
-    if (!email || !password) {
+    let resolvedEmail: string | undefined;
+
+    if (idToken) {
+      // Firebase-based login (Google, Phone, or verified email/password)
+      const firebaseUser = await verifyFirebaseIdToken(idToken);
+
+      if (!firebaseUser.email) {
+        return NextResponse.json(
+          { error: 'E-posta bilgisi bulunamadı' },
+          { status: 400 }
+        );
+      }
+
+      if (!firebaseUser.email_verified) {
+        return NextResponse.json(
+          { error: 'E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki bağlantıya tıklayın.' },
+          { status: 403 }
+        );
+      }
+
+      resolvedEmail = firebaseUser.email;
+    } else if (email && password) {
+      // Legacy password-based login (for existing users before Firebase migration)
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user || !user.password) {
+        return NextResponse.json(
+          { error: 'Geçersiz e-posta veya şifre' },
+          { status: 401 }
+        );
+      }
+
+      const isValidPassword = await verifyPassword(password, user.password);
+      if (!isValidPassword) {
+        return NextResponse.json(
+          { error: 'Geçersiz e-posta veya şifre' },
+          { status: 401 }
+        );
+      }
+
+      resolvedEmail = email;
+    } else {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'idToken veya e-posta/şifre gereklidir' },
         { status: 400 }
       );
     }
 
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: resolvedEmail },
       include: {
         building: true,
         unit: true,
@@ -26,16 +69,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    const isValidPassword = await verifyPassword(password, user.password);
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { error: 'Kullanıcı bulunamadı' },
         { status: 401 }
       );
     }

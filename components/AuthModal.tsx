@@ -4,7 +4,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input, PhoneInput } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
-import { signInWithGoogle, sendPhoneOtp, confirmPhoneOtp } from '@/lib/firebase';
+import {
+  signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
+  sendPhoneOtp,
+  confirmPhoneOtp,
+} from '@/lib/firebase';
 import type { ConfirmationResult } from 'firebase/auth';
 
 interface AuthModalProps {
@@ -14,6 +20,8 @@ interface AuthModalProps {
   context?: 'admin' | 'resident';
   /** Show role selection cards at the top of the register tab (for free sign-up). */
   showRoleSelector?: boolean;
+  /** If true, the modal only allows registration (hides the login tab). */
+  registerOnly?: boolean;
 }
 
 export function AuthModal({
@@ -22,10 +30,12 @@ export function AuthModal({
   initialTab = 'login',
   context = 'resident',
   showRoleSelector = false,
+  registerOnly = false,
 }: AuthModalProps) {
   const router = useRouter();
-  const [tab, setTab] = useState<'login' | 'register'>(initialTab);
+  const [tab, setTab] = useState<'login' | 'register'>(registerOnly ? 'register' : initialTab);
   const [activeContext, setActiveContext] = useState<'admin' | 'resident'>(context);
+  const [step, setStep] = useState<'role' | 'auth'>(showRoleSelector ? 'role' : 'auth');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,10 +49,6 @@ export function AuthModal({
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
-  // Admin self-registration is only possible before the very first SUPER_ADMIN
-  // exists (fresh install bootstrap). We check this once when the modal opens.
-  const [adminRegisterAvailable, setAdminRegisterAvailable] = useState<boolean | null>(null);
-
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
     name: '',
@@ -52,22 +58,17 @@ export function AuthModal({
   });
 
   useEffect(() => {
-    if (isOpen && activeContext === 'admin' && adminRegisterAvailable === null) {
-      fetch('/api/auth/register-admin')
-        .then((res) => res.json())
-        .then((data) => setAdminRegisterAvailable(Boolean(data.available)))
-        .catch(() => setAdminRegisterAvailable(false));
-    }
-  }, [isOpen, activeContext, adminRegisterAvailable]);
-
-  // Reset admin availability when switching role in the role selector.
-  useEffect(() => {
-    setAdminRegisterAvailable(null);
-  }, [activeContext]);
+    setTab(registerOnly ? 'register' : initialTab);
+    setActiveContext(context);
+    setStep(showRoleSelector ? 'role' : 'auth');
+    setError('');
+    setSuccess('');
+    setShowPhoneForm(false);
+  }, [isOpen, initialTab, context, showRoleSelector, registerOnly]);
 
   if (!isOpen) return null;
 
-  const canRegister = true;
+  const canRegister = showRoleSelector && activeContext === 'resident';
 
   const switchTab = (newTab: 'login' | 'register') => {
     setTab(newTab);
@@ -75,16 +76,29 @@ export function AuthModal({
     setSuccess('');
   };
 
+  const selectRole = (role: 'admin' | 'resident') => {
+    setActiveContext(role);
+    setStep('auth');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    if (!loginData.email || !loginData.password) {
+      setError('Lütfen e-posta ve şifrenizi girin');
+      setLoading(false);
+      return;
+    }
+
     try {
+      const idToken = await signInWithEmail(loginData.email, loginData.password);
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData),
+        body: JSON.stringify({ idToken }),
       });
       const data = await response.json();
 
@@ -97,16 +111,13 @@ export function AuthModal({
       } else {
         setError(data.error || 'Giriş yapılırken bir hata oluştu');
       }
-    } catch {
-      setError('Giriş yapılırken bir hata oluştu');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Giriş yapılırken bir hata oluştu');
     } finally {
       setLoading(false);
     }
   };
 
-  // Google sign-in is only offered to residents. Admin accounts are always
-  // created explicitly (bootstrap or by an existing SUPER_ADMIN), never
-  // auto-provisioned via a third-party identity provider.
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     setError('');
@@ -135,7 +146,6 @@ export function AuthModal({
     }
   };
 
-  // Phone sign-in is only offered to residents, same rationale as Google.
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneLoading(true);
@@ -190,23 +200,35 @@ export function AuthModal({
     setError('');
     setSuccess('');
 
-    const endpoint = activeContext === 'admin' ? '/api/auth/register-admin' : '/api/auth/register';
+    if (!registerData.name || !registerData.email || !registerData.phone || !registerData.password) {
+      setError('Lütfen tüm alanları doldurun');
+      setLoading(false);
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      setError('Şifre en az 6 karakter olmalıdır');
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registerData),
-      });
-      const data = await response.json();
+      await signUpWithEmail(registerData.email, registerData.password);
 
-      if (response.ok) {
-        router.push(activeContext === 'admin' ? '/admin' : '/dashboard');
-      } else {
-        setError(data.error || 'Kayıt olurken bir hata oluştu');
-      }
-    } catch {
-      setError('Kayıt olurken bir hata oluştu');
+      sessionStorage.setItem(
+        'pendingRegistration',
+        JSON.stringify({
+          name: registerData.name,
+          phone: registerData.phone,
+          role: activeContext,
+        })
+      );
+
+      setSuccess(
+        'E-posta adresinize doğrulama bağlantısı gönderildi. Lütfen e-postanızdaki bağlantıya tıklayarak kaydınızı tamamlayın.'
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kayıt olurken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -217,13 +239,37 @@ export function AuthModal({
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-zinc-900/60 transition-opacity" onClick={onClose} />
 
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md transform transition-all">
-          <div className="flex items-center justify-between px-6 pt-6">
-            <div>
-              <h3 className="text-lg font-medium text-zinc-900">
-                {activeContext === 'admin' ? 'Yönetici Girişi' : 'Site Sakini'}
-              </h3>
-              <p className="text-sm text-zinc-500 mt-0.5">LuxDues hesabınıza erişin</p>
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm transform transition-all">
+          <div className="flex items-center justify-between px-6 pt-5">
+            <div className="flex items-center gap-2">
+              {step === 'auth' && showRoleSelector && (
+                <button
+                  type="button"
+                  onClick={() => setStep('role')}
+                  className="text-zinc-400 hover:text-zinc-600 transition-colors"
+                  aria-label="Geri"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+              <div>
+                <h3 className="text-lg font-medium text-zinc-900">
+                  {step === 'role'
+                    ? 'Hesap Türü Seçin'
+                    : activeContext === 'admin'
+                      ? registerOnly
+                        ? 'Yönetici Kaydı'
+                        : 'Yönetici Girişi'
+                      : registerOnly
+                        ? 'Site Sakini Kaydı'
+                        : 'Site Sakini'}
+                </h3>
+                <p className="text-sm text-zinc-500 mt-0.5">
+                  {step === 'role' ? 'Devam etmek için hesap türünüzü seçin' : 'LuxDues hesabınıza erişin'}
+                </p>
+              </div>
             </div>
             <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -232,307 +278,346 @@ export function AuthModal({
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 px-6 mt-5 border-b border-zinc-200">
-            <button
-              onClick={() => switchTab('login')}
-              className={`px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                tab === 'login'
-                  ? 'border-zinc-900 text-zinc-900'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-600'
-              }`}
-            >
-              Giriş Yap
-            </button>
-            {canRegister && (
+          {step === 'role' ? (
+            <div className="px-6 py-10 flex flex-col gap-4">
               <button
-                onClick={() => switchTab('register')}
-                className={`px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                  tab === 'register'
-                    ? 'border-zinc-900 text-zinc-900'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-600'
-                }`}
+                type="button"
+                onClick={() => selectRole('resident')}
+                className="text-left p-6 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all group"
               >
-                Kayıt Ol
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 group-hover:text-zinc-900 transition-colors">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-base font-semibold text-zinc-900 group-hover:text-zinc-900">
+                      Site Sakini
+                    </span>
+                  </div>
+                  <svg
+                    className="h-5 w-5 text-zinc-300 group-hover:text-zinc-900 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+                <p className="text-sm text-zinc-500">Daire sakinleri için giriş ve kayıt</p>
               </button>
-            )}
-          </div>
 
-          <div className="px-6 py-6">
-            {tab === 'register' && showRoleSelector && (
-              <div className="mb-5">
-                <p className="text-sm text-zinc-500 mb-3">Kayıt türünü seçin</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveContext('resident')}
-                    className={`text-left p-4 rounded-xl border transition-all ${
-                      activeContext === 'resident'
-                        ? 'border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900'
-                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-zinc-900">Site Sakini</span>
-                      {activeContext === 'resident' && (
-                        <span className="h-2 w-2 rounded-full bg-zinc-900" />
-                      )}
+              <button
+                type="button"
+                onClick={() => selectRole('admin')}
+                className="text-left p-6 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 group-hover:text-zinc-900 transition-colors">
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
                     </div>
-                    <span className="text-xs text-zinc-500">Daire sakinleri için kayıt</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveContext('admin')}
-                    className={`text-left p-4 rounded-xl border transition-all ${
-                      activeContext === 'admin'
-                        ? 'border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900'
-                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
-                    }`}
+                    <span className="text-base font-semibold text-zinc-900 group-hover:text-zinc-900">
+                      Yönetici
+                    </span>
+                  </div>
+                  <svg
+                    className="h-5 w-5 text-zinc-300 group-hover:text-zinc-900 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-zinc-900">Yönetici</span>
-                      {activeContext === 'admin' && (
-                        <span className="h-2 w-2 rounded-full bg-zinc-900" />
-                      )}
-                    </div>
-                    <span className="text-xs text-zinc-500">Blok/site yöneticisi kaydı</span>
-                  </button>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
                 </div>
-              </div>
-            )}
-
-            {activeContext === 'resident' && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={googleLoading}
-                  className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
-                >
-                  {googleLoading ? (
-                    <span className="h-4 w-4 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
-                  ) : (
-                    <svg className="h-4 w-4" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v2.98h3.86c2.26-2.08 3.56-5.16 3.56-8.8z" />
-                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-2.98c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.24v3.09C3.21 21.3 7.26 24 12 24z" />
-                      <path fill="#FBBC05" d="M5.27 14.31c-.24-.72-.38-1.49-.38-2.31s.14-1.59.38-2.31V6.6H1.24C.45 8.24 0 10.06 0 12s.45 3.76 1.24 5.4l4.03-3.09z" />
-                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.94 1.19 15.24 0 12 0 7.26 0 3.21 2.7 1.24 6.6l4.03 3.09c.95-2.85 3.6-4.94 6.73-4.94z" />
-                    </svg>
-                  )}
-                  Google ile Giriş Yap
-                </button>
-
-                {!showPhoneForm ? (
+                <p className="text-sm text-zinc-500">Blok/site yöneticisi için giriş ve kayıt</p>
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Tabs */}
+              {!registerOnly && (
+                <div className="flex gap-1 px-6 mt-3 border-b border-zinc-200">
                   <button
-                    type="button"
-                    onClick={() => setShowPhoneForm(true)}
-                    className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors mb-4"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    Telefon Numarası ile Giriş Yap
-                  </button>
-                ) : (
-                  <div className="border border-zinc-200 rounded-xl p-4 mb-4">
-                    {!otpSent ? (
-                      <form onSubmit={handleSendOtp}>
-                        <div className="form-group">
-                          <PhoneInput
-                            label="Telefon Numarası"
-                            value={phoneNumber}
-                            onChange={(value) => setPhoneNumber(value)}
-                            required
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button type="submit" fullWidth loading={phoneLoading} size="sm">
-                            Doğrulama Kodu Gönder
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowPhoneForm(false)}
-                          >
-                            Vazgeç
-                          </Button>
-                        </div>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleConfirmOtp}>
-                        <p className="text-xs text-zinc-500 mb-3">
-                          {formatPhoneNumber(phoneNumber)} numarasına gönderilen 6 haneli kodu girin.
-                        </p>
-                        <div className="form-group">
-                          <Input
-                            label="Doğrulama Kodu"
-                            placeholder="123456"
-                            value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value)}
-                            maxLength={6}
-                            required
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button type="submit" fullWidth loading={phoneLoading} size="sm">
-                            Doğrula ve Giriş Yap
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setShowPhoneForm(false);
-                              setOtpSent(false);
-                              setOtpCode('');
-                            }}
-                          >
-                            Vazgeç
-                          </Button>
-                        </div>
-                      </form>
-                    )}
-                  </div>
-                )}
-                {/* Invisible reCAPTCHA container required by Firebase phone auth */}
-                <div id="recaptcha-container" />
-
-                <div className="relative mb-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-zinc-200" />
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="bg-white px-3 text-zinc-400">veya e-posta ile</span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-                {success}
-              </div>
-            )}
-
-            {tab === 'login' ? (
-              <form onSubmit={handleLogin}>
-                <div className="form-group">
-                  <Input
-                    type="email"
-                    label="E-posta"
-                    placeholder="ornek@luxdues.com"
-                    value={loginData.email}
-                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <Input
-                    type="password"
-                    label="Şifre"
-                    placeholder="••••••••"
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <Button type="submit" fullWidth loading={loading} className="mt-2">
-                  Giriş Yap
-                </Button>
-                <p className="text-center text-sm text-zinc-500 mt-4">
-                  Hesabın yok mu?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchTab('register')}
-                    className="text-zinc-900 font-medium hover:underline"
-                  >
-                    Kayıt Ol
-                  </button>
-                </p>
-                {activeContext === 'admin' && !canRegister && (
-                  <p className="text-center text-xs text-zinc-500 mt-2">
-                    Yönetici hesabınız yoksa sistem yöneticinizle iletişime geçin.
-                  </p>
-                )}
-              </form>
-            ) : (
-              <form onSubmit={handleRegister}>
-                {activeContext === 'admin' && adminRegisterAvailable === true && (
-                  <div className="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-700">
-                    Sistemde henüz bir yönetici hesabı yok. Oluşturacağınız hesap
-                    otomatik olarak <strong>Ana Yönetici</strong> yetkisi alacak.
-                  </div>
-                )}
-                {activeContext === 'admin' && adminRegisterAvailable === false && (
-                  <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-700">
-                    Sistemde zaten bir yönetici hesabı varsa kendi başınıza kayıt yapamazsınız.
-                    Yeni yönetici eklenmesi için mevcut yöneticinizle iletişime geçin.
-                  </div>
-                )}
-                <div className="form-group">
-                  <Input
-                    label="Ad Soyad"
-                    placeholder="Örn: Ahmet Yılmaz"
-                    value={registerData.name}
-                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <Input
-                    type="email"
-                    label="E-posta"
-                    placeholder="ornek@luxdues.com"
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <PhoneInput
-                    label="Telefon"
-                    value={registerData.phone}
-                    onChange={(value) => setRegisterData({ ...registerData, phone: value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <Input
-                    type="password"
-                    label="Şifre"
-                    placeholder="En az 6 karakter"
-                    value={registerData.password}
-                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <Button type="submit" fullWidth loading={loading} className="mt-2">
-                  Kayıt Ol
-                </Button>
-                <p className="text-center text-sm text-zinc-500 mt-4">
-                  Hesabın var mı?{' '}
-                  <button
-                    type="button"
                     onClick={() => switchTab('login')}
-                    className="text-zinc-900 font-medium hover:underline"
+                    className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                      tab === 'login'
+                        ? 'border-zinc-900 text-zinc-900'
+                        : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                    }`}
                   >
                     Giriş Yap
                   </button>
-                </p>
-                <p className="text-center text-xs text-zinc-500 mt-2">
-                  {activeContext === 'admin'
-                    ? 'Bu adım sadece ilk kurulumda kullanılabilir.'
-                    : 'Kayıt sonrası yöneticiniz sizi dairenizle eşleştirecektir.'}
-                </p>
-              </form>
-            )}
-          </div>
+                  {canRegister && (
+                    <button
+                      onClick={() => switchTab('register')}
+                      className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                        tab === 'register'
+                          ? 'border-zinc-900 text-zinc-900'
+                          : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                      }`}
+                    >
+                      Kayıt Ol
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="px-6 py-5">
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+                    {success}
+                  </div>
+                )}
+
+                {tab === 'login' ? (
+                  <form onSubmit={handleLogin}>
+                    <div className="form-group mb-3">
+                      <Input
+                        type="email"
+                        label="E-posta"
+                        placeholder="ornek@luxdues.com"
+                        value={loginData.email}
+                        onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group mb-3">
+                      <Input
+                        type="password"
+                        label="Şifre"
+                        placeholder="••••••••"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" fullWidth loading={loading} className="mt-2">
+                      Giriş Yap
+                    </Button>
+                    {!registerOnly && canRegister && (
+                      <p className="text-center text-sm text-zinc-500 mt-4">
+                        Hesabın yok mu?{' '}
+                        <button
+                          type="button"
+                          onClick={() => switchTab('register')}
+                          className="text-zinc-900 font-medium hover:underline"
+                        >
+                          Kayıt Ol
+                        </button>
+                      </p>
+                    )}
+                  </form>
+                ) : (
+                  <form onSubmit={handleRegister}>
+                    <div className="form-group mb-3">
+                      <Input
+                        label="Ad Soyad"
+                        placeholder="Örn: Ahmet Yılmaz"
+                        value={registerData.name}
+                        onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group mb-3">
+                      <Input
+                        type="email"
+                        label="E-posta"
+                        placeholder="ornek@luxdues.com"
+                        value={registerData.email}
+                        onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group mb-3">
+                      <PhoneInput
+                        label="Telefon"
+                        value={registerData.phone}
+                        onChange={(value) => setRegisterData({ ...registerData, phone: value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group mb-3">
+                      <Input
+                        type="password"
+                        label="Şifre"
+                        placeholder="En az 6 karakter"
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" fullWidth loading={loading} className="mt-2">
+                      Kayıt Ol
+                    </Button>
+                    {!registerOnly && (
+                      <p className="text-center text-sm text-zinc-500 mt-4">
+                        Hesabın var mı?{' '}
+                        <button
+                          type="button"
+                          onClick={() => switchTab('login')}
+                          className="text-zinc-900 font-medium hover:underline"
+                        >
+                          Giriş Yap
+                        </button>
+                      </p>
+                    )}
+                    {activeContext === 'resident' && (
+                      <p className="text-center text-xs text-zinc-500 mt-2">
+                        Kayıt sonrası yöneticiniz sizi dairenizle eşleştirecektir.
+                      </p>
+                    )}
+                  </form>
+                )}
+
+                {(activeContext === 'resident' || activeContext === 'admin') && (
+                  <>
+                    <div className="relative my-4">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-zinc-200" />
+                      </div>
+                      <div className="relative flex justify-center text-xs">
+                        <span className="bg-white px-3 text-zinc-400">veya</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={googleLoading}
+                      className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                    >
+                      {googleLoading ? (
+                        <span className="h-4 w-4 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
+                      ) : (
+                        <svg className="h-4 w-4" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v2.98h3.86c2.26-2.08 3.56-5.16 3.56-8.8z" />
+                          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-2.98c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.24v3.09C3.21 21.3 7.26 24 12 24z" />
+                          <path fill="#FBBC05" d="M5.27 14.31c-.24-.72-.38-1.49-.38-2.31s.14-1.59.38-2.31V6.6H1.24C.45 8.24 0 10.06 0 12s.45 3.76 1.24 5.4l4.03-3.09z" />
+                          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.94 1.19 15.24 0 12 0 7.26 0 3.21 2.7 1.24 6.6l4.03 3.09c.95-2.85 3.6-4.94 6.73-4.94z" />
+                        </svg>
+                      )}
+                      Google ile Giriş Yap
+                    </button>
+
+                    {!showPhoneForm ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowPhoneForm(true)}
+                        className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors mb-3"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        Telefon Numarası ile Giriş Yap
+                      </button>
+                    ) : (
+                      <div className="border border-zinc-200 rounded-xl p-3 mb-3">
+                        {!otpSent ? (
+                          <form onSubmit={handleSendOtp}>
+                            <div className="form-group mb-3">
+                              <PhoneInput
+                                label="Telefon Numarası"
+                                value={phoneNumber}
+                                onChange={(value) => setPhoneNumber(value)}
+                                required
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button type="submit" fullWidth loading={phoneLoading} size="sm">
+                                Doğrulama Kodu Gönder
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowPhoneForm(false)}
+                              >
+                                Vazgeç
+                              </Button>
+                            </div>
+                          </form>
+                        ) : (
+                          <form onSubmit={handleConfirmOtp}>
+                            <p className="text-xs text-zinc-500 mb-3">
+                              {formatPhoneNumber(phoneNumber)} numarasına gönderilen 6 haneli kodu girin.
+                            </p>
+                            <div className="form-group mb-3">
+                              <Input
+                                label="Doğrulama Kodu"
+                                placeholder="123456"
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value)}
+                                maxLength={6}
+                                required
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button type="submit" fullWidth loading={phoneLoading} size="sm">
+                                Doğrula ve Giriş Yap
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setShowPhoneForm(false);
+                                  setOtpSent(false);
+                                  setOtpCode('');
+                                }}
+                              >
+                                Vazgeç
+                              </Button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    )}
+                    {/* Invisible reCAPTCHA container required by Firebase phone auth */}
+                    <div id="recaptcha-container" />
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

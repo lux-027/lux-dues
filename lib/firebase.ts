@@ -5,6 +5,11 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  applyActionCode,
+  checkActionCode,
   RecaptchaVerifier,
   signInWithPhoneNumber,
   type Auth,
@@ -99,4 +104,48 @@ export async function confirmPhoneOtp(
 ): Promise<string> {
   const result = await confirmationResult.confirm(code);
   return result.user.getIdToken();
+}
+
+/**
+ * Creates a new Firebase Auth user with email/password and sends a verification
+ * email. Returns the user object. The email must be verified before the backend
+ * persists the user record.
+ */
+export async function signUpWithEmail(email: string, password: string) {
+  const auth = getFirebaseAuth();
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+
+  const actionCodeSettings = {
+    url: `${window.location.origin}/verify-email`,
+    handleCodeInApp: false,
+  };
+
+  await sendEmailVerification(result.user, actionCodeSettings);
+  return result.user;
+}
+
+/**
+ * Signs in an existing Firebase Auth user with email/password and returns the
+ * Firebase ID token. Throws if the email is not verified.
+ */
+export async function signInWithEmail(email: string, password: string): Promise<string> {
+  const auth = getFirebaseAuth();
+  const result = await signInWithEmailAndPassword(auth, email, password);
+
+  if (!result.user.emailVerified) {
+    throw new Error('E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki bağlantıya tıklayın.');
+  }
+
+  return result.user.getIdToken();
+}
+
+/**
+ * Verifies the email verification action code (oobCode) from the verification
+ * link. Returns the verified email address.
+ */
+export async function verifyEmailActionCode(oobCode: string): Promise<string> {
+  const auth = getFirebaseAuth();
+  const info = await checkActionCode(auth, oobCode);
+  await applyActionCode(auth, oobCode);
+  return info.data.email || '';
 }

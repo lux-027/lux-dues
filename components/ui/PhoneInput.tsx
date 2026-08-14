@@ -18,7 +18,7 @@ interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElemen
 export const PhoneInput: React.FC<PhoneInputProps> = ({
   label = 'Telefon',
   error,
-  helperText = 'Örn: 555 123 45 67',
+  helperText,
   fullWidth = true,
   placeholder = '555 123 45 67',
   value,

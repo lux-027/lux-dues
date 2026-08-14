@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { generateToken } from '@/lib/auth';
+import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 // GET /api/auth/register-admin - Check whether bootstrap admin registration is
-// still available (i.e. no SUPER_ADMIN exists yet). Used by the UI to decide
-// whether to show the admin "Kayıt Ol" tab.
+// still available (i.e. no SUPER_ADMIN exists yet).
 export async function GET() {
   try {
     const existingAdminCount = await prisma.user.count({
@@ -21,27 +21,31 @@ export async function GET() {
 }
 
 // POST /api/auth/register-admin - Bootstrap registration for the very first admin.
-//
-// Security note: public admin self-registration is only allowed when the system
-// has no SUPER_ADMIN yet (fresh install). Once a SUPER_ADMIN exists, all further
-// admin accounts (SUPER_ADMIN or BLOCK_ADMIN) must be created by an existing
-// SUPER_ADMIN via /admin/admins — never through this public endpoint.
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, password } = body;
+    const { idToken, name, phone } = body;
 
-    if (!name || !email || !phone || !password) {
+    if (!idToken || !name || !phone) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    const firebaseUser = await verifyFirebaseIdToken(idToken);
+
+    if (!firebaseUser.email) {
       return NextResponse.json(
-        { error: 'Şifre en az 6 karakter olmalıdır' },
+        { error: 'Geçerli bir e-posta bulunamadı' },
         { status: 400 }
+      );
+    }
+
+    if (!firebaseUser.email_verified) {
+      return NextResponse.json(
+        { error: 'E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki bağlantıya tıklayın.' },
+        { status: 403 }
       );
     }
 
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
     if (existingUser) {
       return NextResponse.json(
         { error: 'Bu e-posta ile kayıtlı bir kullanıcı zaten mevcut' },
@@ -75,14 +79,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hashedPassword = await hashPassword(password);
-
     const admin = await prisma.user.create({
       data: {
         name,
-        email,
+        email: firebaseUser.email,
         phone: normalizedPhone,
-        password: hashedPassword,
+        emailVerified: true,
         role: UserRole.SUPER_ADMIN,
       },
     });

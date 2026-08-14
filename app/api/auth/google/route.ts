@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/prisma';
-import { generateToken, hashPassword } from '@/lib/auth';
+import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
 
@@ -44,16 +43,14 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       // First time signing in with this Google account — auto-provision a
-      // RESIDENT account. The random password/phone placeholder are never
-      // used/exposed; the account can only be accessed via Google sign-in
-      // going forward (an admin can later attach a real phone/unit).
-      const randomPassword = await hashPassword(randomUUID());
+      // RESIDENT account. The phone placeholder is never used/exposed; the
+      // account can only be accessed via Google sign-in going forward.
       user = await prisma.user.create({
         data: {
           name: googleUser.name || email.split('@')[0],
           email,
           phone: `google:${googleUser.uid}`,
-          password: randomPassword,
+          emailVerified: true,
           role: UserRole.RESIDENT,
         },
       });

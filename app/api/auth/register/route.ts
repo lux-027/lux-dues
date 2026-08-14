@@ -1,26 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { generateToken } from '@/lib/auth';
+import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, password } = body;
+    const { idToken, name, phone } = body;
 
     // Validation
-    if (!name || !email || !phone || !password) {
+    if (!idToken || !name || !phone) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    const firebaseUser = await verifyFirebaseIdToken(idToken);
+
+    if (!firebaseUser.email) {
       return NextResponse.json(
-        { error: 'Şifre en az 6 karakter olmalıdır' },
+        { error: 'Geçerli bir e-posta bulunamadı' },
         { status: 400 }
+      );
+    }
+
+    if (!firebaseUser.email_verified) {
+      return NextResponse.json(
+        { error: 'E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki bağlantıya tıklayın.' },
+        { status: 403 }
       );
     }
 
@@ -34,18 +44,15 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: firebaseUser.email },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'Bu e-posta ile kayıtlı bir kullanıcı zaten mevcut' },
         { status: 409 }
       );
     }
-
-    // Hash password
-    const hashedPassword = await hashPassword(password);
 
     // Public self-registration always creates a RESIDENT account.
     // Admin accounts (SUPER_ADMIN / BLOCK_ADMIN) can only be created via /admin/admins
@@ -53,9 +60,9 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: firebaseUser.email,
         phone: normalizedPhone,
-        password: hashedPassword,
+        emailVerified: true,
         role: UserRole.RESIDENT,
       },
     });

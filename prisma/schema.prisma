@@ -37,14 +37,15 @@ enum ComplaintStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String   @unique
-  email     String   @unique
-  password  String
-  role      UserRole @default(RESIDENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  phone         String   @unique
+  email         String   @unique
+  password      String?
+  emailVerified Boolean  @default(false)
+  role          UserRole @default(RESIDENT)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
   buildingId String?

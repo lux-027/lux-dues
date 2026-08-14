@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { generateToken, hashPassword } from '@/lib/auth';
+import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
-import { randomUUID } from 'crypto';
 
 // POST /api/auth/phone - Exchange a verified Firebase phone-auth ID token for
 // our own session cookie. If no account exists yet for the phone number, a
@@ -36,15 +35,14 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       // First time signing in with this phone number — auto-provision a
-      // RESIDENT account. The random password/email are never used/exposed;
-      // the account can only be accessed via phone sign-in going forward.
-      const randomPassword = await hashPassword(randomUUID());
+      // RESIDENT account. The account can only be accessed via phone sign-in
+      // going forward.
       user = await prisma.user.create({
         data: {
           name: firebaseUser.phone_number,
           email: `${firebaseUser.phone_number.replace(/[^0-9]/g, '')}@phone.luxdues.local`,
           phone: firebaseUser.phone_number,
-          password: randomPassword,
+          emailVerified: true,
           role: UserRole.RESIDENT,
         },
       });
