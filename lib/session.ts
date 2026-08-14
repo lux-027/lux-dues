@@ -6,6 +6,7 @@ export interface SessionUser {
   id: string;
   name: string;
   email: string;
+  phone: string;
   role: 'SUPER_ADMIN' | 'BLOCK_ADMIN' | 'RESIDENT';
   buildingId?: string | null;
   unitId?: string | null;
@@ -36,6 +37,7 @@ export async function getSession(): Promise<SessionUser | null> {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone,
     role: user.role,
     buildingId: user.buildingId,
     unitId: user.unitId,

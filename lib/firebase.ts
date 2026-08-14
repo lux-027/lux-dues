@@ -1,12 +1,13 @@
 'use client';
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   RecaptchaVerifier,
   signInWithPhoneNumber,
+  type Auth,
   type ConfirmationResult,
 } from 'firebase/auth';
 
@@ -19,11 +20,33 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Avoid re-initializing on every hot-reload / re-render.
-export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
-export const firebaseAuth = getAuth(firebaseApp);
+let firebaseApp: FirebaseApp | null = null;
+let firebaseAuth: Auth | null = null;
 
-const googleProvider = new GoogleAuthProvider();
+/**
+ * Lazily initializes Firebase, only in the browser and only when a sign-in
+ * action actually needs it. This avoids running Firebase (and requiring its
+ * env vars) during server-side rendering / static build, where the module
+ * would otherwise throw `auth/invalid-api-key` if the NEXT_PUBLIC_FIREBASE_*
+ * variables aren't set for that environment.
+ */
+function getFirebaseAuth(): Auth {
+  if (typeof window === 'undefined') {
+    throw new Error('Firebase Auth can only be used in the browser');
+  }
+  if (!firebaseConfig.apiKey) {
+    throw new Error(
+      'Firebase yapılandırması eksik. NEXT_PUBLIC_FIREBASE_* ortam değişkenlerini ayarlayın.'
+    );
+  }
+  if (!firebaseApp) {
+    firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  }
+  if (!firebaseAuth) {
+    firebaseAuth = getAuth(firebaseApp);
+  }
+  return firebaseAuth;
+}
 
 /**
  * Opens the Google sign-in popup and returns the Firebase ID token for the
@@ -31,7 +54,9 @@ const googleProvider = new GoogleAuthProvider();
  * to be verified and exchanged for our own session cookie.
  */
 export async function signInWithGoogle(): Promise<string> {
-  const result = await signInWithPopup(firebaseAuth, googleProvider);
+  const auth = getFirebaseAuth();
+  const googleProvider = new GoogleAuthProvider();
+  const result = await signInWithPopup(auth, googleProvider);
   return result.user.getIdToken();
 }
 
@@ -43,7 +68,7 @@ let recaptchaVerifier: RecaptchaVerifier | null = null;
  */
 function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
   if (!recaptchaVerifier) {
-    recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, containerId, {
+    recaptchaVerifier = new RecaptchaVerifier(getFirebaseAuth(), containerId, {
       size: 'invisible',
     });
   }
@@ -59,8 +84,9 @@ export async function sendPhoneOtp(
   phoneNumber: string,
   recaptchaContainerId: string
 ): Promise<ConfirmationResult> {
+  const auth = getFirebaseAuth();
   const verifier = getRecaptchaVerifier(recaptchaContainerId);
-  return signInWithPhoneNumber(firebaseAuth, phoneNumber, verifier);
+  return signInWithPhoneNumber(auth, phoneNumber, verifier);
 }
 
 /**

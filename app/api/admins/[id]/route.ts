@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { UserRole } from '@prisma/client';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 // PUT /api/admins/[id] - Update an admin's building assignment (SUPER_ADMIN only)
 export async function PUT(
@@ -18,13 +19,25 @@ export async function PUT(
     const body = await request.json();
     const { buildingId, name, phone } = body;
 
+    const updateData: any = {
+      ...(buildingId !== undefined && { buildingId }),
+      ...(name && { name }),
+    };
+
+    if (phone) {
+      const normalizedPhone = normalizePhoneNumber(phone);
+      if (!isValidTurkishPhone(normalizedPhone)) {
+        return NextResponse.json(
+          { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+          { status: 400 }
+        );
+      }
+      updateData.phone = normalizedPhone;
+    }
+
     const admin = await prisma.user.update({
       where: { id, role: UserRole.BLOCK_ADMIN },
-      data: {
-        ...(buildingId !== undefined && { buildingId }),
-        ...(name && { name }),
-        ...(phone && { phone }),
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,

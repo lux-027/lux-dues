@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, PhoneInput } from '@/components/ui';
+import { formatPhoneNumber } from '@/lib/phone';
 import { signInWithGoogle, sendPhoneOtp, confirmPhoneOtp } from '@/lib/firebase';
 import type { ConfirmationResult } from 'firebase/auth';
 
@@ -289,11 +290,10 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
                     {!otpSent ? (
                       <form onSubmit={handleSendOtp}>
                         <div className="form-group">
-                          <Input
+                          <PhoneInput
                             label="Telefon Numarası"
-                            placeholder="+905551234567"
                             value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            onChange={(value) => setPhoneNumber(value)}
                             required
                           />
                         </div>
@@ -314,7 +314,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
                     ) : (
                       <form onSubmit={handleConfirmOtp}>
                         <p className="text-xs text-zinc-500 mb-3">
-                          {phoneNumber} numarasına gönderilen 6 haneli kodu girin.
+                          {formatPhoneNumber(phoneNumber)} numarasına gönderilen 6 haneli kodu girin.
                         </p>
                         <div className="form-group">
                           <Input
@@ -431,11 +431,10 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
                   />
                 </div>
                 <div className="form-group">
-                  <Input
+                  <PhoneInput
                     label="Telefon"
-                    placeholder="+905551234567"
                     value={registerData.phone}
-                    onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                    onChange={(value) => setRegisterData({ ...registerData, phone: value })}
                     required
                   />
                 </div>

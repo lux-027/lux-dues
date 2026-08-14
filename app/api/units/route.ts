@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 // GET /api/units?buildingId=... - List units for a building
 export async function GET(request: NextRequest) {
@@ -65,6 +66,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedPhone = normalizePhoneNumber(residentPhone);
+    if (!isValidTurkishPhone(normalizedPhone)) {
+      return NextResponse.json(
+        { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+        { status: 400 }
+      );
+    }
+
     if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -76,7 +85,7 @@ export async function POST(request: NextRequest) {
         doorNo,
         floor,
         ownerName,
-        residentPhone,
+        residentPhone: normalizedPhone,
       },
     });
 

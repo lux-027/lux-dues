@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, generateToken } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,14 @@ export async function POST(request: NextRequest) {
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'Şifre en az 6 karakter olmalıdır' },
+        { status: 400 }
+      );
+    }
+
+    const normalizedPhone = normalizePhoneNumber(phone);
+    if (!isValidTurkishPhone(normalizedPhone)) {
+      return NextResponse.json(
+        { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
         { status: 400 }
       );
     }
@@ -45,7 +54,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
-        phone,
+        phone: normalizedPhone,
         password: hashedPassword,
         role: UserRole.RESIDENT,
       },
@@ -66,6 +75,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
         buildingId: user.buildingId,
         unitId: user.unitId,

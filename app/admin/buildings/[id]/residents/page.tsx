@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardBody } from '@/components/ui';
-import { Button, Input, Badge } from '@/components/ui';
+import { Button, Input, Badge, PhoneInput } from '@/components/ui';
+import { formatPhoneNumber } from '@/lib/phone';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
 
 interface Resident {
@@ -132,7 +133,7 @@ export default function ResidentsPage() {
                     <TableCell>{unit.doorNo}</TableCell>
                     <TableCell>{unit.floor}</TableCell>
                     <TableCell>{unit.ownerName}</TableCell>
-                    <TableCell>{unit.residentPhone}</TableCell>
+                    <TableCell>{formatPhoneNumber(unit.residentPhone)}</TableCell>
                     <TableCell>
                       {unit.residents.length > 0 ? (
                         <Badge variant="success">Var ({unit.residents.length})</Badge>
@@ -268,11 +269,10 @@ function CreateUnitModal({ buildingId, onClose, onSuccess }: CreateUnitModalProp
             </div>
 
             <div className="form-group">
-              <Input
+              <PhoneInput
                 label="Telefon"
-                placeholder="Örn: +905551234567"
                 value={formData.residentPhone}
-                onChange={(e) => setFormData({ ...formData, residentPhone: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, residentPhone: value })}
                 required
               />
             </div>

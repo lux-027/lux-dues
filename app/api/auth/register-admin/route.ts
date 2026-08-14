@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, generateToken } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 // GET /api/auth/register-admin - Check whether bootstrap admin registration is
 // still available (i.e. no SUPER_ADMIN exists yet). Used by the UI to decide
@@ -44,6 +45,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedPhone = normalizePhoneNumber(phone);
+    if (!isValidTurkishPhone(normalizedPhone)) {
+      return NextResponse.json(
+        { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+        { status: 400 }
+      );
+    }
+
     const existingAdminCount = await prisma.user.count({
       where: { role: UserRole.SUPER_ADMIN },
     });
@@ -72,7 +81,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
-        phone,
+        phone: normalizedPhone,
         password: hashedPassword,
         role: UserRole.SUPER_ADMIN,
       },
@@ -92,6 +101,7 @@ export async function POST(request: NextRequest) {
           id: admin.id,
           name: admin.name,
           email: admin.email,
+          phone: admin.phone,
           role: admin.role,
         },
         token,

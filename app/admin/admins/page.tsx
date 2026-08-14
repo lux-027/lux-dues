@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '@/components/ui';
-import { Button, Badge, Input, Select } from '@/components/ui';
+import { Button, Badge, Input, Select, PhoneInput } from '@/components/ui';
+import { formatPhoneNumber } from '@/lib/phone';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
 
 interface Building {
@@ -123,7 +124,7 @@ export default function AdminsPage() {
                   <TableRow key={admin.id}>
                     <TableCell className="font-medium text-zinc-900">{admin.name}</TableCell>
                     <TableCell>{admin.email}</TableCell>
-                    <TableCell>{admin.phone}</TableCell>
+                    <TableCell>{formatPhoneNumber(admin.phone)}</TableCell>
                     <TableCell>
                       <Badge variant={admin.role === 'SUPER_ADMIN' ? 'info' : 'default'}>
                         {admin.role === 'SUPER_ADMIN' ? 'Ana Yönetici' : 'Blok Yöneticisi'}
@@ -255,11 +256,10 @@ function CreateAdminModal({ buildings, onClose, onSuccess }: CreateAdminModalPro
                 </div>
 
                 <div className="form-group">
-                  <Input
+                  <PhoneInput
                     label="Telefon"
-                    placeholder="Örn: +905551234567"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(value) => setFormData({ ...formData, phone: value })}
                     required
                   />
                 </div>

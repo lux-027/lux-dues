@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 // PUT /api/units/[id] - Update a unit (admin only)
 export async function PUT(
@@ -17,15 +18,27 @@ export async function PUT(
     const body = await request.json();
     const { blockName, doorNo, floor, ownerName, residentPhone } = body;
 
+    const updateData: any = {
+      ...(blockName && { blockName }),
+      ...(doorNo && { doorNo }),
+      ...(floor && { floor }),
+      ...(ownerName && { ownerName }),
+    };
+
+    if (residentPhone) {
+      const normalizedPhone = normalizePhoneNumber(residentPhone);
+      if (!isValidTurkishPhone(normalizedPhone)) {
+        return NextResponse.json(
+          { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+          { status: 400 }
+        );
+      }
+      updateData.residentPhone = normalizedPhone;
+    }
+
     const unit = await prisma.unit.update({
       where: { id },
-      data: {
-        ...(blockName && { blockName }),
-        ...(doorNo && { doorNo }),
-        ...(floor && { floor }),
-        ...(ownerName && { ownerName }),
-        ...(residentPhone && { residentPhone }),
-      },
+      data: updateData,
     });
 
     return NextResponse.json(unit);

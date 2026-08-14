@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { hashPassword } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 // GET /api/admins - List all admins (SUPER_ADMIN, BLOCK_ADMIN)
 export async function GET(request: NextRequest) {
@@ -62,6 +63,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedPhone = normalizePhoneNumber(phone);
+    if (!isValidTurkishPhone(normalizedPhone)) {
+      return NextResponse.json(
+        { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+        { status: 400 }
+      );
+    }
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
@@ -81,7 +90,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
-        phone,
+        phone: normalizedPhone,
         password: hashedPassword,
         role: UserRole.BLOCK_ADMIN,
         buildingId,

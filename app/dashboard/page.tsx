@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { Button, Badge, Input, Textarea } from '@/components/ui';
+import { PhonePromptModal } from '@/components/PhonePromptModal';
 
 interface Due {
   id: string;
@@ -46,6 +47,7 @@ export default function ResidentDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [showPhonePrompt, setShowPhonePrompt] = useState(false);
 
   useEffect(() => {
     fetchAll();
@@ -53,15 +55,24 @@ export default function ResidentDashboard() {
 
   const fetchAll = async () => {
     try {
-      const [duesRes, complaintsRes, projectsRes] = await Promise.all([
+      const [duesRes, complaintsRes, projectsRes, meRes] = await Promise.all([
         fetch('/api/dues'),
         fetch('/api/complaints'),
         fetch('/api/projects'),
+        fetch('/api/auth/me'),
       ]);
 
       if (duesRes.ok) setDues(await duesRes.json());
       if (complaintsRes.ok) setComplaints(await complaintsRes.json());
       if (projectsRes.ok) setProjects(await projectsRes.json());
+
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        const phone = meData.user?.phone;
+        if (!phone || phone.startsWith('google:')) {
+          setShowPhonePrompt(true);
+        }
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -243,6 +254,16 @@ export default function ResidentDashboard() {
           onClose={() => setShowComplaintForm(false)}
           onSuccess={() => {
             setShowComplaintForm(false);
+            fetchAll();
+          }}
+        />
+      )}
+
+      {showPhonePrompt && (
+        <PhonePromptModal
+          onClose={() => setShowPhonePrompt(false)}
+          onSuccess={() => {
+            setShowPhonePrompt(false);
             fetchAll();
           }}
         />
