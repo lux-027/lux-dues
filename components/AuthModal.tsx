@@ -51,17 +51,9 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
     }
   }, [isOpen, context, adminRegisterAvailable]);
 
-  // If admin registration turns out to be unavailable while the register tab
-  // is active (e.g. a SUPER_ADMIN already exists), fall back to the login tab.
-  useEffect(() => {
-    if (context === 'admin' && adminRegisterAvailable === false && tab === 'register') {
-      setTab('login');
-    }
-  }, [context, adminRegisterAvailable, tab]);
-
   if (!isOpen) return null;
 
-  const canRegister = context === 'resident' || adminRegisterAvailable === true;
+  const canRegister = true;
 
   const switchTab = (newTab: 'login' | 'register') => {
     setTab(newTab);
@@ -405,10 +397,16 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login', context = 're
               </form>
             ) : (
               <form onSubmit={handleRegister}>
-                {context === 'admin' && (
+                {context === 'admin' && adminRegisterAvailable === true && (
                   <div className="mb-4 p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-700">
                     Sistemde henüz bir yönetici hesabı yok. Oluşturacağınız hesap
                     otomatik olarak <strong>Ana Yönetici</strong> yetkisi alacak.
+                  </div>
+                )}
+                {context === 'admin' && adminRegisterAvailable === false && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-700">
+                    Sistemde zaten bir yönetici hesabı varsa kendi başınıza kayıt yapamazsınız.
+                    Yeni yönetici eklenmesi için mevcut yöneticinizle iletişime geçin.
                   </div>
                 )}
                 <div className="form-group">
