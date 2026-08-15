@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input, PhoneInput } from '@/components/ui';
-import { formatPhoneNumber } from '@/lib/phone';
+import { normalizePhoneNumber } from '@/lib/phone';
 import {
   signInWithGoogle,
   signInWithEmail,
@@ -41,15 +41,16 @@ export function AuthModal({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Phone number sign-in (SMS OTP via Firebase)
+  // Toggle between email and phone/password forms
   const [showPhoneForm, setShowPhoneForm] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+
+  // Phone number registration verification (SMS OTP)
   const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [loginData, setLoginData] = useState({ email: '', phone: '', password: '' });
   const [registerData, setRegisterData] = useState({
     name: '',
     email: '',
@@ -64,6 +65,8 @@ export function AuthModal({
     setError('');
     setSuccess('');
     setShowPhoneForm(false);
+    setError('');
+    setSuccess('');
   }, [isOpen, initialTab, context, showRoleSelector, registerOnly]);
 
   if (!isOpen) return null;
@@ -72,6 +75,7 @@ export function AuthModal({
 
   const switchTab = (newTab: 'login' | 'register') => {
     setTab(newTab);
+    setShowPhoneForm(false);
     setError('');
     setSuccess('');
   };
@@ -79,6 +83,7 @@ export function AuthModal({
   const selectRole = (role: 'admin' | 'resident') => {
     setActiveContext(role);
     setStep('auth');
+    setShowPhoneForm(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -86,19 +91,25 @@ export function AuthModal({
     setLoading(true);
     setError('');
 
-    if (!loginData.email || !loginData.password) {
-      setError('Lütfen e-posta ve şifrenizi girin');
+    const missing = !showPhoneForm
+      ? !loginData.email || !loginData.password
+      : !loginData.phone || !loginData.password;
+
+    if (missing) {
+      setError(!showPhoneForm ? 'Lütfen e-posta ve şifrenizi girin' : 'Lütfen telefon numarası ve şifrenizi girin');
       setLoading(false);
       return;
     }
 
     try {
-      const idToken = await signInWithEmail(loginData.email, loginData.password);
+      const body = !showPhoneForm
+        ? { idToken: await signInWithEmail(loginData.email, loginData.password) }
+        : { phone: loginData.phone, password: loginData.password };
 
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify(body),
       });
       const data = await response.json();
 
@@ -146,61 +157,18 @@ export function AuthModal({
     }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPhoneLoading(true);
-    setError('');
-
-    try {
-      const result = await sendPhoneOtp(phoneNumber, 'recaptcha-container');
-      setConfirmationResult(result);
-      setOtpSent(true);
-    } catch (err: any) {
-      setError(
-        err?.code === 'auth/invalid-phone-number'
-          ? 'Geçersiz telefon numarası. Örn: +905551234567'
-          : 'Doğrulama kodu gönderilemedi'
-      );
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
-  const handleConfirmOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confirmationResult) return;
-    setPhoneLoading(true);
-    setError('');
-
-    try {
-      const idToken = await confirmPhoneOtp(confirmationResult, otpCode);
-
-      const response = await fetch('/api/auth/phone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await response.json();
-
-      if (response.ok) {
-        router.push('/dashboard');
-      } else {
-        setError(data.error || 'Telefon ile giriş yapılamadı');
-      }
-    } catch {
-      setError('Doğrulama kodu yanlış veya süresi dolmuş');
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
 
-    if (!registerData.name || !registerData.email || !registerData.phone || !registerData.password) {
+    const phoneMode = showPhoneForm;
+    const missing = phoneMode
+      ? !registerData.name || !registerData.phone || !registerData.password
+      : !registerData.name || !registerData.email || !registerData.phone || !registerData.password;
+
+    if (missing) {
       setError('Lütfen tüm alanları doldurun');
       setLoading(false);
       return;
@@ -213,6 +181,15 @@ export function AuthModal({
     }
 
     try {
+      if (phoneMode) {
+        const result = await sendPhoneOtp(registerData.phone, 'recaptcha-container');
+        setConfirmationResult(result);
+        setOtpSent(true);
+        setSuccess('Telefonunuza doğrulama kodu gönderildi.');
+        setLoading(false);
+        return;
+      }
+
       await signUpWithEmail(registerData.email, registerData.password);
 
       sessionStorage.setItem(
@@ -231,6 +208,47 @@ export function AuthModal({
       setError(err instanceof Error ? err.message : 'Kayıt olurken bir hata oluştu');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegisterConfirmOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmationResult) return;
+    setPhoneLoading(true);
+    setError('');
+    setSuccess('');
+
+    if (otpCode.length !== 6) {
+      setError('6 haneli doğrulama kodunu girin');
+      setPhoneLoading(false);
+      return;
+    }
+
+    try {
+      const idToken = await confirmPhoneOtp(confirmationResult, otpCode);
+
+      const response = await fetch('/api/auth/register-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken,
+          name: registerData.name,
+          password: registerData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Kayıt olurken bir hata oluştu');
+        setPhoneLoading(false);
+        return;
+      }
+
+      router.push('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Doğrulama kodu yanlış veya süresi dolmuş');
+      setPhoneLoading(false);
     }
   };
 
@@ -409,44 +427,82 @@ export function AuthModal({
                 )}
 
                 {tab === 'login' ? (
-                  <form onSubmit={handleLogin}>
-                    <div className="form-group mb-3">
-                      <Input
-                        type="email"
-                        label="E-posta"
-                        placeholder="ornek@luxdues.com"
-                        value={loginData.email}
-                        onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group mb-3">
-                      <Input
-                        type="password"
-                        label="Şifre"
-                        placeholder="••••••••"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" fullWidth loading={loading} className="mt-2">
-                      Giriş Yap
-                    </Button>
-                    {!registerOnly && canRegister && (
-                      <p className="text-center text-sm text-zinc-500 mt-4">
-                        Hesabın yok mu?{' '}
-                        <button
-                          type="button"
-                          onClick={() => switchTab('register')}
-                          className="text-zinc-900 font-medium hover:underline"
-                        >
-                          Kayıt Ol
-                        </button>
-                      </p>
-                    )}
-                  </form>
-                ) : (
+                  !showPhoneForm ? (
+                    <form onSubmit={handleLogin}>
+                      <div className="form-group mb-3">
+                        <Input
+                          type="email"
+                          label="E-posta"
+                          placeholder="ornek@luxdues.com"
+                          value={loginData.email}
+                          onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="form-group mb-3">
+                        <Input
+                          type="password"
+                          label="Şifre"
+                          placeholder="••••••••"
+                          value={loginData.password}
+                          onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" fullWidth loading={loading} className="mt-2">
+                        Giriş Yap
+                      </Button>
+                      {!registerOnly && canRegister && (
+                        <p className="text-center text-sm text-zinc-500 mt-4">
+                          Hesabın yok mu?{' '}
+                          <button
+                            type="button"
+                            onClick={() => switchTab('register')}
+                            className="text-zinc-900 font-medium hover:underline"
+                          >
+                            Kayıt Ol
+                          </button>
+                        </p>
+                      )}
+                    </form>
+                  ) : (
+                    <form onSubmit={handleLogin}>
+                      <div className="form-group mb-3">
+                        <PhoneInput
+                          label="Telefon Numarası"
+                          value={loginData.phone}
+                          onChange={(value) => setLoginData({ ...loginData, phone: value })}
+                          required
+                        />
+                      </div>
+                      <div className="form-group mb-3">
+                        <Input
+                          type="password"
+                          label="Şifre"
+                          placeholder="••••••••"
+                          value={loginData.password}
+                          onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" fullWidth loading={loading} className="mt-2">
+                        Giriş Yap
+                      </Button>
+                      {!registerOnly && canRegister && (
+                        <p className="text-center text-sm text-zinc-500 mt-4">
+                          Hesabın yok mu?{' '}
+                          <button
+                            type="button"
+                            onClick={() => switchTab('register')}
+                            className="text-zinc-900 font-medium hover:underline"
+                          >
+                            Kayıt Ol
+                          </button>
+                        </p>
+                      )}
+                    </form>
+                  )
+                ) : !showPhoneForm ? (
                   <form onSubmit={handleRegister}>
                     <div className="form-group mb-3">
                       <Input
@@ -506,6 +562,85 @@ export function AuthModal({
                       </p>
                     )}
                   </form>
+                ) : (
+                  <form onSubmit={!otpSent ? handleRegister : handleRegisterConfirmOtp}>
+                    <div className="form-group mb-3">
+                      <Input
+                        label="Ad Soyad"
+                        placeholder="Örn: Ahmet Yılmaz"
+                        value={registerData.name}
+                        onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                        required
+                        disabled={otpSent}
+                      />
+                    </div>
+                    <div className="form-group mb-3">
+                      <PhoneInput
+                        label="Telefon Numarası"
+                        value={registerData.phone}
+                        onChange={(value) => setRegisterData({ ...registerData, phone: value })}
+                        required
+                        disabled={otpSent}
+                      />
+                    </div>
+                    <div className="form-group mb-3">
+                      <Input
+                        type="password"
+                        label="Şifre"
+                        placeholder="En az 6 karakter"
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        required
+                        disabled={otpSent}
+                      />
+                    </div>
+                    {otpSent && (
+                      <div className="form-group mb-3">
+                        <Input
+                          label="Doğrulama Kodu"
+                          placeholder="123456"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value)}
+                          maxLength={6}
+                          required
+                        />
+                      </div>
+                    )}
+                    <Button
+                      type="submit"
+                      fullWidth
+                      loading={!otpSent ? loading : phoneLoading}
+                      className="mt-2"
+                    >
+                      {!otpSent ? 'Doğrulama Kodu Gönder' : 'Kayıt Ol'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      fullWidth
+                      className="mt-2"
+                      onClick={() => {
+                        setShowPhoneForm(false);
+                        setOtpSent(false);
+                        setOtpCode('');
+                        setConfirmationResult(null);
+                      }}
+                    >
+                      Vazgeç
+                    </Button>
+                    {!registerOnly && !otpSent && (
+                      <p className="text-center text-sm text-zinc-500 mt-4">
+                        Hesabın var mı?{' '}
+                        <button
+                          type="button"
+                          onClick={() => switchTab('login')}
+                          className="text-zinc-900 font-medium hover:underline"
+                        >
+                          Giriş Yap
+                        </button>
+                      </p>
+                    )}
+                  </form>
                 )}
 
                 {(activeContext === 'resident' || activeContext === 'admin') && (
@@ -538,79 +673,38 @@ export function AuthModal({
                       Google ile Giriş Yap
                     </button>
 
-                    {!showPhoneForm ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowPhoneForm(true)}
-                        className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors mb-3"
-                      >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        Telefon Numarası ile Giriş Yap
-                      </button>
-                    ) : (
-                      <div className="border border-zinc-200 rounded-xl p-3 mb-3">
-                        {!otpSent ? (
-                          <form onSubmit={handleSendOtp}>
-                            <div className="form-group mb-3">
-                              <PhoneInput
-                                label="Telefon Numarası"
-                                value={phoneNumber}
-                                onChange={(value) => setPhoneNumber(value)}
-                                required
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button type="submit" fullWidth loading={phoneLoading} size="sm">
-                                Doğrulama Kodu Gönder
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowPhoneForm(false)}
-                              >
-                                Vazgeç
-                              </Button>
-                            </div>
-                          </form>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPhoneForm((prev) => !prev);
+                      }}
+                      className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors mb-3"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {showPhoneForm ? (
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
                         ) : (
-                          <form onSubmit={handleConfirmOtp}>
-                            <p className="text-xs text-zinc-500 mb-3">
-                              {formatPhoneNumber(phoneNumber)} numarasına gönderilen 6 haneli kodu girin.
-                            </p>
-                            <div className="form-group mb-3">
-                              <Input
-                                label="Doğrulama Kodu"
-                                placeholder="123456"
-                                value={otpCode}
-                                onChange={(e) => setOtpCode(e.target.value)}
-                                maxLength={6}
-                                required
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button type="submit" fullWidth loading={phoneLoading} size="sm">
-                                Doğrula ve Giriş Yap
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setShowPhoneForm(false);
-                                  setOtpSent(false);
-                                  setOtpCode('');
-                                }}
-                              >
-                                Vazgeç
-                              </Button>
-                            </div>
-                          </form>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                          />
                         )}
-                      </div>
-                    )}
+                      </svg>
+                      {showPhoneForm
+                      ? tab === 'login'
+                        ? 'E-posta ile Giriş Yap'
+                        : 'E-posta ile Kayıt Ol'
+                      : tab === 'login'
+                        ? 'Telefon Numarası ile Giriş Yap'
+                        : 'Telefon Numarası ile Kayıt Ol'}
+                    </button>
                     {/* Invisible reCAPTCHA container required by Firebase phone auth */}
                     <div id="recaptcha-container" />
                   </>

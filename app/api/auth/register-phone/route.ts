@@ -1,73 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { generateToken } from '@/lib/auth';
+import { hashPassword, generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
-import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { idToken, name, phone } = body;
+    const { idToken, name, password } = body;
 
-    if (!idToken || !name || !phone) {
+    if (!idToken || !name || !password) {
       return NextResponse.json(
-        { error: 'Doğrulama, ad ve telefon numarası gereklidir' },
+        { error: 'Doğrulama kodu, ad ve şifre gereklidir' },
         { status: 400 }
       );
     }
 
-    const normalizedPhone = normalizePhoneNumber(phone);
-    if (!isValidTurkishPhone(normalizedPhone)) {
+    if (password.length < 6) {
       return NextResponse.json(
-        { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+        { error: 'Şifre en az 6 karakter olmalıdır' },
         { status: 400 }
       );
     }
 
     const firebaseUser = await verifyFirebaseIdToken(idToken);
 
-    if (!firebaseUser.email) {
+    if (!firebaseUser.phone_number) {
       return NextResponse.json(
-        { error: 'Geçerli bir e-posta bulunamadı' },
+        { error: 'Geçerli bir telefon numarası bulunamadı' },
         { status: 400 }
       );
     }
 
-    if (!firebaseUser.email_verified) {
+    const phone = firebaseUser.phone_number;
+    const email = `${phone.replace(/[^0-9]/g, '')}@phone.luxdues.local`;
+
+    const existingByPhone = await prisma.user.findUnique({
+      where: { phone },
+    });
+
+    if (existingByPhone) {
       return NextResponse.json(
-        { error: 'E-posta adresiniz doğrulanmamış. Lütfen e-postanızdaki bağlantıya tıklayın.' },
-        { status: 403 }
+        { error: 'Bu telefon numarası ile kayıtlı bir kullanıcı zaten mevcut' },
+        { status: 409 }
       );
     }
 
-    const email = firebaseUser.email;
-
-    const existingUser = await prisma.user.findUnique({
+    const existingByEmail = await prisma.user.findUnique({
       where: { email },
     });
 
-    if (existingUser) {
+    if (existingByEmail) {
       return NextResponse.json(
         { error: 'Bu e-posta ile kayıtlı bir kullanıcı zaten mevcut' },
         { status: 409 }
       );
     }
 
-    // Public self-registration always creates a RESIDENT account.
-    // Admin accounts (SUPER_ADMIN / BLOCK_ADMIN) can only be created via /admin/admins
-    // by an existing SUPER_ADMIN, and unit assignment is handled separately by an admin.
+    const hashedPassword = await hashPassword(password);
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
-        phone: normalizedPhone,
+        phone,
+        password: hashedPassword,
         emailVerified: true,
         role: UserRole.RESIDENT,
       },
     });
 
-    // Generate token
     const token = generateToken({
       userId: user.id,
       email: user.email,
@@ -76,7 +78,6 @@ export async function POST(request: NextRequest) {
       unitId: user.unitId,
     });
 
-    // Create response
     const response = NextResponse.json({
       user: {
         id: user.id,
@@ -90,17 +91,16 @@ export async function POST(request: NextRequest) {
       token,
     }, { status: 201 });
 
-    // Set cookie
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return response;
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('Register phone error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

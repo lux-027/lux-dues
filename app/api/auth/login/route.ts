@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword, generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { idToken, email, password } = body;
+    const { idToken, email, phone, password } = body;
 
-    let resolvedEmail: string | undefined;
+    let user: Awaited<ReturnType<typeof prisma.user.findUnique>> = null;
 
     if (idToken) {
       // Firebase-based login (Google, Phone, or verified email/password)
@@ -28,44 +29,50 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      resolvedEmail = firebaseUser.email;
+      user = await prisma.user.findUnique({
+        where: { email: firebaseUser.email },
+        include: { building: true, unit: true },
+      });
     } else if (email && password) {
-      // Legacy password-based login (for existing users before Firebase migration)
-      const user = await prisma.user.findUnique({
+      // Legacy or password-based login by email
+      user = await prisma.user.findUnique({
         where: { email },
+        include: { building: true, unit: true },
       });
 
-      if (!user || !user.password) {
+      if (!user || !user.password || !(await verifyPassword(password, user.password))) {
         return NextResponse.json(
           { error: 'Geçersiz e-posta veya şifre' },
           { status: 401 }
         );
       }
-
-      const isValidPassword = await verifyPassword(password, user.password);
-      if (!isValidPassword) {
+    } else if (phone && password) {
+      // Password-based login by phone number
+      const normalizedPhone = normalizePhoneNumber(phone);
+      if (!isValidTurkishPhone(normalizedPhone)) {
         return NextResponse.json(
-          { error: 'Geçersiz e-posta veya şifre' },
-          { status: 401 }
+          { error: 'Geçerli bir Türkiye telefon numarası girin' },
+          { status: 400 }
         );
       }
 
-      resolvedEmail = email;
+      user = await prisma.user.findUnique({
+        where: { phone: normalizedPhone },
+        include: { building: true, unit: true },
+      });
+
+      if (!user || !user.password || !(await verifyPassword(password, user.password))) {
+        return NextResponse.json(
+          { error: 'Geçersiz telefon numarası veya şifre' },
+          { status: 401 }
+        );
+      }
     } else {
       return NextResponse.json(
-        { error: 'idToken veya e-posta/şifre gereklidir' },
+        { error: 'idToken, e-posta/şifre veya telefon/şifre gereklidir' },
         { status: 400 }
       );
     }
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email: resolvedEmail },
-      include: {
-        building: true,
-        unit: true,
-      },
-    });
 
     if (!user) {
       return NextResponse.json(
