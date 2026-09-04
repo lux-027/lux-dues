@@ -5,6 +5,7 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
   error?: string;
   helperText?: string;
   fullWidth?: boolean;
+  rightElement?: React.ReactNode;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -13,6 +14,7 @@ export const Input: React.FC<InputProps> = ({
   helperText,
   fullWidth = true,
   className = '',
+  rightElement,
   id,
   ...props
 }) => {
@@ -26,11 +28,18 @@ export const Input: React.FC<InputProps> = ({
           {label}
         </label>
       )}
-      <input
-        id={inputId}
-        className={`input-field ${error ? 'input-error' : ''}`}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          id={inputId}
+          className={`input-field ${rightElement ? 'pr-14' : ''} ${error ? 'input-error' : ''}`}
+          {...props}
+        />
+        {rightElement && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+            {rightElement}
+          </div>
+        )}
+      </div>
       {error && (
         <p className="mt-1 text-sm text-red-600 font-light">
           {error}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button, Input, PhoneInput } from '@/components/ui';
 import { normalizePhoneNumber } from '@/lib/phone';
 import {
@@ -16,6 +15,7 @@ import type { ConfirmationResult } from 'firebase/auth';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   initialTab?: 'login' | 'register';
   context?: 'admin' | 'resident';
   /** Show role selection cards at the top of the register tab (for free sign-up). */
@@ -27,12 +27,12 @@ interface AuthModalProps {
 export function AuthModal({
   isOpen,
   onClose,
+  onSuccess,
   initialTab = 'login',
   context = 'resident',
   showRoleSelector = false,
   registerOnly = false,
 }: AuthModalProps) {
-  const router = useRouter();
   const [tab, setTab] = useState<'login' | 'register'>(registerOnly ? 'register' : initialTab);
   const [activeContext, setActiveContext] = useState<'admin' | 'resident'>(context);
   const [step, setStep] = useState<'role' | 'auth'>(showRoleSelector ? 'role' : 'auth');
@@ -114,11 +114,7 @@ export function AuthModal({
       const data = await response.json();
 
       if (response.ok) {
-        if (data.user.role === 'SUPER_ADMIN' || data.user.role === 'BLOCK_ADMIN') {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
-        }
+        onSuccess?.();
       } else {
         setError(data.error || 'Giriş yapılırken bir hata oluştu');
       }
@@ -144,7 +140,7 @@ export function AuthModal({
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/dashboard');
+        onSuccess?.();
       } else {
         setError(data.error || 'Google ile giriş yapılamadı');
       }
@@ -192,7 +188,7 @@ export function AuthModal({
 
       await signUpWithEmail(registerData.email, registerData.password);
 
-      sessionStorage.setItem(
+      localStorage.setItem(
         'pendingRegistration',
         JSON.stringify({
           name: registerData.name,
@@ -245,7 +241,7 @@ export function AuthModal({
         return;
       }
 
-      router.push('/dashboard');
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Doğrulama kodu yanlış veya süresi dolmuş');
       setPhoneLoading(false);

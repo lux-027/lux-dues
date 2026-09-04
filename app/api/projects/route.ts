@@ -16,11 +16,16 @@ export async function GET(request: NextRequest) {
 
     let where: any = {};
 
+    const residentUnitIds = session.role === 'RESIDENT' ? session.units.map((u) => u.id) : [];
+    const residentBuildingIds = Array.from(new Set(session.units.map((u) => u.buildingId)));
+
     if (session.role === 'RESIDENT') {
-      if (!session.buildingId) {
+      if (residentUnitIds.length === 0) {
         return NextResponse.json([]);
       }
-      where.buildingId = session.buildingId;
+      where.buildingId = buildingId && residentBuildingIds.includes(buildingId)
+        ? buildingId
+        : { in: residentBuildingIds };
     } else if (buildingId) {
       where.buildingId = buildingId;
     } else if (session.role === 'BLOCK_ADMIN' && session.buildingId) {
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         payments: session.role === 'RESIDENT'
-          ? { where: { unitId: session.unitId || '' } }
+          ? { where: { unitId: { in: residentUnitIds } } }
           : true,
         _count: {
           select: { payments: true },
@@ -59,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { buildingId, title, totalAmount, description } = body;
+    const { buildingId, title, totalAmount, description, blockNames } = body;
 
     if (!buildingId || !title || !totalAmount) {
       return NextResponse.json(
@@ -68,15 +73,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all units for this building to calculate fair distribution
+    // Build the unit filter: if specific blocks are selected, include only those.
+    const unitWhere: any = { buildingId };
+    if (Array.isArray(blockNames) && blockNames.length > 0) {
+      unitWhere.blockName = { in: blockNames };
+    }
+
+    // Get the relevant units for this building to calculate fair distribution
     const units = await prisma.unit.findMany({
-      where: { buildingId },
+      where: unitWhere,
       select: { id: true },
     });
 
     if (units.length === 0) {
       return NextResponse.json(
-        { error: 'No units found in this building' },
+        { error: 'Seçili bloklarda daire bulunamadı' },
         { status: 400 }
       );
     }

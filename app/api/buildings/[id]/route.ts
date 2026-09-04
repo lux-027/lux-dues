@@ -55,7 +55,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, type, totalBlocks, address } = body;
+    const { name, type, totalBlocks, address, image, blockImages } = body;
 
     const building = await prisma.building.update({
       where: {
@@ -66,6 +66,8 @@ export async function PUT(
         ...(type && { type }),
         ...(totalBlocks && { totalBlocks: parseInt(totalBlocks) }),
         ...(address && { address }),
+        ...(image !== undefined && { image: image || null }),
+        ...(blockImages !== undefined && { blockImages: blockImages || null }),
       },
     });
 

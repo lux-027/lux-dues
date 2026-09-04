@@ -42,7 +42,7 @@ function VerifyEmailContent() {
 
         if (cancelled) return;
 
-        const pendingRaw = sessionStorage.getItem('pendingRegistration');
+        const pendingRaw = localStorage.getItem('pendingRegistration');
         const pending: PendingRegistration | null = pendingRaw ? JSON.parse(pendingRaw) : null;
 
         if (!pending || !idToken) {
@@ -78,7 +78,7 @@ function VerifyEmailContent() {
           return;
         }
 
-        sessionStorage.removeItem('pendingRegistration');
+        localStorage.removeItem('pendingRegistration');
         setStatus('success');
         setMessage('Hesabınız oluşturuldu. Yönlendiriliyorsunuz...');
 

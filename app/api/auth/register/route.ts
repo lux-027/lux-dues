@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
       buildingId: user.buildingId,
-      unitId: user.unitId,
     });
 
     // Create response
@@ -85,7 +84,6 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         role: user.role,
         buildingId: user.buildingId,
-        unitId: user.unitId,
       },
       token,
     }, { status: 201 });

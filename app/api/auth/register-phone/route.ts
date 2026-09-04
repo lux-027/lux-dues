@@ -75,7 +75,6 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
       buildingId: user.buildingId,
-      unitId: user.unitId,
     });
 
     const response = NextResponse.json({
@@ -86,7 +85,6 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         role: user.role,
         buildingId: user.buildingId,
-        unitId: user.unitId,
       },
       token,
     }, { status: 201 });

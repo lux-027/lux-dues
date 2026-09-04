@@ -31,13 +31,13 @@ export async function POST(request: NextRequest) {
 
       user = await prisma.user.findUnique({
         where: { email: firebaseUser.email },
-        include: { building: true, unit: true },
+        include: { building: true },
       });
     } else if (email && password) {
       // Legacy or password-based login by email
       user = await prisma.user.findUnique({
         where: { email },
-        include: { building: true, unit: true },
+        include: { building: true },
       });
 
       if (!user || !user.password || !(await verifyPassword(password, user.password))) {
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
       user = await prisma.user.findUnique({
         where: { phone: normalizedPhone },
-        include: { building: true, unit: true },
+        include: { building: true },
       });
 
       if (!user || !user.password || !(await verifyPassword(password, user.password))) {
@@ -87,7 +87,6 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
       buildingId: user.buildingId,
-      unitId: user.unitId,
     });
 
     // Create response
@@ -99,7 +98,6 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         role: user.role,
         buildingId: user.buildingId,
-        unitId: user.unitId,
       },
       token,
     });

@@ -94,7 +94,6 @@ export async function POST(request: NextRequest) {
       email: admin.email,
       role: admin.role,
       buildingId: admin.buildingId,
-      unitId: admin.unitId,
     });
 
     const response = NextResponse.json(

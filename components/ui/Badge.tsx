@@ -5,6 +5,7 @@ interface BadgeProps {
   variant?: 'success' | 'warning' | 'danger' | 'info' | 'default';
   size?: 'sm' | 'md';
   className?: string;
+  leftIcon?: React.ReactNode;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -12,6 +13,7 @@ export const Badge: React.FC<BadgeProps> = ({
   variant = 'default',
   size = 'md',
   className = '',
+  leftIcon,
 }) => {
   const variantClasses = {
     success: 'bg-green-100 text-green-800',
@@ -20,16 +22,17 @@ export const Badge: React.FC<BadgeProps> = ({
     info: 'bg-blue-100 text-blue-800',
     default: 'bg-zinc-100 text-zinc-800',
   };
-  
+
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-xs',
     md: 'px-3 py-1 text-xs',
   };
-  
+
   return (
     <span
-      className={`inline-flex items-center rounded-full font-medium ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
+      {leftIcon}
       {children}
     </span>
   );

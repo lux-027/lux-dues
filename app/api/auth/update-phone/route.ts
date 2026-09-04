@@ -55,7 +55,6 @@ export async function PATCH(request: NextRequest) {
       email: updatedUser.email,
       role: updatedUser.role,
       buildingId: updatedUser.buildingId,
-      unitId: updatedUser.unitId,
     });
 
     const response = NextResponse.json({
@@ -66,7 +65,6 @@ export async function PATCH(request: NextRequest) {
         phone: updatedUser.phone,
         role: updatedUser.role,
         buildingId: updatedUser.buildingId,
-        unitId: updatedUser.unitId,
       },
       token,
     });

@@ -19,11 +19,13 @@ export async function GET(request: NextRequest) {
       },
       select: {
         id: true,
+        accountNumber: true,
         name: true,
         email: true,
         phone: true,
         role: true,
         buildingId: true,
+        blockName: true,
         building: {
           select: {
             id: true,
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, phone, password, buildingId } = body;
+    const { name, email, phone, password, buildingId, blockName } = body;
 
     if (!name || !email || !phone || !password || !buildingId) {
       return NextResponse.json(
@@ -92,8 +94,10 @@ export async function POST(request: NextRequest) {
         email,
         phone: normalizedPhone,
         password: hashedPassword,
+        emailVerified: true,
         role: UserRole.BLOCK_ADMIN,
         buildingId,
+        blockName: blockName || null,
       },
       select: {
         id: true,
@@ -102,6 +106,7 @@ export async function POST(request: NextRequest) {
         phone: true,
         role: true,
         buildingId: true,
+        blockName: true,
         createdAt: true,
       },
     });

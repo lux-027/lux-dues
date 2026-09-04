@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { Button, Badge, Input, Textarea } from '@/components/ui';
 import { PhonePromptModal } from '@/components/PhonePromptModal';
@@ -12,6 +12,7 @@ interface Due {
   year: number;
   status: 'PAID' | 'UNPAID';
   dueDate: string;
+  unitId?: string;
 }
 
 interface Complaint {
@@ -24,6 +25,7 @@ interface Complaint {
 
 interface ProjectPayment {
   id: string;
+  unitId: string;
   status: 'PAID' | 'UNPAID';
 }
 
@@ -33,7 +35,25 @@ interface Project {
   description: string | null;
   perUnitAmount: string;
   status: 'ACTIVE' | 'COMPLETED';
+  buildingId: string;
   payments: ProjectPayment[];
+}
+
+interface UserUnit {
+  id: string;
+  blockName: string;
+  doorNo: string;
+  floor: string;
+  buildingId: string;
+  buildingName: string;
+}
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  units: UserUnit[];
 }
 
 const MONTH_NAMES = [
@@ -41,42 +61,130 @@ const MONTH_NAMES = [
   'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
 ];
 
+interface ResidentHomeProps {
+  user: UserProfile;
+  units: UserUnit[];
+  onSelectUnit: (unitId: string) => void;
+}
+
+function ResidentHome({ user, units, onSelectUnit }: ResidentHomeProps) {
+  return (
+    <div className="page-container">
+      <div className="section-header mb-8">
+        <h1 className="text-3xl sm:text-4xl font-light text-zinc-900 mb-2">
+          Merhaba, {user.name.split(' ')[0]}
+        </h1>
+        <p className="text-zinc-500 font-light text-sm max-w-2xl">
+          Sahip olduğunuz dairelere tıklayarak aidat, şikayet, duyuru ve proje bilgilerini görüntüleyebilirsiniz.
+        </p>
+      </div>
+
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-lg font-medium text-zinc-900">Dairelerim</h2>
+        <span className="text-xs text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-lg">
+          {units.length} {units.length === 1 ? 'daire' : 'daire'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {units.map((unit) => (
+          <button
+            key={unit.id}
+            onClick={() => onSelectUnit(unit.id)}
+            className="group relative h-56 rounded-2xl overflow-hidden shadow-sm border border-zinc-200 text-left transition-all duration-300 hover:shadow-lg hover:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
+          >
+            <img
+              src="/bannerbina.jpg"
+              alt={unit.buildingName}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/90 via-zinc-900/45 to-transparent" />
+            <div className="absolute inset-0 p-6 flex flex-col justify-end">
+              <p className="text-white text-xl font-medium truncate mb-1">{unit.buildingName}</p>
+              <div className="flex items-center gap-2 text-zinc-200 text-sm">
+                <span>{unit.blockName}</span>
+                <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                <span>No: {unit.doorNo}</span>
+                <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                <span>Kat: {unit.floor}</span>
+              </div>
+              <div className="mt-4 flex items-center text-white text-xs font-semibold tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Detayları Gör
+                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ResidentDashboard() {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [dues, setDues] = useState<Due[]>([]);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [showComplaintForm, setShowComplaintForm] = useState(false);
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+  const [showDuesDetail, setShowDuesDetail] = useState(false);
+  const [duesDetailYear, setDuesDetailYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    fetchAll();
+    fetchMe();
   }, []);
 
-  const fetchAll = async () => {
+  useEffect(() => {
+    if (selectedUnitId) {
+      fetchUnitData(selectedUnitId);
+    }
+  }, [selectedUnitId]);
+
+  const fetchMe = async () => {
     try {
-      const [duesRes, complaintsRes, projectsRes, meRes] = await Promise.all([
-        fetch('/api/dues'),
+      const meRes = await fetch('/api/auth/me');
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        const user: UserProfile | null = meData.user || null;
+        setCurrentUser(user);
+
+        const phone = user?.phone;
+        if (!phone || phone.startsWith('google:')) {
+          setShowPhonePrompt(true);
+        }
+
+        // Do not auto-select; always start on the resident home page so the
+        // user can choose which unit they want to view.
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUnitData = async (unitId: string) => {
+    const unit = currentUser?.units.find((u) => u.id === unitId);
+    setDataLoading(true);
+    try {
+      const [duesRes, complaintsRes, projectsRes] = await Promise.all([
+        fetch(`/api/dues?unitId=${unitId}`),
         fetch('/api/complaints'),
-        fetch('/api/projects'),
-        fetch('/api/auth/me'),
+        fetch(`/api/projects${unit ? `?buildingId=${unit.buildingId}` : ''}`),
       ]);
 
       if (duesRes.ok) setDues(await duesRes.json());
       if (complaintsRes.ok) setComplaints(await complaintsRes.json());
       if (projectsRes.ok) setProjects(await projectsRes.json());
-
-      if (meRes.ok) {
-        const meData = await meRes.json();
-        const phone = meData.user?.phone;
-        if (!phone || phone.startsWith('google:')) {
-          setShowPhonePrompt(true);
-        }
-      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -89,12 +197,30 @@ export default function ResidentDashboard() {
       case 'PENDING':
         return <Badge variant="warning">Beklemede</Badge>;
       case 'IN_PROGRESS':
-        return <Badge variant="info">İşlemde</Badge>;
+        return <Badge variant="info">İnceleniyor</Badge>;
       case 'RESOLVED':
         return <Badge variant="success">Çözüldü</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
+  };
+
+  const selectedUnit = useMemo(
+    () => currentUser?.units.find((u) => u.id === selectedUnitId) || null,
+    [currentUser, selectedUnitId]
+  );
+
+  const duesAvailableYears = useMemo(() => {
+    const years = Array.from(new Set(dues.map((d) => d.year)));
+    return years.sort((a, b) => b - a);
+  }, [dues]);
+
+  const openDuesDetail = () => {
+    const currentYear = new Date().getFullYear();
+    setDuesDetailYear(
+      duesAvailableYears.includes(currentYear) ? currentYear : (duesAvailableYears[0] || currentYear)
+    );
+    setShowDuesDetail(true);
   };
 
   const totalDebt = dues
@@ -111,150 +237,251 @@ export default function ResidentDashboard() {
     );
   }
 
-  return (
-    <div className="page-container">
-      <div className="section-header">
-        <h1 className="text-3xl font-light text-zinc-900 mb-2">
-          Sakin Paneli
-        </h1>
-        <p className="text-zinc-600 font-light">
-          Aidat borçlarınızı, duyuruları ve taleplerinizi buradan takip edebilirsiniz
-        </p>
-      </div>
-
-      {/* Summary Card */}
-      <Card className="mb-6">
-        <CardBody>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-zinc-500 mb-1">Toplam Borç</p>
-              <p className="text-3xl font-light text-zinc-900">
-                {totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-              </p>
-            </div>
-            <div className="h-14 w-14 bg-zinc-100 rounded-lg flex items-center justify-center">
-              <svg className="h-7 w-7 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Borçlarım */}
+  // No home linked to this account yet.
+  if (currentUser && currentUser.units.length === 0) {
+    return (
+      <div className="page-container">
         <Card>
-          <CardHeader>
-            <h2 className="text-lg font-medium text-zinc-900">Borçlarım</h2>
-          </CardHeader>
-          <CardBody>
-            {dues.length === 0 ? (
-              <p className="text-sm text-zinc-500 py-4">Henüz bir aidat kaydınız bulunmuyor.</p>
-            ) : (
-              <div className="space-y-3">
-                {dues.map((due) => (
-                  <div
-                    key={due.id}
-                    className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
-                  >
-                    <div>
-                      <p className="font-medium text-zinc-900">
-                        {MONTH_NAMES[due.month - 1]} {due.year}
-                      </p>
-                      <p className="text-sm text-zinc-500">
-                        {parseFloat(due.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                      </p>
-                    </div>
-                    {getStatusBadge(due.status)}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardBody>
-        </Card>
-
-        {/* Duyurular */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-medium text-zinc-900">Duyurular</h2>
-          </CardHeader>
           <CardBody>
             <div className="empty-state">
-              <p className="text-sm text-zinc-500">Şu anda aktif bir duyuru bulunmuyor.</p>
+              <svg className="mx-auto h-12 w-12 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-zinc-900">
+                Henüz bir daireye bağlı değilsiniz
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500">
+                Bina yöneticiniz sizi bir daireye atadığında burada görünecektir.
+              </p>
             </div>
-          </CardBody>
-        </Card>
-
-        {/* Ortak Proje Katılımları */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-medium text-zinc-900">Ortak Proje Katılımları</h2>
-          </CardHeader>
-          <CardBody>
-            {projects.length === 0 ? (
-              <p className="text-sm text-zinc-500 py-4">Aktif bir ortak proje bulunmuyor.</p>
-            ) : (
-              <div className="space-y-3">
-                {projects.map((project) => (
-                  <div
-                    key={project.id}
-                    className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
-                  >
-                    <div>
-                      <p className="font-medium text-zinc-900">{project.title}</p>
-                      <p className="text-sm text-zinc-500">
-                        {parseFloat(project.perUnitAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
-                      </p>
-                    </div>
-                    {project.payments[0] ? getStatusBadge(project.payments[0].status) : (
-                      <Badge variant="danger">Ödenmedi</Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardBody>
-        </Card>
-
-        {/* Şikayet Kutusu */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-zinc-900">Şikayet Kutusu</h2>
-              <Button size="sm" variant="secondary" onClick={() => setShowComplaintForm(true)}>
-                Yeni Talep
-              </Button>
-            </div>
-          </CardHeader>
-          <CardBody>
-            {complaints.length === 0 ? (
-              <p className="text-sm text-zinc-500 py-4">Henüz bir talebiniz bulunmuyor.</p>
-            ) : (
-              <div className="space-y-3">
-                {complaints.map((complaint) => (
-                  <div
-                    key={complaint.id}
-                    className="py-3 border-b border-zinc-100 last:border-0"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-zinc-900">{complaint.subject}</p>
-                      {getStatusBadge(complaint.status)}
-                    </div>
-                    <p className="text-sm text-zinc-500">{complaint.description}</p>
-                  </div>
-                ))}
-              </div>
-            )}
           </CardBody>
         </Card>
       </div>
+    );
+  }
+
+  // Resident home page — shown whenever the user hasn't picked a unit yet,
+  // regardless of whether they own one or many.
+  if (currentUser && !selectedUnitId) {
+    return <ResidentHome user={currentUser} units={currentUser.units} onSelectUnit={setSelectedUnitId} />;
+  }
+
+  return (
+    <div className="page-container">
+      {/* Top Header */}
+      <div className="section-header mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <button
+              onClick={() => setSelectedUnitId(null)}
+              className="inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-1.5 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 rounded-lg shadow-sm hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-300 transition-all mb-3"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Dairelerime Dön
+            </button>
+            <h1 className="text-3xl font-light text-zinc-900 mb-1">
+              {selectedUnit?.buildingName}
+            </h1>
+            <p className="text-zinc-500 font-light text-sm">
+              {selectedUnit?.blockName} · No: {selectedUnit?.doorNo} · Kat: {selectedUnit?.floor}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {currentUser && currentUser.units.length > 1 && (
+              <button
+                onClick={() => setSelectedUnitId(null)}
+                className="text-xs font-medium text-zinc-600 hover:text-zinc-900 underline underline-offset-2 transition-colors"
+              >
+                Evlerimi Değiştir
+              </button>
+            )}
+            {selectedUnit && (
+              <div className="bg-zinc-50 border border-zinc-200 px-4 py-2 rounded-xl flex items-center gap-2 text-xs text-zinc-700">
+                <span className="font-medium text-zinc-900">{selectedUnit.buildingName}</span>
+                <span className="text-zinc-300">•</span>
+                <span>{selectedUnit.blockName} No: {selectedUnit.doorNo}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {dataLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="loading-spinner"></div>
+        </div>
+      ) : (
+        <>
+          {/* Summary Card */}
+          <Card className="mb-6">
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Toplam Aidat Borcu</p>
+                  <p className="text-3xl font-light text-zinc-900">
+                    {totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-700">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Borçlarım */}
+            <Card
+              className="cursor-pointer hover:border-zinc-300 hover:shadow-sm transition-all"
+              onClick={() => dues.length > 0 && openDuesDetail()}
+            >
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-medium text-zinc-900">Aidat Borçlarım</h2>
+                  {dues.length > 0 && (
+                    <span className="text-xs text-zinc-400 flex items-center gap-1">
+                      Detay
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
+              </CardHeader>
+              <CardBody>
+                {dues.length === 0 ? (
+                  <p className="text-sm text-zinc-500 py-4">Henüz bir aidat kaydınız bulunmuyor.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {dues.map((due) => (
+                      <div
+                        key={due.id}
+                        className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
+                      >
+                        <div>
+                          <p className="font-medium text-zinc-900">
+                            {MONTH_NAMES[due.month - 1]} {due.year}
+                          </p>
+                          <p className="text-sm text-zinc-500">
+                            {parseFloat(due.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                          </p>
+                        </div>
+                        {getStatusBadge(due.status)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Şikayet ve İstek / Yorum Kutusu */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-medium text-zinc-900">Şikayet ve İstek Kutusu</h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">Bina yönetimine talep veya öneri iletin</p>
+                  </div>
+                  <Button size="sm" variant="secondary" onClick={() => setShowComplaintForm(true)}>
+                    Yeni Talep / Yorum
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardBody>
+                {complaints.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <p className="text-sm text-zinc-500 mb-3">Henüz ilettiğiniz bir talep veya yorum bulunmuyor.</p>
+                    <Button size="sm" variant="ghost" onClick={() => setShowComplaintForm(true)}>
+                      + İlk Talebinizi İletin
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {complaints.map((complaint) => (
+                      <div
+                        key={complaint.id}
+                        className="p-3 bg-zinc-50/70 border border-zinc-100 rounded-xl space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-zinc-900 text-sm">{complaint.subject}</p>
+                          {getStatusBadge(complaint.status)}
+                        </div>
+                        <p className="text-xs text-zinc-600 whitespace-pre-line">{complaint.description}</p>
+                        <p className="text-[11px] text-zinc-400 pt-1">
+                          {new Date(complaint.createdAt).toLocaleDateString('tr-TR', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Duyurular */}
+            <Card>
+              <CardHeader>
+                <h2 className="text-base font-medium text-zinc-900">Bina Duyuruları</h2>
+              </CardHeader>
+              <CardBody>
+                <div className="empty-state py-4 text-center">
+                  <p className="text-sm text-zinc-500">Şu anda aktif bir duyuru bulunmuyor.</p>
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Ortak Proje Katılımları */}
+            <Card>
+              <CardHeader>
+                <h2 className="text-base font-medium text-zinc-900">Ortak Projeler</h2>
+              </CardHeader>
+              <CardBody>
+                {projects.length === 0 ? (
+                  <p className="text-sm text-zinc-500 py-4">Aktif bir ortak proje bulunmuyor.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {projects.map((project) => {
+                      const payment = project.payments.find((p) => p.unitId === selectedUnitId) || project.payments[0];
+                      return (
+                        <div
+                          key={project.id}
+                          className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
+                        >
+                          <div>
+                            <p className="font-medium text-zinc-900">{project.title}</p>
+                            <p className="text-sm text-zinc-500">
+                              {parseFloat(project.perUnitAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                            </p>
+                          </div>
+                          {payment ? getStatusBadge(payment.status) : (
+                            <Badge variant="danger">Ödenmedi</Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+          </div>
+        </>
+      )}
 
       {showComplaintForm && (
         <ComplaintFormModal
+          userBuildingId={selectedUnit?.buildingId}
           onClose={() => setShowComplaintForm(false)}
           onSuccess={() => {
             setShowComplaintForm(false);
-            fetchAll();
+            if (selectedUnitId) fetchUnitData(selectedUnitId);
           }}
         />
       )}
@@ -264,20 +491,190 @@ export default function ResidentDashboard() {
           onClose={() => setShowPhonePrompt(false)}
           onSuccess={() => {
             setShowPhonePrompt(false);
-            fetchAll();
+            fetchMe();
           }}
+        />
+      )}
+
+      {showDuesDetail && selectedUnit && (
+        <ResidentDuesDetailModal
+          unit={selectedUnit}
+          dues={dues}
+          selectedYear={duesDetailYear}
+          availableYears={duesAvailableYears}
+          onYearChange={setDuesDetailYear}
+          onClose={() => setShowDuesDetail(false)}
         />
       )}
     </div>
   );
 }
 
+// -------------------------------------------------------------
+// MODAL: RESIDENT'S OWN YEARLY DUES HISTORY (READ-ONLY)
+// -------------------------------------------------------------
+interface ResidentDuesDetailModalProps {
+  unit: UserUnit;
+  dues: Due[];
+  selectedYear: number;
+  availableYears: number[];
+  onYearChange: (year: number) => void;
+  onClose: () => void;
+}
+
+function ResidentDuesDetailModal({
+  unit,
+  dues,
+  selectedYear,
+  availableYears,
+  onYearChange,
+  onClose,
+}: ResidentDuesDetailModalProps) {
+  const yearDues = useMemo(() => dues.filter((d) => d.year === selectedYear), [dues, selectedYear]);
+
+  const yearTotalExpected = yearDues.reduce((acc, d) => acc + parseFloat(d.amount), 0);
+  const yearTotalPaid = yearDues.filter((d) => d.status === 'PAID').reduce((acc, d) => acc + parseFloat(d.amount), 0);
+  const yearTotalUnpaid = yearTotalExpected - yearTotalPaid;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
+
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl transform transition-all overflow-hidden flex flex-col max-h-[90vh]">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-zinc-50">
+            <div>
+              <h3 className="text-lg font-medium text-zinc-900">
+                {unit.blockName} - No: {unit.doorNo} Aidat Geçmişi
+              </h3>
+              <p className="text-xs text-zinc-500 mt-0.5">{unit.buildingName}</p>
+            </div>
+            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto space-y-6">
+            {/* Year Selector — only shown when dues exist from more than one year */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl">
+              {availableYears.length > 1 ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-zinc-500 uppercase">Yıl:</span>
+                  <div className="flex items-center gap-1 bg-white border border-zinc-200 p-1 rounded-lg">
+                    {availableYears.map((yr) => (
+                      <button
+                        key={yr}
+                        onClick={() => onYearChange(yr)}
+                        className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                          selectedYear === yr
+                            ? 'bg-zinc-900 text-white shadow-sm'
+                            : 'text-zinc-600 hover:bg-zinc-100'
+                        }`}
+                      >
+                        {yr}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <span className="text-xs font-medium text-zinc-500">{selectedYear} Yılı</span>
+              )}
+
+              <div className="flex items-center gap-4 text-xs">
+                <div>
+                  <span className="text-zinc-500">Yıllık Toplam: </span>
+                  <strong className="text-zinc-900">{yearTotalExpected.toLocaleString('tr-TR')} ₺</strong>
+                </div>
+                <div>
+                  <span className="text-zinc-500">Ödenen: </span>
+                  <strong className="text-emerald-700">{yearTotalPaid.toLocaleString('tr-TR')} ₺</strong>
+                </div>
+                <div>
+                  <span className="text-zinc-500">Kalan: </span>
+                  <strong className={yearTotalUnpaid > 0 ? 'text-zinc-900 font-semibold' : 'text-zinc-500'}>
+                    {yearTotalUnpaid.toLocaleString('tr-TR')} ₺
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* 12 Months Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {MONTH_NAMES.map((mName, idx) => {
+                const monthNum = idx + 1;
+                const due = yearDues.find((d) => d.month === monthNum);
+                const isPaid = due?.status === 'PAID';
+                const isUnpaid = due && due.status === 'UNPAID';
+
+                return (
+                  <div
+                    key={monthNum}
+                    className="border border-zinc-200 rounded-xl p-3.5 bg-white flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm text-zinc-900">
+                        {monthNum}. {mName} {selectedYear}
+                      </span>
+                      {isPaid ? (
+                        <span className="text-[11px] font-medium px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
+                          Ödendi
+                        </span>
+                      ) : isUnpaid ? (
+                        <span className="text-[11px] font-medium px-2 py-0.5 bg-zinc-100 text-zinc-800 border border-zinc-200 rounded">
+                          Ödenmedi
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded">
+                          Tanımsız
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="my-2">
+                      {due ? (
+                        <div className="text-xs text-zinc-600 space-y-1">
+                          <div className="flex justify-between">
+                            <span>Tutar:</span>
+                            <span className="font-medium text-zinc-900">
+                              {parseFloat(due.amount).toLocaleString('tr-TR')} ₺
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[11px] text-zinc-400">
+                            <span>Son Gün:</span>
+                            <span>{new Date(due.dueDate).toLocaleDateString('tr-TR')}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-zinc-400 italic">Bu ay için aidat kaydı bulunmuyor</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="px-6 py-3 border-t border-zinc-200 bg-zinc-50 flex justify-end">
+            <Button variant="secondary" onClick={onClose}>
+              Kapat
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface ComplaintFormModalProps {
+  userBuildingId?: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-function ComplaintFormModal({ onClose, onSuccess }: ComplaintFormModalProps) {
+function ComplaintFormModal({ userBuildingId, onClose, onSuccess }: ComplaintFormModalProps) {
   const [formData, setFormData] = useState({ subject: '', description: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -288,21 +685,11 @@ function ComplaintFormModal({ onClose, onSuccess }: ComplaintFormModalProps) {
     setError('');
 
     try {
-      // Fetch current session to obtain buildingId
-      const meRes = await fetch('/api/auth/me');
-      const meData = await meRes.json();
-
-      if (!meRes.ok || !meData.user.buildingId) {
-        setError('Bina bilgisi bulunamadı. Lütfen yöneticinizle iletişime geçin.');
-        setLoading(false);
-        return;
-      }
-
       const response = await fetch('/api/complaints', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          buildingId: meData.user.buildingId,
+          buildingId: userBuildingId || undefined,
           subject: formData.subject,
           description: formData.description,
         }),
@@ -326,9 +713,9 @@ function ComplaintFormModal({ onClose, onSuccess }: ComplaintFormModalProps) {
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
 
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg transform transition-all">
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg transform transition-all">
           <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">Yeni Talep / Şikayet</h3>
+            <h3 className="text-lg font-medium text-zinc-900">Yeni Talep / Yorum İlet</h3>
             <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -336,17 +723,17 @@ function ComplaintFormModal({ onClose, onSuccess }: ComplaintFormModalProps) {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="px-6 py-4">
+          <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {error}
               </div>
             )}
 
             <div className="form-group">
               <Input
-                label="Konu"
-                placeholder="Örn: Asansör Arızası"
+                label="Konu / Başlık"
+                placeholder="Örn: Asansör Arızası, Bahçe Temizliği vb."
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 required
@@ -355,20 +742,21 @@ function ComplaintFormModal({ onClose, onSuccess }: ComplaintFormModalProps) {
 
             <div className="form-group">
               <Textarea
-                label="Açıklama"
-                placeholder="Talebinizi detaylandırın..."
+                label="Açıklama / Mesajınız"
+                placeholder="Bina yönetimine iletmek istediğiniz detayları buraya yazın..."
+                rows={4}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 required
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 mt-6">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
               <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
                 İptal
               </Button>
               <Button type="submit" loading={loading}>
-                Gönder
+                Talebi Gönder
               </Button>
             </div>
           </form>

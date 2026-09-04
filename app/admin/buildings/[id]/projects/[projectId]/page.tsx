@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { Button, Badge } from '@/components/ui';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
+import { formatPhoneNumber } from '@/lib/phone';
 
 interface Payment {
   id: string;
@@ -36,6 +37,7 @@ export default function ProjectDetailPage() {
   const projectId = params.projectId as string;
 
   const [project, setProject] = useState<Project | null>(null);
+  const [selectedBlockFilter, setSelectedBlockFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -111,21 +113,37 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const paidCount = project.payments.filter((p) => p.status === 'PAID').length;
-  const totalCount = project.payments.length;
-  const collectedAmount = paidCount * parseFloat(project.perUnitAmount);
-  const progressPercent = totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
+  // Sadece bu projeye dahil edilen blokların listesi
+  const includedBlockNames = useMemo(() => {
+    if (!project) return [];
+    const set = new Set(project.payments.map((p) => p.unit.blockName));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [project]);
+
+  // Seçili blok filtresine göre ödemeler
+  const filteredPayments = useMemo(() => {
+    if (!project) return [];
+    if (selectedBlockFilter === 'ALL') return project.payments;
+    return project.payments.filter((p) => p.unit.blockName === selectedBlockFilter);
+  }, [project, selectedBlockFilter]);
+
+  const perUnitVal = project ? parseFloat(project.perUnitAmount) : 0;
+  const filteredTotalCount = filteredPayments.length;
+  const filteredPaidCount = filteredPayments.filter((p) => p.status === 'PAID').length;
+  const filteredCollectedAmount = filteredPaidCount * perUnitVal;
+  const filteredTargetAmount = filteredTotalCount * perUnitVal;
+  const filteredProgressPercent = filteredTotalCount > 0 ? Math.round((filteredPaidCount / filteredTotalCount) * 100) : 0;
 
   return (
     <div className="page-container">
-      <div className="section-header">
+      <div className="section-header mb-6">
         <div className="flex items-center gap-4 mb-4">
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={() => router.push(`/admin/buildings/${buildingId}/projects`)}
             leftIcon={
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             }
@@ -133,54 +151,98 @@ export default function ProjectDetailPage() {
             Projelere Dön
           </Button>
         </div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-light text-zinc-900">{project.title}</h1>
-          <Badge variant={project.status === 'ACTIVE' ? 'info' : 'success'}>
-            {project.status === 'ACTIVE' ? 'Aktif' : 'Tamamlandı'}
-          </Badge>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-light text-zinc-900">{project.title}</h1>
+              <Badge variant={project.status === 'ACTIVE' ? 'info' : 'success'}>
+                {project.status === 'ACTIVE' ? 'Aktif' : 'Tamamlandı'}
+              </Badge>
+            </div>
+            {project.description && (
+              <p className="text-zinc-600 font-light mt-2">{project.description}</p>
+            )}
+          </div>
         </div>
-        {project.description && (
-          <p className="text-zinc-600 font-light mt-2">{project.description}</p>
-        )}
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* Blok Filtreleme Sekmeleri - Sadece Projeye Dahil Edilen Bloklar Listelenir */}
+      {includedBlockNames.length > 1 && (
+        <div className="flex items-center gap-2 border-b border-zinc-200 pb-3 mb-6 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setSelectedBlockFilter('ALL')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              selectedBlockFilter === 'ALL'
+                ? 'bg-zinc-900 text-white shadow-sm'
+                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+            }`}
+          >
+            Tüm Bloklar ({project.payments.length})
+          </button>
+          {includedBlockNames.map((bName) => {
+            const count = project.payments.filter((p) => p.unit.blockName === bName).length;
+            const isSelected = selectedBlockFilter === bName;
+            return (
+              <button
+                key={bName}
+                type="button"
+                onClick={() => setSelectedBlockFilter(bName)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  isSelected
+                    ? 'bg-zinc-900 text-white shadow-sm'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                {bName} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Summary Cards - Seçili Bloğa Göre Dinamik Değişir */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardBody>
-            <p className="text-sm text-zinc-500 mb-1">Toplam Tutar</p>
-            <p className="text-2xl font-medium text-zinc-900">
-              {parseFloat(project.totalAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">
+              {selectedBlockFilter === 'ALL' ? 'Toplam Tutar' : `${selectedBlockFilter} Hedefi`}
             </p>
+            <p className="text-2xl font-light text-zinc-900">
+              {filteredTargetAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+            </p>
+            <p className="text-[11px] text-zinc-400 mt-1">{filteredTotalCount} daire dahil</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-zinc-500 mb-1">Daire Başı Tutar</p>
-            <p className="text-2xl font-medium text-zinc-900">
-              {parseFloat(project.perUnitAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Daire Başı Tutar</p>
+            <p className="text-2xl font-light text-zinc-900">
+              {perUnitVal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
             </p>
+            <p className="text-[11px] text-zinc-400 mt-1">Sabit pay</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-zinc-500 mb-1">Tahsil Edilen</p>
-            <p className="text-2xl font-medium text-zinc-900">
-              {collectedAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-1">Tahsil Edilen</p>
+            <p className="text-2xl font-light text-emerald-800">
+              {filteredCollectedAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
             </p>
+            <p className="text-[11px] text-emerald-600 mt-1">{filteredPaidCount} daire ödedi</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-zinc-500 mb-1">Ödeme Oranı</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Ödeme Oranı</p>
             <div className="flex items-center gap-2">
-              <p className="text-2xl font-medium text-zinc-900">{progressPercent}%</p>
-              <span className="text-sm text-zinc-500">({paidCount}/{totalCount})</span>
+              <p className="text-2xl font-light text-zinc-900">{filteredProgressPercent}%</p>
+              <span className="text-xs text-zinc-500 font-medium">({filteredPaidCount}/{filteredTotalCount})</span>
             </div>
             <div className="mt-2 h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-zinc-900 transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
+                style={{ width: `${filteredProgressPercent}%` }}
               />
             </div>
           </CardBody>
@@ -190,7 +252,14 @@ export default function ProjectDetailPage() {
       {/* Payment Table */}
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-medium text-zinc-900">Daire Bazlı Ödeme Tablosu</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium text-zinc-900">
+              {selectedBlockFilter === 'ALL' ? 'Tüm Dairelerin Ödeme Tablosu' : `${selectedBlockFilter} Ödeme Tablosu`}
+            </h2>
+            <span className="text-xs text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-md">
+              {filteredPayments.length} Kayıt
+            </span>
+          </div>
         </CardHeader>
         <CardBody className="p-0">
           <Table>
@@ -206,14 +275,16 @@ export default function ProjectDetailPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {project.payments.map((payment) => (
+              {filteredPayments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell className="font-medium text-zinc-900">{payment.unit.blockName}</TableCell>
-                  <TableCell>{payment.unit.doorNo}</TableCell>
-                  <TableCell>{payment.unit.ownerName}</TableCell>
-                  <TableCell>{payment.unit.residentPhone}</TableCell>
-                  <TableCell>
-                    {parseFloat(project.perUnitAmount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                  <TableCell className="font-medium text-zinc-900">Daire {payment.unit.doorNo}</TableCell>
+                  <TableCell className="text-zinc-800">{payment.unit.ownerName}</TableCell>
+                  <TableCell className="font-mono text-xs text-zinc-600">
+                    {payment.unit.residentPhone ? formatPhoneNumber(payment.unit.residentPhone) : '-'}
+                  </TableCell>
+                  <TableCell className="font-medium text-zinc-900">
+                    {perUnitVal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                   </TableCell>
                   <TableCell>
                     <Badge variant={payment.status === 'PAID' ? 'success' : 'danger'}>
@@ -222,12 +293,13 @@ export default function ProjectDetailPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
-                      variant="secondary"
+                      variant={payment.status === 'PAID' ? 'ghost' : 'secondary'}
                       size="sm"
                       loading={updatingId === payment.id}
                       onClick={() => togglePaymentStatus(payment)}
+                      className={payment.status === 'PAID' ? 'text-zinc-500 hover:text-red-600 hover:bg-red-50' : ''}
                     >
-                      {payment.status === 'PAID' ? 'Ödenmedi İşaretle' : 'Ödendi İşaretle'}
+                      {payment.status === 'PAID' ? 'Ödenmedi Yap' : 'Ödendi İşaretle'}
                     </Button>
                   </TableCell>
                 </TableRow>

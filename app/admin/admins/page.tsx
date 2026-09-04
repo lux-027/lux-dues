@@ -2,31 +2,64 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '@/components/ui';
-import { Button, Badge, Input, Select, PhoneInput } from '@/components/ui';
+import { Button, Badge, Input, Select } from '@/components/ui';
+import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
+import { formatAccountNumber, parseAccountNumber } from '@/lib/userId';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
 
 interface Building {
   id: string;
   name: string;
+  type?: string;
+  totalBlocks?: number;
 }
 
 interface Admin {
   id: string;
+  accountNumber?: number;
   name: string;
   email: string;
   phone: string;
   role: 'SUPER_ADMIN' | 'BLOCK_ADMIN';
   buildingId: string | null;
+  blockName?: string | null;
   building?: { id: string; name: string } | null;
+  createdAt: string;
+}
+
+interface SentInvitation {
+  id: string;
+  receiver: {
+    id: string;
+    accountNumber: number;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  building: {
+    id: string;
+    name: string;
+  };
+  blockName: string | null;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
   createdAt: string;
 }
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [sentInvitations, setSentInvitations] = useState<SentInvitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [redirectAdmin, setRedirectAdmin] = useState<Admin | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    action: () => Promise<void>;
+    loading: boolean;
+  }>({ open: false, title: '', description: '', action: async () => {}, loading: false });
 
   useEffect(() => {
     fetchData();
@@ -34,12 +67,17 @@ export default function AdminsPage() {
 
   const fetchData = async () => {
     try {
-      const [adminsRes, buildingsRes] = await Promise.all([
+      const [adminsRes, buildingsRes, invitesRes] = await Promise.all([
         fetch('/api/admins'),
         fetch('/api/buildings'),
+        fetch('/api/invitations'),
       ]);
       if (adminsRes.ok) setAdmins(await adminsRes.json());
       if (buildingsRes.ok) setBuildings(await buildingsRes.json());
+      if (invitesRes.ok) {
+        const invData = await invitesRes.json();
+        setSentInvitations(invData.sent || []);
+      }
     } catch (error) {
       console.error('Error fetching admins:', error);
     } finally {
@@ -48,14 +86,62 @@ export default function AdminsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bu yöneticiyi silmek istediğinizden emin misiniz?')) return;
-    try {
-      const response = await fetch(`/api/admins/${id}`, { method: 'DELETE' });
-      if (response.ok) fetchData();
-    } catch (error) {
-      console.error('Error deleting admin:', error);
-    }
+    setConfirmModal({
+      open: true,
+      title: 'Yöneticinin Yetkisini Kaldırmak İstiyor musunuz?',
+      description: 'Bu yöneticinin yönetici yetkileri kaldırılacaktır. Kullanıcı hesabı silinmeyecek, sadece atanmış olduğu site ve blok yetkisi kaldırılacaktır.',
+      action: async () => {
+        setConfirmModal((prev) => ({ ...prev, loading: true }));
+        try {
+          const response = await fetch(`/api/admins/${id}`, { method: 'DELETE' });
+          if (response.ok) {
+            setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
+            fetchData();
+          } else {
+            alert('Yetki kaldırılırken bir hata oluştu');
+            setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
+          }
+        } catch (error) {
+          console.error('Error removing admin permissions:', error);
+          alert('Yetki kaldırılırken bir hata oluştu');
+          setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
+        }
+      },
+      loading: false,
+    });
   };
+
+  const handleCancelInvite = async (id: string) => {
+    setConfirmModal({
+      open: true,
+      title: 'Daveti İptal Etmek İstiyor musunuz?',
+      description: 'Bu davet bağlantısı iptal edilecek ve artık kullanılamayacaktır.',
+      action: async () => {
+        setConfirmModal((prev) => ({ ...prev, loading: true }));
+        try {
+          const response = await fetch(`/api/invitations/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'CANCEL' }),
+          });
+          if (response.ok) {
+            setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
+            fetchData();
+          } else {
+            alert('Davet iptal edilirken bir hata oluştu');
+            setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
+          }
+        } catch (error) {
+          console.error('Error cancelling invite:', error);
+          alert('Davet iptal edilirken bir hata oluştu');
+          setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
+        }
+      },
+      loading: false,
+    });
+  };
+
+  const pendingInvites = sentInvitations.filter((i) => i.status === 'PENDING');
 
   if (loading) {
     return (
@@ -76,20 +162,91 @@ export default function AdminsPage() {
               Yöneticiler
             </h1>
             <p className="text-zinc-600 font-light">
-              Bloklara özel yöneticiler atayın ve yetkilendirmeleri yönetin
+              Kullanıcı ID ile diğer yöneticilere talep gönderin ve blok yetkilerini yönetin
             </p>
           </div>
           <Button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => setShowInviteModal(true)}
             leftIcon={
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
             }
           >
-            Yeni Blok Yöneticisi Ekle
+            Yönetici Davet Et (ID ile)
           </Button>
         </div>
+      </div>
+
+      {/* Bekleyen Davetler Tablosu */}
+      {pendingInvites.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-base font-medium text-zinc-900">Bekleyen Yönetici Talepleri</h2>
+            <span className="px-2 py-0.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-medium">
+              {pendingInvites.length} Beklemede
+            </span>
+          </div>
+          <Card>
+            <CardBody className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Davet Edilen Kullanıcı</TableHead>
+                    <TableHead>Kullanıcı ID</TableHead>
+                    <TableHead>Telefon</TableHead>
+                    <TableHead>Hedef Site / Blok</TableHead>
+                    <TableHead>Durum</TableHead>
+                    <TableHead className="text-right">İşlem</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingInvites.map((inv) => (
+                    <TableRow key={inv.id}>
+                      <TableCell className="font-medium text-zinc-900">{inv.receiver.name}</TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200 font-mono">
+                          {formatAccountNumber(inv.receiver.accountNumber)}
+                        </code>
+                      </TableCell>
+                      <TableCell>{formatPhoneNumber(inv.receiver.phone)}</TableCell>
+                      <TableCell>
+                        <span className="font-medium text-zinc-800">{inv.building.name}</span>{' '}
+                        {inv.blockName ? (
+                          <span className="px-2 py-0.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-md font-medium">
+                            {inv.blockName}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 text-xs bg-zinc-100 text-zinc-600 rounded-md">
+                            Tüm Bloklar
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="warning">Onay Bekliyor</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCancelInvite(inv.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          İptal Et
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {/* Aktif Yöneticiler */}
+      <div className="mb-3">
+        <h2 className="text-base font-medium text-zinc-900">Aktif Yöneticiler</h2>
       </div>
 
       {admins.length === 0 ? (
@@ -100,7 +257,7 @@ export default function AdminsPage() {
                 Henüz yönetici bulunmuyor
               </h3>
               <p className="mt-1 text-sm text-zinc-500">
-                İlk blok yöneticisini eklemek için yukarıdaki butona tıklayın.
+                İlk blok yöneticisini davet etmek için yukarıdaki butona tıklayın.
               </p>
             </div>
           </CardBody>
@@ -112,10 +269,11 @@ export default function AdminsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Ad Soyad</TableHead>
+                  <TableHead>Kullanıcı ID</TableHead>
                   <TableHead>E-posta</TableHead>
                   <TableHead>Telefon</TableHead>
                   <TableHead>Rol</TableHead>
-                  <TableHead>Atanan Bina</TableHead>
+                  <TableHead>Atanan Yer / Blok</TableHead>
                   <TableHead className="text-right">İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
@@ -123,23 +281,59 @@ export default function AdminsPage() {
                 {admins.map((admin) => (
                   <TableRow key={admin.id}>
                     <TableCell className="font-medium text-zinc-900">{admin.name}</TableCell>
+                    <TableCell>
+                      {admin.accountNumber ? (
+                        <code className="text-xs bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200 font-mono">
+                          {formatAccountNumber(admin.accountNumber)}
+                        </code>
+                      ) : (
+                        <span className="text-zinc-400 text-xs">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>{admin.email}</TableCell>
                     <TableCell>{formatPhoneNumber(admin.phone)}</TableCell>
                     <TableCell>
                       <Badge variant={admin.role === 'SUPER_ADMIN' ? 'info' : 'default'}>
-                        {admin.role === 'SUPER_ADMIN' ? 'Ana Yönetici' : 'Blok Yöneticisi'}
+                        {admin.role === 'SUPER_ADMIN' ? 'Ana Yönetici (Tüm Sistem)' : 'Blok Yöneticisi'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {admin.building ? admin.building.name : (
+                      {admin.building ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-zinc-800">{admin.building.name}</span>
+                          {admin.blockName ? (
+                            <span className="px-2 py-0.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-md font-medium">
+                              {admin.blockName}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 text-xs bg-zinc-100 text-zinc-600 rounded-md">
+                              Tüm Bloklar
+                            </span>
+                          )}
+                        </div>
+                      ) : admin.role === 'SUPER_ADMIN' ? (
+                        <span className="text-xs text-indigo-600 font-medium">Tüm Siteler ve Bloklar</span>
+                      ) : (
                         <span className="text-zinc-400">Atanmadı</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       {admin.role === 'BLOCK_ADMIN' && (
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(admin.id)}>
-                          Sil
-                        </Button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setRedirectAdmin(admin);
+                              setShowInviteModal(true);
+                            }}
+                          >
+                            Yeni Siteye Yönlendir
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(admin.id)}>
+                            Yetkiyi Kaldır
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>
@@ -150,59 +344,173 @@ export default function AdminsPage() {
         </Card>
       )}
 
-      {showCreateModal && (
-        <CreateAdminModal
+      {showInviteModal && (
+        <InviteAdminModal
           buildings={buildings}
-          onClose={() => setShowCreateModal(false)}
+          prefillAccountNumber={redirectAdmin?.accountNumber}
+          onClose={() => {
+            setShowInviteModal(false);
+            setRedirectAdmin(null);
+          }}
           onSuccess={() => {
-            setShowCreateModal(false);
+            setShowInviteModal(false);
+            setRedirectAdmin(null);
             fetchData();
           }}
         />
       )}
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        loading={confirmModal.loading}
+        confirmText="Evet, Onayla"
+        cancelText="Vazgeç"
+        variant="danger"
+        onConfirm={confirmModal.action}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }
 
-interface CreateAdminModalProps {
+// -------------------------------------------------------------
+// MODAL: INVITE ADMIN BY USER ID
+// -------------------------------------------------------------
+interface InviteAdminModalProps {
   buildings: Building[];
+  prefillAccountNumber?: number;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-function CreateAdminModal({ buildings, onClose, onSuccess }: CreateAdminModalProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    buildingId: buildings[0]?.id || '',
-  });
-  const [loading, setLoading] = useState(false);
+interface LookedUpUser {
+  id: string;
+  accountNumber: number;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+}
+
+function InviteAdminModal({ buildings, prefillAccountNumber, onClose, onSuccess }: InviteAdminModalProps) {
+  const [accountNumberInput, setAccountNumberInput] = useState(prefillAccountNumber ? formatAccountNumber(prefillAccountNumber) : '');
+  const [buildingId, setBuildingId] = useState(buildings[0]?.id || '');
+  const [blockName, setBlockName] = useState('');
+  const [availableBlocks, setAvailableBlocks] = useState<string[]>([]);
+
+  const [lookedUpUser, setLookedUpUser] = useState<LookedUpUser | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState('');
+
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Prefill edilmiş kullanıcı varsa açılışta otomatik arat
+  useEffect(() => {
+    if (prefillAccountNumber) {
+      const fetchUser = async () => {
+        setLookupLoading(true);
+        setLookupError('');
+        try {
+          const res = await fetch(`/api/users/lookup?accountNumber=${encodeURIComponent(String(prefillAccountNumber))}`);
+          const data = await res.json();
+          if (res.ok && data.user) {
+            setLookedUpUser(data.user);
+          } else {
+            setLookedUpUser(null);
+            setLookupError(data.error || 'Kullanıcı bulunamadı');
+          }
+        } catch (err) {
+          setLookupError('Bağlantı hatası oluştu');
+          setLookedUpUser(null);
+        } finally {
+          setLookupLoading(false);
+        }
+      };
+      fetchUser();
+    }
+  }, [prefillAccountNumber]);
+
+  useEffect(() => {
+    if (buildingId) {
+      fetch(`/api/buildings/${buildingId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.units) {
+            const uniqueBlocks = Array.from(new Set(data.units.map((u: any) => u.blockName))).filter(Boolean) as string[];
+            if (uniqueBlocks.length > 0) {
+              setAvailableBlocks(uniqueBlocks);
+            } else if (data.totalBlocks > 1) {
+              setAvailableBlocks(Array.from({ length: data.totalBlocks }, (_, i) => `${String.fromCharCode(65 + i)} Blok`));
+            } else {
+              setAvailableBlocks(['A Blok']);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [buildingId]);
+
+  const handleLookup = async () => {
+    const trimmed = accountNumberInput.trim();
+    if (!trimmed) {
+      setLookupError('Lütfen bir Kullanıcı ID girin');
+      setLookedUpUser(null);
+      return;
+    }
+
+    setLookupLoading(true);
+    setLookupError('');
+    try {
+      const res = await fetch(`/api/users/lookup?accountNumber=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setLookedUpUser(data.user);
+      } else {
+        setLookedUpUser(null);
+        setLookupError(data.error || 'Kullanıcı bulunamadı');
+      }
+    } catch (err) {
+      setLookupError('Bağlantı hatası oluştu');
+      setLookedUpUser(null);
+    } finally {
+      setLookupLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!lookedUpUser) {
+      setError('Lütfen önce geçerli bir kullanıcı bulun');
+      return;
+    }
+
+    setSubmitLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/admins', {
+      const response = await fetch('/api/invitations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          receiverAccountNumber: lookedUpUser.accountNumber,
+          buildingId,
+          blockName: blockName || undefined,
+        }),
       });
 
       if (response.ok) {
         onSuccess();
       } else {
         const data = await response.json();
-        setError(data.error || 'Yönetici oluşturulurken bir hata oluştu');
+        setError(data.error || 'Talep gönderilirken bir hata oluştu');
       }
     } catch (err) {
-      setError('Yönetici oluşturulurken bir hata oluştu');
+      setError('Talep gönderilirken bir hata oluştu');
     } finally {
-      setLoading(false);
+      setSubmitLoading(false);
     }
   };
 
@@ -211,9 +519,18 @@ function CreateAdminModal({ buildings, onClose, onSuccess }: CreateAdminModalPro
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
 
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg transform transition-all">
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg transform transition-all overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">Yeni Blok Yöneticisi Ekle</h3>
+            <div>
+              <h3 className="text-lg font-medium text-zinc-900">
+                {prefillAccountNumber ? 'Yöneticiyi Yeni Siteye Yönlendir' : 'Yönetici Davet Et'}
+              </h3>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                {prefillAccountNumber
+                  ? 'Yöneticinin yeni atanacağı site ve bloğu seçin'
+                  : "Kullanıcının 9 haneli ID kodunu girerek talep gönderin"}
+              </p>
+            </div>
             <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -221,9 +538,9 @@ function CreateAdminModal({ buildings, onClose, onSuccess }: CreateAdminModalPro
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="px-6 py-4">
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {error}
               </div>
             )}
@@ -234,65 +551,111 @@ function CreateAdminModal({ buildings, onClose, onSuccess }: CreateAdminModalPro
               </p>
             ) : (
               <>
-                <div className="form-group">
-                  <Input
-                    label="Ad Soyad"
-                    placeholder="Örn: Mehmet Demir"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                {/* Kullanıcı ID Arama */}
+                <div>
+                  <label className="input-label">Kullanıcı ID</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      className="input-field font-mono"
+                      placeholder="Örn: 000 000 002"
+                      value={accountNumberInput}
+                      readOnly={!!prefillAccountNumber}
+                      disabled={!!prefillAccountNumber}
+                      onChange={(e) => {
+                        setAccountNumberInput(e.target.value);
+                        setLookedUpUser(null);
+                        setLookupError('');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !prefillAccountNumber) {
+                          e.preventDefault();
+                          handleLookup();
+                        }
+                      }}
+                    />
+                    {!prefillAccountNumber && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleLookup}
+                        loading={lookupLoading}
+                      >
+                        Kullanıcıyı Bul
+                      </Button>
+                    )}
+                  </div>
+                  {lookupError && (
+                    <p className="text-xs text-red-600 mt-1.5">{lookupError}</p>
+                  )}
                 </div>
 
-                <div className="form-group">
-                  <Input
-                    type="email"
-                    label="E-posta"
-                    placeholder="ornek@luxdues.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
+                {/* Bulunan Kullanıcı Önizleme Kartı */}
+                {lookedUpUser && (
+                  <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-zinc-900">{lookedUpUser.name}</span>
+                        <Badge variant="success">Kayıtlı Kullanıcı</Badge>
+                      </div>
+                      <p className="text-xs text-zinc-600 mt-0.5">
+                        {lookedUpUser.email} • {formatPhoneNumber(lookedUpUser.phone)}
+                      </p>
+                    </div>
+                    <code className="text-xs bg-white px-2 py-1 rounded border border-emerald-200 font-mono text-emerald-800">
+                      {formatAccountNumber(lookedUpUser.accountNumber)}
+                    </code>
+                  </div>
+                )}
+
+                {/* Hedef Bina & Blok Seçimi */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="form-group">
+                    <Select
+                      label="Yetkilendirilecek Bina / Site"
+                      value={buildingId}
+                      onChange={(e) => {
+                        setBuildingId(e.target.value);
+                        setBlockName('');
+                      }}
+                      options={buildings.map((b) => ({ value: b.id, label: b.name }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <Select
+                      label="Yetkili Blok"
+                      value={blockName}
+                      onChange={(e) => setBlockName(e.target.value)}
+                      options={[
+                        { value: '', label: 'Tüm Bloklar (Tüm Site)' },
+                        ...availableBlocks.map((blk) => ({ value: blk, label: `${blk}` })),
+                      ]}
+                    />
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <PhoneInput
-                    label="Telefon"
-                    value={formData.phone}
-                    onChange={(value) => setFormData({ ...formData, phone: value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <Input
-                    type="password"
-                    label="Geçici Şifre"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <Select
-                    label="Atanacak Bina / Blok"
-                    value={formData.buildingId}
-                    onChange={(e) => setFormData({ ...formData, buildingId: e.target.value })}
-                    options={buildings.map((b) => ({ value: b.id, label: b.name }))}
-                    required
-                  />
+                <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600 space-y-1">
+                  <p className="font-medium text-zinc-800">İşlem Bilgisi:</p>
+                  <p>
+                    Talep gönderildikten sonra ilgili kullanıcı siteye giriş yaptığında bir bildirim paneli görür.
+                    Kullanıcı talebi <strong>Kabul Et</strong> butonuna basarak onayladığında ilgili bloğun yöneticisi olur.
+                  </p>
                 </div>
               </>
             )}
 
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
+              <Button type="button" variant="secondary" onClick={onClose} disabled={submitLoading}>
                 İptal
               </Button>
-              <Button type="submit" loading={loading} disabled={buildings.length === 0}>
-                Yönetici Ekle
+              <Button
+                type="submit"
+                loading={submitLoading}
+                disabled={buildings.length === 0 || !lookedUpUser}
+              >
+                Yöneticilik Talebi Gönder
               </Button>
             </div>
           </form>
@@ -301,3 +664,4 @@ function CreateAdminModal({ buildings, onClose, onSuccess }: CreateAdminModalPro
     </div>
   );
 }
+

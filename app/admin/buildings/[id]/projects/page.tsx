@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardBody } from '@/components/ui';
 import { Button, Badge, Input, Textarea } from '@/components/ui';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/currency';
 
 interface Project {
   id: string;
@@ -18,8 +19,9 @@ interface Project {
   payments: { status: 'PAID' | 'UNPAID' }[];
 }
 
-interface UnitCount {
-  unitCount: number;
+interface UnitWithBlock {
+  id: string;
+  blockName: string;
 }
 
 export default function ProjectsPage() {
@@ -28,7 +30,7 @@ export default function ProjectsPage() {
   const buildingId = params.id as string;
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [unitCount, setUnitCount] = useState(0);
+  const [units, setUnits] = useState<UnitWithBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -44,8 +46,8 @@ export default function ProjectsPage() {
       ]);
       if (projectsRes.ok) setProjects(await projectsRes.json());
       if (unitsRes.ok) {
-        const units = await unitsRes.json();
-        setUnitCount(units.length);
+        const fetchedUnits: UnitWithBlock[] = await unitsRes.json();
+        setUnits(fetchedUnits);
       }
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -72,7 +74,7 @@ export default function ProjectsPage() {
       <div className="section-header">
         <div className="flex items-center gap-4 mb-4">
           <Button
-            variant="ghost"
+            variant="primary"
             size="sm"
             onClick={() => router.push(`/admin/buildings/${buildingId}`)}
             leftIcon={
@@ -95,7 +97,7 @@ export default function ProjectsPage() {
           </div>
           <Button
             onClick={() => setShowCreateModal(true)}
-            disabled={unitCount === 0}
+            disabled={units.length === 0}
             leftIcon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -105,7 +107,7 @@ export default function ProjectsPage() {
             Yeni Proje Ekle
           </Button>
         </div>
-        {unitCount === 0 && (
+        {units.length === 0 && (
           <p className="mt-3 text-sm text-amber-600">
             Proje ekleyebilmek için önce bu binaya en az bir daire eklemelisiniz.
           </p>
@@ -177,7 +179,7 @@ export default function ProjectsPage() {
       {showCreateModal && (
         <CreateProjectModal
           buildingId={buildingId}
-          unitCount={unitCount}
+          units={units}
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
@@ -191,24 +193,41 @@ export default function ProjectsPage() {
 
 interface CreateProjectModalProps {
   buildingId: string;
-  unitCount: number;
+  units: UnitWithBlock[];
   onClose: () => void;
   onSuccess: () => void;
 }
 
-function CreateProjectModal({ buildingId, unitCount, onClose, onSuccess }: CreateProjectModalProps) {
+function CreateProjectModal({ buildingId, units, onClose, onSuccess }: CreateProjectModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     totalAmount: '',
     description: '',
   });
+  const [selectedBlocks, setSelectedBlocks] = useState<string[]>(() => {
+    return Array.from(new Set(units.map((u) => u.blockName))).sort((a, b) => a.localeCompare(b));
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const blockNames = useMemo(() => {
+    return Array.from(new Set(units.map((u) => u.blockName))).sort((a, b) => a.localeCompare(b));
+  }, [units]);
+
+  const selectedUnitCount = useMemo(() => {
+    return units.filter((u) => selectedBlocks.includes(u.blockName)).length;
+  }, [units, selectedBlocks]);
+
   const perUnitPreview =
-    formData.totalAmount && unitCount > 0
-      ? (parseFloat(formData.totalAmount) / unitCount)
+    formData.totalAmount && selectedUnitCount > 0
+      ? (parseFloat(formData.totalAmount) / selectedUnitCount)
       : 0;
+
+  const toggleBlock = (block: string) => {
+    setSelectedBlocks((prev) =>
+      prev.includes(block) ? prev.filter((b) => b !== block) : [...prev, block]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,7 +238,11 @@ function CreateProjectModal({ buildingId, unitCount, onClose, onSuccess }: Creat
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buildingId, ...formData }),
+        body: JSON.stringify({
+          buildingId,
+          ...formData,
+          blockNames: selectedBlocks,
+        }),
       });
 
       if (response.ok) {
@@ -269,24 +292,71 @@ function CreateProjectModal({ buildingId, unitCount, onClose, onSuccess }: Creat
 
             <div className="form-group">
               <Input
-                type="number"
-                step="0.01"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 label="Toplam Tutar (₺)"
-                placeholder="Örn: 15000"
-                value={formData.totalAmount}
-                onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
+                placeholder="Örn: 15.000"
+                value={formatCurrencyInput(formData.totalAmount)}
+                onChange={(e) => {
+                  const raw = parseCurrencyInput(e.target.value);
+                  setFormData({ ...formData, totalAmount: raw });
+                }}
                 required
               />
-              {formData.totalAmount && unitCount > 0 && (
+              {formData.totalAmount && selectedUnitCount > 0 && (
                 <p className="mt-2 text-sm text-zinc-600">
-                  Bu binada <strong>{unitCount}</strong> daire bulunuyor. Her daireye{' '}
+                  Seçili <strong>{selectedUnitCount}</strong> daireye{' '}
                   <strong>
                     {perUnitPreview.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                   </strong>{' '}
                   borç yansıtılacak.
                 </p>
               )}
+              {formData.totalAmount && selectedUnitCount === 0 && (
+                <p className="mt-2 text-sm text-red-600">
+                  Borç yansıtabilmek için en az bir blok seçmelisiniz.
+                </p>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="input-label">Dahil Bloklar</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1.5">
+                {blockNames.map((block) => {
+                  const count = units.filter((u) => u.blockName === block).length;
+                  const isSelected = selectedBlocks.includes(block);
+                  return (
+                    <label
+                      key={block}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-zinc-900 text-white border-zinc-900'
+                          : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={isSelected}
+                        onChange={() => toggleBlock(block)}
+                      />
+                      <div
+                        className={`h-4 w-4 rounded border flex items-center justify-center ${
+                          isSelected ? 'bg-white border-white' : 'bg-white border-zinc-300'
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg className="h-3 w-3 text-zinc-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium truncate">{block}</span>
+                      <span className={`text-xs ${isSelected ? 'text-zinc-300' : 'text-zinc-500'}`}>({count})</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="form-group">
@@ -302,7 +372,7 @@ function CreateProjectModal({ buildingId, unitCount, onClose, onSuccess }: Creat
               <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
                 İptal
               </Button>
-              <Button type="submit" loading={loading}>
+              <Button type="submit" loading={loading} disabled={selectedUnitCount === 0}>
                 Proje Oluştur ve Borçları Yansıt
               </Button>
             </div>

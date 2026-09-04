@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
-// "/login" is kept only as a redirect shim to "/?auth=login" for old links.
+// Public paths that do not require authentication
 const PUBLIC_PATHS = [
   '/login',
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/register-admin',
-  '/api/auth/google',
-  '/api/auth/phone',
+  '/verify-email',
+  '/api/auth/',
   '/api/stats',
 ];
 

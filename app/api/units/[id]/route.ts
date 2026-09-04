@@ -16,30 +16,72 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { blockName, doorNo, floor, ownerName, residentPhone } = body;
+    const { blockName, doorNo, floor, ownerName, residentPhone, defaultDueAmount, residentUserId, residentAccountNumber } = body;
 
     const updateData: any = {
-      ...(blockName && { blockName }),
-      ...(doorNo && { doorNo }),
-      ...(floor && { floor }),
-      ...(ownerName && { ownerName }),
+      ...(blockName !== undefined && { blockName }),
+      ...(doorNo !== undefined && { doorNo }),
+      ...(floor !== undefined && { floor }),
+      ...(ownerName !== undefined && { ownerName }),
     };
 
-    if (residentPhone) {
-      const normalizedPhone = normalizePhoneNumber(residentPhone);
-      if (!isValidTurkishPhone(normalizedPhone)) {
-        return NextResponse.json(
-          { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
-          { status: 400 }
-        );
+    if (defaultDueAmount !== undefined) {
+      updateData.defaultDueAmount = defaultDueAmount === '' || defaultDueAmount === null ? null : parseFloat(String(defaultDueAmount));
+    }
+
+    if (residentPhone !== undefined) {
+      if (residentPhone) {
+        const normalizedPhone = normalizePhoneNumber(residentPhone);
+        if (!isValidTurkishPhone(normalizedPhone)) {
+          return NextResponse.json(
+            { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+            { status: 400 }
+          );
+        }
+        updateData.residentPhone = normalizedPhone;
+      } else {
+        updateData.residentPhone = '';
       }
-      updateData.residentPhone = normalizedPhone;
     }
 
     const unit = await prisma.unit.update({
       where: { id },
       data: updateData,
     });
+
+    if (residentUserId !== undefined) {
+      if (residentUserId === 'remove') {
+        await prisma.unit.update({
+          where: { id },
+          data: { residents: { set: [] } },
+        });
+      } else if (residentUserId) {
+        await prisma.unit.update({
+          where: { id },
+          data: { residents: { connect: { id: residentUserId } } },
+        });
+      }
+    }
+
+    if (residentAccountNumber !== undefined) {
+      if (residentAccountNumber === 'remove') {
+        await prisma.unit.update({
+          where: { id },
+          data: { residents: { set: [] } },
+        });
+      } else if (residentAccountNumber) {
+        const targetUser = await prisma.user.findUnique({
+          where: { accountNumber: Number(residentAccountNumber) },
+        });
+        if (!targetUser) {
+          return NextResponse.json({ error: 'Bu ID ile eşleşen bir kullanıcı bulunamadı' }, { status: 404 });
+        }
+        await prisma.unit.update({
+          where: { id },
+          data: { residents: { connect: { id: targetUser.id } } },
+        });
+      }
+    }
 
     return NextResponse.json(unit);
   } catch (error) {

@@ -36,12 +36,21 @@ enum ComplaintStatus {
   RESOLVED
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id            String   @id @default(cuid())
+  accountNumber Int      @unique @default(autoincrement())
   name          String
   phone         String   @unique
   email         String   @unique
   password      String?
+  avatarUrl     String?  @db.Text
   emailVerified Boolean  @default(false)
   role          UserRole @default(RESIDENT)
   createdAt     DateTime @default(now())
@@ -49,51 +58,59 @@ model User {
 
   // Relations
   buildingId String?
-  building   Building? @relation("BuildingAdmins", fields: [buildingId], references: [id])
-  unitId     String?
-  unit       Unit?     @relation("UnitResidents", fields: [unitId], references: [id])
+  building   Building?   @relation("BuildingAdmins", fields: [buildingId], references: [id])
+  blockName  String?
+  units      Unit[]      @relation("UnitResidents")
   complaints Complaint[] @relation("UserComplaints")
+
+  sentInvitations     AdminInvitation[] @relation("SenderInvitations")
+  receivedInvitations AdminInvitation[] @relation("ReceiverInvitations")
 
   @@index([email])
   @@index([phone])
   @@index([role])
   @@index([buildingId])
-  @@index([unitId])
+  @@index([blockName])
 }
 
 model Building {
-  id          String        @id @default(cuid())
-  name        String
-  type        BuildingType
-  totalBlocks Int
-  address     String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id               String       @id @default(cuid())
+  name             String
+  type             BuildingType
+  totalBlocks      Int
+  address          String
+  image            String?
+  blockImages      Json?
+  defaultDueAmount Decimal?     @db.Decimal(10, 2)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   // Relations
-  units          Unit[]           @relation("BuildingUnits")
-  admins         User[]           @relation("BuildingAdmins")
+  units           Unit[]           @relation("BuildingUnits")
+  admins          User[]           @relation("BuildingAdmins")
   specialProjects SpecialProject[] @relation("BuildingProjects")
-  complaints     Complaint[]       @relation("BuildingComplaints")
+  complaints      Complaint[]      @relation("BuildingComplaints")
+  invitations     AdminInvitation[] @relation("BuildingInvitations")
 
   @@index([type])
 }
 
 model Unit {
-  id           String   @id @default(cuid())
-  buildingId   String
-  blockName    String
-  doorNo       String
-  floor        String
-  ownerName    String
-  residentPhone String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  buildingId       String
+  blockName        String
+  doorNo           String
+  floor            String
+  ownerName        String
+  residentPhone    String
+  defaultDueAmount Decimal? @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
-  building     Building  @relation("BuildingUnits", fields: [buildingId], references: [id], onDelete: Cascade)
-  residents    User[]    @relation("UnitResidents")
-  dues         Dues[]    @relation("UnitDues")
+  building        Building         @relation("BuildingUnits", fields: [buildingId], references: [id], onDelete: Cascade)
+  residents       User[]           @relation("UnitResidents")
+  dues            Dues[]           @relation("UnitDues")
   projectPayments ProjectPayment[] @relation("UnitProjectPayments")
 
   @@unique([buildingId, blockName, doorNo])
@@ -122,15 +139,15 @@ model Dues {
 }
 
 model SpecialProject {
-  id            String         @id @default(cuid())
+  id            String        @id @default(cuid())
   buildingId    String
   title         String
-  totalAmount   Decimal        @db.Decimal(10, 2)
-  perUnitAmount Decimal        @db.Decimal(10, 2)
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  perUnitAmount Decimal       @db.Decimal(10, 2)
   description   String?
-  status        ProjectStatus  @default(ACTIVE)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  status        ProjectStatus @default(ACTIVE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relations
   building Building         @relation("BuildingProjects", fields: [buildingId], references: [id], onDelete: Cascade)
@@ -177,3 +194,25 @@ model Complaint {
   @@index([status])
   @@index([createdAt])
 }
+
+model AdminInvitation {
+  id         String           @id @default(cuid())
+  senderId   String
+  receiverId String
+  buildingId String
+  blockName  String?
+  status     InvitationStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  // Relations
+  sender   User     @relation("SenderInvitations", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User     @relation("ReceiverInvitations", fields: [receiverId], references: [id], onDelete: Cascade)
+  building Building @relation("BuildingInvitations", fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@index([receiverId])
+  @@index([senderId])
+  @@index([buildingId])
+  @@index([status])
+}
+

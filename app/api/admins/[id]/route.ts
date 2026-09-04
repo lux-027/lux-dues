@@ -17,10 +17,11 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { buildingId, name, phone } = body;
+    const { buildingId, blockName, name, phone } = body;
 
     const updateData: any = {
       ...(buildingId !== undefined && { buildingId }),
+      ...(blockName !== undefined && { blockName }),
       ...(name && { name }),
     };
 
@@ -45,6 +46,7 @@ export async function PUT(
         phone: true,
         role: true,
         buildingId: true,
+        blockName: true,
       },
     });
 
@@ -58,7 +60,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/admins/[id] - Remove a Block Admin (SUPER_ADMIN only)
+// DELETE /api/admins/[id] - Remove a Block Admin's permissions but keep the user (SUPER_ADMIN only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -71,19 +73,35 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Prevent deleting the SUPER_ADMIN account through this route
+    // Prevent touching the SUPER_ADMIN account through this route
     const target = await prisma.user.findUnique({ where: { id } });
     if (!target || target.role === UserRole.SUPER_ADMIN) {
-      return NextResponse.json({ error: 'Bu kullanıcı silinemez' }, { status: 400 });
+      return NextResponse.json({ error: 'Bu kullanıcı üzerinde işlem yapılamaz' }, { status: 400 });
     }
 
-    await prisma.user.delete({ where: { id } });
+    const admin = await prisma.user.update({
+      where: { id },
+      data: {
+        role: UserRole.RESIDENT,
+        buildingId: null,
+        blockName: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        buildingId: true,
+        blockName: true,
+      },
+    });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, admin });
   } catch (error) {
-    console.error('Error deleting admin:', error);
+    console.error('Error removing admin permissions:', error);
     return NextResponse.json(
-      { error: 'Failed to delete admin' },
+      { error: 'Failed to remove admin permissions' },
       { status: 500 }
     );
   }

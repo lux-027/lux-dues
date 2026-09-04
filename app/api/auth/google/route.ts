@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
       buildingId: user.buildingId,
-      unitId: user.unitId,
     });
 
     const requiresPhone = !user.phone || user.phone.startsWith('google:');
@@ -74,7 +73,6 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         role: user.role,
         buildingId: user.buildingId,
-        unitId: user.unitId,
       },
       requiresPhone,
       token,

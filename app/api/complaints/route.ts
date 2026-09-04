@@ -29,12 +29,22 @@ export async function GET(request: NextRequest) {
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             phone: true,
+            email: true,
+            units: {
+              select: {
+                blockName: true,
+                doorNo: true,
+                floor: true,
+              },
+            },
           },
         },
         building: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -52,7 +62,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/complaints - Create a new complaint (resident)
+// POST /api/complaints - Create a new complaint / comment (resident)
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
@@ -61,11 +71,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { buildingId, subject, description } = body;
+    let { buildingId, subject, description } = body;
+
+    // If resident didn't send buildingId, use their assigned buildingId
+    if (!buildingId && session.buildingId) {
+      buildingId = session.buildingId;
+    }
 
     if (!buildingId || !subject || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Bina, konu ve açıklama alanları zorunludur' },
         { status: 400 }
       );
     }
@@ -78,13 +93,26 @@ export async function POST(request: NextRequest) {
         description,
         status: ComplaintStatus.PENDING,
       },
+      include: {
+        user: {
+          select: {
+            name: true,
+            units: {
+              select: {
+                blockName: true,
+                doorNo: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return NextResponse.json(complaint, { status: 201 });
   } catch (error) {
     console.error('Error creating complaint:', error);
     return NextResponse.json(
-      { error: 'Failed to create complaint' },
+      { error: 'Talep oluşturulurken bir hata oluştu' },
       { status: 500 }
     );
   }
