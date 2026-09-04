@@ -369,7 +369,9 @@ export default function BuildingDetailPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {blockStats.map((block) => {
               const dayIndex = Math.floor(Date.now() / 86400000);
-              const imageUrl = `https://loremflickr.com/300/300/city,corporate,office,skyscraper,modern,urban,apartment?lock=${building.id}-${block.name}-${dayIndex}`;
+              const storedBlockImage = building?.blockImages?.[block.name];
+              const fallbackImage = `https://loremflickr.com/300/300/city,corporate,office,skyscraper,modern,urban,apartment?lock=${building.id}-${block.name}-${dayIndex}`;
+              const imageUrl = storedBlockImage || fallbackImage;
               return (
                 <Card
                   key={block.name}

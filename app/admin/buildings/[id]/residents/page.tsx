@@ -7,6 +7,7 @@ import { Button, Input, Badge, PhoneInput, CurrencyInput } from '@/components/ui
 import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
+import { BLOCK_ARCHIVE_IMAGES } from '@/lib/buildingImages';
 import EditUnitModal from './EditUnitModal';
 
 const MONTH_NAMES = [
@@ -57,6 +58,7 @@ interface BuildingInfo {
   name: string;
   type: 'SITE' | 'APARTMENT';
   totalBlocks: number;
+  blockImages: Record<string, string> | null;
   admins?: AdminUser[];
 }
 
@@ -574,10 +576,11 @@ export default function ResidentsPage() {
         />
       )}
 
-      {showEditBlockModal && selectedBlock && selectedBlock !== 'ALL' && (
+      {showEditBlockModal && selectedBlock && selectedBlock !== 'ALL' && building && (
         <EditBlockModal
           buildingId={buildingId}
           blockName={selectedBlock}
+          blockImages={building.blockImages}
           existingBlocks={allBlockNames}
           onClose={() => setShowEditBlockModal(false)}
           onSuccess={(newBlockName) => {
@@ -624,13 +627,15 @@ export default function ResidentsPage() {
 interface EditBlockModalProps {
   buildingId: string;
   blockName: string;
+  blockImages: Record<string, string> | null;
   existingBlocks: string[];
   onClose: () => void;
   onSuccess: (newBlockName: string) => void;
 }
 
-function EditBlockModal({ buildingId, blockName, existingBlocks, onClose, onSuccess }: EditBlockModalProps) {
+function EditBlockModal({ buildingId, blockName, blockImages, existingBlocks, onClose, onSuccess }: EditBlockModalProps) {
   const [newName, setNewName] = useState(blockName);
+  const [blockImage, setBlockImage] = useState(blockImages?.[blockName] || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -648,27 +653,51 @@ function EditBlockModal({ buildingId, blockName, existingBlocks, onClose, onSucc
       return;
     }
 
-    if (trimmed === blockName) {
-      onClose();
-      return;
-    }
-
     setLoading(true);
     try {
-      const response = await fetch('/api/units', {
-        method: 'PATCH',
+      const updatedBlockImages: Record<string, string> = { ...(blockImages || {}) };
+
+      if (trimmed !== blockName) {
+        delete updatedBlockImages[blockName];
+      }
+
+      if (blockImage.trim()) {
+        updatedBlockImages[trimmed] = blockImage.trim();
+      } else {
+        delete updatedBlockImages[trimmed];
+      }
+
+      const imageRes = await fetch(`/api/buildings/${buildingId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buildingId, oldBlockName: blockName, newBlockName: trimmed }),
+        body: JSON.stringify({ blockImages: updatedBlockImages }),
       });
 
-      if (response.ok) {
-        onSuccess(trimmed);
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Blok adı güncellenirken bir hata oluştu');
+      if (!imageRes.ok) {
+        const data = await imageRes.json();
+        setError(data.error || 'Blok görseli güncellenirken bir hata oluştu');
+        setLoading(false);
+        return;
       }
+
+      if (trimmed !== blockName) {
+        const renameRes = await fetch('/api/units', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ buildingId, oldBlockName: blockName, newBlockName: trimmed }),
+        });
+
+        if (!renameRes.ok) {
+          const data = await renameRes.json();
+          setError(data.error || 'Blok adı güncellenirken bir hata oluştu');
+          setLoading(false);
+          return;
+        }
+      }
+
+      onSuccess(trimmed);
     } catch (err) {
-      setError('Blok adı güncellenirken bir hata oluştu');
+      setError('Blok güncellenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -679,9 +708,9 @@ function EditBlockModal({ buildingId, blockName, existingBlocks, onClose, onSucc
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm transform transition-all">
+        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all">
           <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">Blok Adını Düzenle</h3>
+            <h3 className="text-lg font-medium text-zinc-900">Blok Düzenle</h3>
             <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -710,6 +739,33 @@ function EditBlockModal({ buildingId, blockName, existingBlocks, onClose, onSucc
                 onChange={(e) => setNewName(e.target.value)}
                 autoFocus
                 required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="input-label">Blok Görseli</label>
+              <div className="grid grid-cols-5 gap-2 mt-1 mb-2">
+                {BLOCK_ARCHIVE_IMAGES.map((img) => (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => setBlockImage(img.src)}
+                    className={`relative h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                      blockImage === img.src
+                        ? 'border-zinc-900 ring-2 ring-zinc-900 ring-offset-1'
+                        : 'border-zinc-200 hover:border-zinc-400'
+                    }`}
+                  >
+                    <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                className="input-field"
+                value={blockImage}
+                onChange={(e) => setBlockImage(e.target.value)}
+                placeholder="Kendi görsel URL'nizi yapıştırın"
               />
             </div>
 
