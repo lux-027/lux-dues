@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
 import { BuildingIllustration } from '@/components/BuildingIllustration';
 import { Logo } from '@/components/Logo';
-import { Input, Textarea, Button } from '@/components/ui';
+import { Input, Textarea, Button, ConfirmModal } from '@/components/ui';
 
 // Central contact address for the whole site. Always route contact/support
 // messages here, with the subject line indicating they came from the LuxDues page.
@@ -123,10 +123,16 @@ export default function HomeClient({
   // Seeded from the server (via getSession()) so the header never flashes
   // the logged-out state before the client re-checks the session.
   const [session, setSession] = useState<SessionSummary | null>(initialSession);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = async () => {
+    setShowLogoutConfirm(false);
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/';
+  };
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
   };
 
   const handleStart = () => {
@@ -210,7 +216,7 @@ export default function HomeClient({
                   </div>
                   <span className="hidden sm:inline text-sm text-zinc-700 font-medium">{session.name}</span>
                   <button
-                    onClick={handleLogout}
+                    onClick={handleLogoutClick}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors"
                   >
                     Çıkış Yap
@@ -541,6 +547,17 @@ export default function HomeClient({
           </div>
         </div>
       </footer>
+
+      <ConfirmModal
+        open={showLogoutConfirm}
+        title="Çıkış Yap"
+        description="Oturumunuzu kapatmak istediğinize emin misiniz?"
+        confirmText="Çıkış Yap"
+        cancelText="Vazgeç"
+        variant="warning"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
 
       <AuthModal
         key={`${authModal.context}-${authModal.tab}-${authModal.open}-${authModal.showRoleSelector}-${authModal.registerOnly}`}
