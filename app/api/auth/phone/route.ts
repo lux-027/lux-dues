@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
+import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { UserRole } from '@prisma/client';
 
 // POST /api/auth/phone - Exchange a verified Firebase phone-auth ID token for
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
       // going forward.
       user = await prisma.user.create({
         data: {
+          accountNumber: await generateUniqueAccountNumber(),
           name: firebaseUser.phone_number,
           email: `${firebaseUser.phone_number.replace(/[^0-9]/g, '')}@phone.luxdues.local`,
           phone: firebaseUser.phone_number,

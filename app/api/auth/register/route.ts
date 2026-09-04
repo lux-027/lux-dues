@@ -4,6 +4,7 @@ import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
+import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
     // by an existing SUPER_ADMIN, and unit assignment is handled separately by an admin.
     const user = await prisma.user.create({
       data: {
+        accountNumber: await generateUniqueAccountNumber(),
         name,
         email,
         phone: normalizedPhone,

@@ -425,7 +425,7 @@ export default function HomeClient({
                 href={
                   session.role === 'SUPER_ADMIN' || session.role === 'BLOCK_ADMIN'
                     ? '/admin'
-                    : '/resident'
+                    : '/dashboard'
                 }
                 className="bg-white text-zinc-900 px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-sm"
               >
@@ -556,6 +556,12 @@ export default function HomeClient({
             .then((res) => res.json())
             .then((data) => {
               if (data.user) setSession(data.user);
+              const role = data.user?.role;
+              if (role === 'SUPER_ADMIN' || role === 'BLOCK_ADMIN') {
+                window.location.href = '/admin';
+              } else {
+                window.location.href = '/dashboard';
+              }
             })
             .catch(() => {});
         }}

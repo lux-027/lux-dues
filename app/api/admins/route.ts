@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { hashPassword } from '@/lib/auth';
+import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { UserRole } from '@prisma/client';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
 
     const admin = await prisma.user.create({
       data: {
+        accountNumber: await generateUniqueAccountNumber(),
         name,
         email,
         phone: normalizedPhone,

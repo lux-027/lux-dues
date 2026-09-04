@@ -4,6 +4,7 @@ import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
+import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 
 // GET /api/auth/register-admin - Check whether bootstrap admin registration is
 // still available (i.e. no SUPER_ADMIN exists yet).
@@ -57,20 +58,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingAdminCount = await prisma.user.count({
-      where: { role: UserRole.SUPER_ADMIN },
-    });
-
-    if (existingAdminCount > 0) {
-      return NextResponse.json(
-        {
-          error:
-            'Sistemde zaten bir yönetici hesabı mevcut. Yeni yönetici hesapları sadece mevcut yönetici tarafından "Yöneticiler" sayfasından oluşturulabilir.',
-        },
-        { status: 403 }
-      );
-    }
-
     const existingUser = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
     if (existingUser) {
       return NextResponse.json(
@@ -81,6 +68,7 @@ export async function POST(request: NextRequest) {
 
     const admin = await prisma.user.create({
       data: {
+        accountNumber: await generateUniqueAccountNumber(),
         name,
         email: firebaseUser.email,
         phone: normalizedPhone,

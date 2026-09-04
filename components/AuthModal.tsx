@@ -71,7 +71,7 @@ export function AuthModal({
 
   if (!isOpen) return null;
 
-  const canRegister = showRoleSelector && activeContext === 'resident';
+  const canRegister = showRoleSelector;
 
   const switchTab = (newTab: 'login' | 'register') => {
     setTab(newTab);

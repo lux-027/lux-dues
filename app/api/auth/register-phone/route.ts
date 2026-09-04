@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, generateToken } from '@/lib/auth';
+import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
+import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
 
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
+        accountNumber: await generateUniqueAccountNumber(),
         name,
         email,
         phone,

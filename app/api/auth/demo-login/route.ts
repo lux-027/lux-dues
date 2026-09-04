@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth';
+import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { UserRole } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
       if (!user) {
         user = await prisma.user.create({
           data: {
+            accountNumber: await generateUniqueAccountNumber(),
             name: 'Sistem Yöneticisi (Demo)',
             email: 'admin@luxdues.com',
             phone: '+905550000000',
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
 
         user = await prisma.user.create({
           data: {
+            accountNumber: await generateUniqueAccountNumber(),
             name: 'Demo Site Sakini',
             email: 'sakin@luxdues.com',
             phone: '+905551112233',

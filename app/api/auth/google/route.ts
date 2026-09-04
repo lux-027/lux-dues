@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
+import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { UserRole } from '@prisma/client';
 
 // POST /api/auth/google - Exchange a verified Firebase (Google) ID token for
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
       // account can only be accessed via Google sign-in going forward.
       user = await prisma.user.create({
         data: {
+          accountNumber: await generateUniqueAccountNumber(),
           name: googleUser.name || email.split('@')[0],
           email,
           phone: `google:${googleUser.uid}`,

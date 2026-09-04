@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { Button, Badge, Input, Textarea } from '@/components/ui';
 import { PhonePromptModal } from '@/components/PhonePromptModal';
@@ -53,6 +54,7 @@ interface UserProfile {
   name: string;
   email: string;
   phone: string;
+  role: string;
   units: UserUnit[];
 }
 
@@ -125,6 +127,7 @@ function ResidentHome({ user, units, onSelectUnit }: ResidentHomeProps) {
 export default function ResidentDashboard() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const router = useRouter();
   const [dues, setDues] = useState<Due[]>([]);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -152,6 +155,11 @@ export default function ResidentDashboard() {
         const meData = await meRes.json();
         const user: UserProfile | null = meData.user || null;
         setCurrentUser(user);
+
+        if (user?.role === 'SUPER_ADMIN' || user?.role === 'BLOCK_ADMIN') {
+          router.push('/admin');
+          return;
+        }
 
         const phone = user?.phone;
         if (!phone || phone.startsWith('google:')) {

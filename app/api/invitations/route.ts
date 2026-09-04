@@ -107,6 +107,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Kendinize davet gönderemezsiniz' }, { status: 400 });
     }
 
+    if (receiver.role === UserRole.RESIDENT) {
+      return NextResponse.json(
+        { error: 'Sakin kullanıcılar yönetici olarak davet edilemez. Sadece daireye davet edilebilirler.' },
+        { status: 400 }
+      );
+    }
+
     // Check if building exists
     const building = await prisma.building.findUnique({
       where: { id: buildingId },
