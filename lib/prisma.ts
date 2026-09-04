@@ -10,6 +10,9 @@ const databaseUrl = process.env.DATABASE_URL
 const adapter = new PrismaPg({
   connectionString: databaseUrl,
   ssl: databaseUrl?.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+  max: process.env.NODE_ENV === 'production' ? 2 : 5,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 10000,
 })
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter })
