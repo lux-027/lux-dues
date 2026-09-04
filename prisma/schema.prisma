@@ -66,6 +66,9 @@ model User {
   sentInvitations     AdminInvitation[] @relation("SenderInvitations")
   receivedInvitations AdminInvitation[] @relation("ReceiverInvitations")
 
+  sentFriendships     AdminFriendship[] @relation("AdminFriendshipRequester")
+  receivedFriendships AdminFriendship[] @relation("AdminFriendshipAddressee")
+
   @@index([email])
   @@index([phone])
   @@index([role])
@@ -213,6 +216,24 @@ model AdminInvitation {
   @@index([receiverId])
   @@index([senderId])
   @@index([buildingId])
+  @@index([status])
+}
+
+model AdminFriendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      InvitationStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relations
+  requester User @relation("AdminFriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("AdminFriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
   @@index([status])
 }
 

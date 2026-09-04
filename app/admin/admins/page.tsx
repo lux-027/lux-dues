@@ -27,6 +27,23 @@ interface Admin {
   createdAt: string;
 }
 
+interface FriendUser {
+  id: string;
+  accountNumber: number;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'SUPER_ADMIN' | 'BLOCK_ADMIN' | 'RESIDENT';
+}
+
+interface AdminFriendship {
+  id: string;
+  requester: FriendUser;
+  addressee: FriendUser;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+  createdAt: string;
+}
+
 interface SentInvitation {
   id: string;
   receiver: {
@@ -51,8 +68,14 @@ export default function AdminsPage() {
   const [sentInvitations, setSentInvitations] = useState<SentInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showFriendModal, setShowFriendModal] = useState(false);
   const [redirectAdmin, setRedirectAdmin] = useState<Admin | null>(null);
   const [search, setSearch] = useState('');
+  const [friendData, setFriendData] = useState<{
+    received: AdminFriendship[];
+    sent: AdminFriendship[];
+    friends: FriendUser[];
+  }>({ received: [], sent: [], friends: [] });
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -67,16 +90,25 @@ export default function AdminsPage() {
 
   const fetchData = async () => {
     try {
-      const [adminsRes, buildingsRes, invitesRes] = await Promise.all([
+      const [adminsRes, buildingsRes, invitesRes, friendRes] = await Promise.all([
         fetch('/api/admins'),
         fetch('/api/buildings'),
         fetch('/api/invitations'),
+        fetch('/api/admin-friendships'),
       ]);
       if (adminsRes.ok) setAdmins(await adminsRes.json());
       if (buildingsRes.ok) setBuildings(await buildingsRes.json());
       if (invitesRes.ok) {
         const invData = await invitesRes.json();
         setSentInvitations(invData.sent || []);
+      }
+      if (friendRes.ok) {
+        const fData = await friendRes.json();
+        setFriendData({
+          received: fData.received || [],
+          sent: fData.sent || [],
+          friends: fData.friends || [],
+        });
       }
     } catch (error) {
       console.error('Error fetching admins:', error);
@@ -109,6 +141,24 @@ export default function AdminsPage() {
       },
       loading: false,
     });
+  };
+
+  const handleFriendAction = async (id: string, action: 'ACCEPT' | 'REJECT' | 'CANCEL') => {
+    try {
+      const res = await fetch(`/api/admin-friendships/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        fetchData();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'İşlem başarısız');
+      }
+    } catch (error) {
+      console.error('Error handling friendship action:', error);
+    }
   };
 
   const handleCancelInvite = async (id: string) => {
@@ -178,16 +228,29 @@ export default function AdminsPage() {
             <h1 className="text-3xl font-light text-zinc-900 mb-1">Yöneticiler</h1>
             <p className="text-sm text-zinc-500">Site ve blok yöneticilerini görüntüleyin, davet edin ve yetkilerini yönetin.</p>
           </div>
-          <Button
-            onClick={() => setShowInviteModal(true)}
-            leftIcon={
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-            }
-          >
-            Yönetici Davet Et
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowFriendModal(true)}
+              variant="secondary"
+              leftIcon={
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              }
+            >
+              Yönetici Arkadaş Ekle
+            </Button>
+            <Button
+              onClick={() => setShowInviteModal(true)}
+              leftIcon={
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              }
+            >
+              Yönetici Davet Et
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -278,6 +341,114 @@ export default function AdminsPage() {
         </div>
       )}
 
+      {/* Gelen Arkadaşlık İstekleri */}
+      {friendData.received.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-medium text-zinc-900">Gelen Arkadaşlık İstekleri</h2>
+            <Badge variant="warning" size="sm">{friendData.received.length}</Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {friendData.received.map((f) => (
+              <Card key={f.id}>
+                <CardBody className="p-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                      {f.requester.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-zinc-900 truncate">{f.requester.name}</p>
+                      <p className="text-xs text-zinc-500 font-mono truncate">{formatAccountNumber(f.requester.accountNumber)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleFriendAction(f.id, 'REJECT')}>
+                      Reddet
+                    </Button>
+                    <Button size="sm" onClick={() => handleFriendAction(f.id, 'ACCEPT')}>
+                      Kabul Et
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Gönderilen Arkadaşlık İstekleri */}
+      {friendData.sent.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-medium text-zinc-900">Gönderilen Arkadaşlık İstekleri</h2>
+            <Badge variant="warning" size="sm">{friendData.sent.length}</Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {friendData.sent.map((f) => (
+              <Card key={f.id}>
+                <CardBody className="p-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                      {f.addressee.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-zinc-900 truncate">{f.addressee.name}</p>
+                      <p className="text-xs text-zinc-500 font-mono truncate">{formatAccountNumber(f.addressee.accountNumber)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFriendAction(f.id, 'CANCEL')}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      İptal Et
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Yönetici Arkadaşlarım */}
+      {friendData.friends.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-medium text-zinc-900">Yönetici Arkadaşlarım</h2>
+            <Badge variant="info" size="sm">{friendData.friends.length}</Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {friendData.friends.map((friend) => (
+              <Card key={friend.id}>
+                <CardBody className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-12 w-12 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                      {friend.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-zinc-900 truncate">{friend.name}</p>
+                      <p className="text-xs text-zinc-500 truncate">{friend.email}</p>
+                      <div className="mt-1.5 space-y-1 text-sm text-zinc-600">
+                        <p>{formatPhoneNumber(friend.phone)}</p>
+                        <p className="font-mono text-xs bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200 inline-block">
+                          {formatAccountNumber(friend.accountNumber)}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={friend.role === 'SUPER_ADMIN' ? 'info' : 'default'} size="sm">
+                      {friend.role === 'SUPER_ADMIN' ? 'Ana Yönetici' : 'Blok Yöneticisi'}
+                    </Badge>
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Aktif Yöneticiler */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-medium text-zinc-900">Aktif Yöneticiler</h2>
@@ -340,9 +511,20 @@ export default function AdminsPage() {
         </div>
       )}
 
+      {showFriendModal && (
+        <SendFriendRequestModal
+          onClose={() => setShowFriendModal(false)}
+          onSuccess={() => {
+            setShowFriendModal(false);
+            fetchData();
+          }}
+        />
+      )}
+
       {showInviteModal && (
         <InviteAdminModal
           buildings={buildings}
+          friends={friendData.friends}
           prefillAccountNumber={redirectAdmin?.accountNumber}
           onClose={() => {
             setShowInviteModal(false);
@@ -461,10 +643,164 @@ function AdminCard({
 }
 
 // -------------------------------------------------------------
+// MODAL: SEND ADMIN FRIEND REQUEST
+// -------------------------------------------------------------
+interface SendFriendRequestModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function SendFriendRequestModal({ onClose, onSuccess }: SendFriendRequestModalProps) {
+  const [accountNumberInput, setAccountNumberInput] = useState('');
+  const [lookedUpUser, setLookedUpUser] = useState<FriendUser | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleLookup = async () => {
+    const trimmed = accountNumberInput.trim();
+    if (!trimmed) {
+      setLookupError('Lütfen bir Kullanıcı ID girin');
+      setLookedUpUser(null);
+      return;
+    }
+
+    setLookupLoading(true);
+    setLookupError('');
+    setError('');
+    try {
+      const res = await fetch(`/api/users/lookup?accountNumber=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setLookedUpUser(data.user);
+      } else {
+        setLookedUpUser(null);
+        setLookupError(data.error || 'Kullanıcı bulunamadı');
+      }
+    } catch {
+      setLookedUpUser(null);
+      setLookupError('Bağlantı hatası oluştu');
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lookedUpUser) {
+      setError('Lütfen önce geçerli bir kullanıcı bulun');
+      return;
+    }
+
+    setSubmitLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin-friendships', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountNumber: lookedUpUser.accountNumber }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onSuccess();
+      } else {
+        setError(data.error || 'İstek gönderilemedi');
+      }
+    } catch {
+      setError('İstek gönderilemedi');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
+
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md transform transition-all overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
+            <h3 className="text-lg font-medium text-zinc-900">Yönetici Arkadaş Ekle</h3>
+            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="input-label">Kullanıcı ID</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="text"
+                  className="input-field font-mono"
+                  placeholder="Örn: 000 000 002"
+                  value={accountNumberInput}
+                  onChange={(e) => {
+                    setAccountNumberInput(e.target.value);
+                    setLookedUpUser(null);
+                    setLookupError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleLookup();
+                    }
+                  }}
+                />
+                <Button type="button" variant="secondary" onClick={handleLookup} loading={lookupLoading}>
+                  Bul
+                </Button>
+              </div>
+              {lookupError && <p className="text-xs text-red-600 mt-1.5">{lookupError}</p>}
+            </div>
+
+            {lookedUpUser && (
+              <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-zinc-900">{lookedUpUser.name}</span>
+                    <Badge variant="success">Kayıtlı Kullanıcı</Badge>
+                  </div>
+                  <p className="text-xs text-zinc-600 mt-0.5">
+                    {lookedUpUser.email} • {formatPhoneNumber(lookedUpUser.phone)}
+                  </p>
+                </div>
+                <code className="text-xs bg-white px-2 py-1 rounded border border-emerald-200 font-mono text-emerald-800">
+                  {formatAccountNumber(lookedUpUser.accountNumber)}
+                </code>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
+              <Button type="button" variant="secondary" onClick={onClose} disabled={submitLoading}>
+                İptal
+              </Button>
+              <Button type="submit" loading={submitLoading} disabled={!lookedUpUser}>
+                İstek Gönder
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
 // MODAL: INVITE ADMIN BY USER ID
 // -------------------------------------------------------------
 interface InviteAdminModalProps {
   buildings: Building[];
+  friends: FriendUser[];
   prefillAccountNumber?: number;
   onClose: () => void;
   onSuccess: () => void;
@@ -479,7 +815,7 @@ interface LookedUpUser {
   role: string;
 }
 
-function InviteAdminModal({ buildings, prefillAccountNumber, onClose, onSuccess }: InviteAdminModalProps) {
+function InviteAdminModal({ buildings, friends, prefillAccountNumber, onClose, onSuccess }: InviteAdminModalProps) {
   const [accountNumberInput, setAccountNumberInput] = useState(prefillAccountNumber ? formatAccountNumber(prefillAccountNumber) : '');
   const [buildingId, setBuildingId] = useState(buildings[0]?.id || '');
   const [blockName, setBlockName] = useState('');
@@ -636,6 +972,38 @@ function InviteAdminModal({ buildings, prefillAccountNumber, onClose, onSuccess 
               </p>
             ) : (
               <>
+                {friends.length > 0 && (
+                  <div>
+                    <label className="input-label">Yönetici Arkadaşlarım</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                      {friends.map((friend) => (
+                        <button
+                          key={friend.id}
+                          type="button"
+                          onClick={() => {
+                            setAccountNumberInput(formatAccountNumber(friend.accountNumber));
+                            setLookedUpUser(friend as LookedUpUser);
+                            setLookupError('');
+                          }}
+                          className={`flex items-center gap-2 p-2 border rounded-lg text-left transition-all ${
+                            lookedUpUser?.id === friend.id
+                              ? 'border-zinc-900 bg-zinc-50'
+                              : 'border-zinc-200 hover:border-zinc-400 bg-white'
+                          }`}
+                        >
+                          <div className="h-8 w-8 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                            {friend.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-zinc-900 truncate">{friend.name}</p>
+                            <p className="text-xs text-zinc-500 font-mono">{formatAccountNumber(friend.accountNumber)}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Kullanıcı ID Arama */}
                 <div>
                   <label className="input-label">Kullanıcı ID</label>
