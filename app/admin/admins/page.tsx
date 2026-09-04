@@ -281,10 +281,10 @@ export default function AdminsPage() {
       {/* Aktif Yöneticiler */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-medium text-zinc-900">Aktif Yöneticiler</h2>
-        <div className="flex items-center gap-2">
+        <div className="relative w-60 sm:w-72">
           <input
             type="text"
-            className="input-field w-60 sm:w-72"
+            className="input-field w-full pr-20"
             placeholder="Ara (isim, e-posta, telefon, ID)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -296,9 +296,10 @@ export default function AdminsPage() {
           />
           <Button
             type="button"
-            variant="secondary"
+            variant="primary"
             size="sm"
             onClick={() => setSearch(search.trim())}
+            className="absolute right-1.5 top-1.5 bottom-1.5"
             leftIcon={
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
