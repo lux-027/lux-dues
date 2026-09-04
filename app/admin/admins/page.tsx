@@ -195,7 +195,7 @@ export default function AdminsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardBody className="flex items-center gap-4 p-4">
-            <div className="h-10 w-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-xl bg-zinc-100 text-zinc-900 flex items-center justify-center">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
@@ -208,7 +208,7 @@ export default function AdminsPage() {
         </Card>
         <Card>
           <CardBody className="flex items-center gap-4 p-4">
-            <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-xl bg-zinc-100 text-zinc-900 flex items-center justify-center">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
@@ -221,7 +221,7 @@ export default function AdminsPage() {
         </Card>
         <Card>
           <CardBody className="flex items-center gap-4 p-4">
-            <div className="h-10 w-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-xl bg-zinc-100 text-zinc-900 flex items-center justify-center">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -281,13 +281,33 @@ export default function AdminsPage() {
       {/* Aktif Yöneticiler */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-medium text-zinc-900">Aktif Yöneticiler</h2>
-        <input
-          type="text"
-          className="input-field max-w-xs"
-          placeholder="Ara (isim, e-posta, telefon, ID)"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            className="input-field w-60 sm:w-72"
+            placeholder="Ara (isim, e-posta, telefon, ID)"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setSearch(search.trim())}
+            leftIcon={
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            }
+          >
+            Ara
+          </Button>
+        </div>
       </div>
 
       {filteredAdmins.length === 0 ? (
@@ -375,9 +395,7 @@ function AdminCard({
       <CardBody className="p-4 flex flex-col h-full">
         <div className="flex items-start gap-3">
           <div
-            className={`h-12 w-12 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${
-              isSuper ? 'bg-indigo-100 text-indigo-600' : 'bg-zinc-100 text-zinc-600'
-            }`}
+            className="h-12 w-12 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0"
           >
             {initials}
           </div>
