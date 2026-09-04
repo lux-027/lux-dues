@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardBody } from '@/components/ui';
-import { Button, Badge, Input, Select } from '@/components/ui';
+import { Button, Badge, Select } from '@/components/ui';
 import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
-import { formatAccountNumber, parseAccountNumber } from '@/lib/userId';
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
+import { formatAccountNumber } from '@/lib/userId';
 
 interface Building {
   id: string;
@@ -53,6 +52,7 @@ export default function AdminsPage() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [redirectAdmin, setRedirectAdmin] = useState<Admin | null>(null);
+  const [search, setSearch] = useState('');
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -143,6 +143,23 @@ export default function AdminsPage() {
 
   const pendingInvites = sentInvitations.filter((i) => i.status === 'PENDING');
 
+  const filteredAdmins = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return admins;
+    return admins.filter((a) =>
+      a.name.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q) ||
+      a.phone.replace(/\D/g, '').includes(q) ||
+      (a.accountNumber !== undefined && formatAccountNumber(a.accountNumber).toLowerCase().includes(q))
+    );
+  }, [admins, search]);
+
+  const stats = useMemo(() => ({
+    total: admins.length,
+    super: admins.filter((a) => a.role === 'SUPER_ADMIN').length,
+    block: admins.filter((a) => a.role === 'BLOCK_ADMIN').length,
+  }), [admins]);
+
   if (loading) {
     return (
       <div className="page-container">
@@ -156,14 +173,10 @@ export default function AdminsPage() {
   return (
     <div className="page-container">
       <div className="section-header">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-light text-zinc-900 mb-2">
-              Yöneticiler
-            </h1>
-            <p className="text-zinc-600 font-light">
-              Kullanıcı ID ile diğer yöneticilere talep gönderin ve blok yetkilerini yönetin
-            </p>
+            <h1 className="text-3xl font-light text-zinc-900 mb-1">Yöneticiler</h1>
+            <p className="text-sm text-zinc-500">Site ve blok yöneticilerini görüntüleyin, davet edin ve yetkilerini yönetin.</p>
           </div>
           <Button
             onClick={() => setShowInviteModal(true)}
@@ -173,175 +186,137 @@ export default function AdminsPage() {
               </svg>
             }
           >
-            Yönetici Davet Et (ID ile)
+            Yönetici Davet Et
           </Button>
         </div>
       </div>
 
-      {/* Bekleyen Davetler Tablosu */}
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <Card>
+          <CardBody className="flex items-center gap-4 p-4">
+            <div className="h-10 w-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-900">{stats.total}</p>
+              <p className="text-xs text-zinc-500">Toplam Yönetici</p>
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="flex items-center gap-4 p-4">
+            <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-900">{stats.super}</p>
+              <p className="text-xs text-zinc-500">Ana Yönetici</p>
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="flex items-center gap-4 p-4">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-zinc-900">{stats.block}</p>
+              <p className="text-xs text-zinc-500">Blok Yöneticisi</p>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Bekleyen Davetler */}
       {pendingInvites.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-base font-medium text-zinc-900">Bekleyen Yönetici Talepleri</h2>
-            <span className="px-2 py-0.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-medium">
-              {pendingInvites.length} Beklemede
-            </span>
+            <h2 className="text-lg font-medium text-zinc-900">Bekleyen Davetler</h2>
+            <Badge variant="warning" size="sm">{pendingInvites.length}</Badge>
           </div>
-          <Card>
-            <CardBody className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Davet Edilen Kullanıcı</TableHead>
-                    <TableHead>Kullanıcı ID</TableHead>
-                    <TableHead>Telefon</TableHead>
-                    <TableHead>Hedef Site / Blok</TableHead>
-                    <TableHead>Durum</TableHead>
-                    <TableHead className="text-right">İşlem</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingInvites.map((inv) => (
-                    <TableRow key={inv.id}>
-                      <TableCell className="font-medium text-zinc-900">{inv.receiver.name}</TableCell>
-                      <TableCell>
-                        <code className="text-xs bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200 font-mono">
-                          {formatAccountNumber(inv.receiver.accountNumber)}
-                        </code>
-                      </TableCell>
-                      <TableCell>{formatPhoneNumber(inv.receiver.phone)}</TableCell>
-                      <TableCell>
-                        <span className="font-medium text-zinc-800">{inv.building.name}</span>{' '}
-                        {inv.blockName ? (
-                          <span className="px-2 py-0.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-md font-medium">
-                            {inv.blockName}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 text-xs bg-zinc-100 text-zinc-600 rounded-md">
-                            Tüm Bloklar
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="warning">Onay Bekliyor</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCancelInvite(inv.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          İptal Et
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardBody>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pendingInvites.map((inv) => (
+              <Card key={inv.id}>
+                <CardBody className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                        {inv.receiver.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-zinc-900 truncate">{inv.receiver.name}</p>
+                        <p className="text-xs text-zinc-500 font-mono truncate">{formatAccountNumber(inv.receiver.accountNumber)}</p>
+                      </div>
+                    </div>
+                    <Badge variant="warning" size="sm">Onay Bekliyor</Badge>
+                  </div>
+                  <div className="mt-3 text-sm text-zinc-600">
+                    <span className="font-medium">{inv.building.name}</span>
+                    {inv.blockName ? ` · ${inv.blockName}` : ' · Tüm Bloklar'}
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCancelInvite(inv.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      İptal Et
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Aktif Yöneticiler */}
-      <div className="mb-3">
-        <h2 className="text-base font-medium text-zinc-900">Aktif Yöneticiler</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <h2 className="text-lg font-medium text-zinc-900">Aktif Yöneticiler</h2>
+        <input
+          type="text"
+          className="input-field max-w-xs"
+          placeholder="Ara (isim, e-posta, telefon, ID)"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {admins.length === 0 ? (
+      {filteredAdmins.length === 0 ? (
         <Card>
           <CardBody>
             <div className="empty-state">
               <h3 className="mt-2 text-sm font-medium text-zinc-900">
-                Henüz yönetici bulunmuyor
+                {search ? 'Aramaya uygun yönetici bulunamadı' : 'Henüz yönetici bulunmuyor'}
               </h3>
               <p className="mt-1 text-sm text-zinc-500">
-                İlk blok yöneticisini davet etmek için yukarıdaki butona tıklayın.
+                {search ? 'Farklı bir arama terimi deneyin.' : 'İlk blok yöneticisini davet etmek için yukarıdaki butona tıklayın.'}
               </p>
             </div>
           </CardBody>
         </Card>
       ) : (
-        <Card>
-          <CardBody className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ad Soyad</TableHead>
-                  <TableHead>Kullanıcı ID</TableHead>
-                  <TableHead>E-posta</TableHead>
-                  <TableHead>Telefon</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Atanan Yer / Blok</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {admins.map((admin) => (
-                  <TableRow key={admin.id}>
-                    <TableCell className="font-medium text-zinc-900">{admin.name}</TableCell>
-                    <TableCell>
-                      {admin.accountNumber ? (
-                        <code className="text-xs bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200 font-mono">
-                          {formatAccountNumber(admin.accountNumber)}
-                        </code>
-                      ) : (
-                        <span className="text-zinc-400 text-xs">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{admin.email}</TableCell>
-                    <TableCell>{formatPhoneNumber(admin.phone)}</TableCell>
-                    <TableCell>
-                      <Badge variant={admin.role === 'SUPER_ADMIN' ? 'info' : 'default'}>
-                        {admin.role === 'SUPER_ADMIN' ? 'Ana Yönetici (Tüm Sistem)' : 'Blok Yöneticisi'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {admin.building ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-zinc-800">{admin.building.name}</span>
-                          {admin.blockName ? (
-                            <span className="px-2 py-0.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-md font-medium">
-                              {admin.blockName}
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 text-xs bg-zinc-100 text-zinc-600 rounded-md">
-                              Tüm Bloklar
-                            </span>
-                          )}
-                        </div>
-                      ) : admin.role === 'SUPER_ADMIN' ? (
-                        <span className="text-xs text-indigo-600 font-medium">Tüm Siteler ve Bloklar</span>
-                      ) : (
-                        <span className="text-zinc-400">Atanmadı</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {admin.role === 'BLOCK_ADMIN' && (
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setRedirectAdmin(admin);
-                              setShowInviteModal(true);
-                            }}
-                          >
-                            Yeni Siteye Yönlendir
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(admin.id)}>
-                            Yetkiyi Kaldır
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardBody>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredAdmins.map((admin) => (
+            <AdminCard
+              key={admin.id}
+              admin={admin}
+              onRedirect={() => {
+                setRedirectAdmin(admin);
+                setShowInviteModal(true);
+              }}
+              onRemove={() => handleDelete(admin.id)}
+            />
+          ))}
+        </div>
       )}
 
       {showInviteModal && (
@@ -372,6 +347,97 @@ export default function AdminsPage() {
         onCancel={() => setConfirmModal((prev) => ({ ...prev, open: false }))}
       />
     </div>
+  );
+}
+
+// -------------------------------------------------------------
+// COMPONENT: ADMIN CARD
+// -------------------------------------------------------------
+function AdminCard({
+  admin,
+  onRedirect,
+  onRemove,
+}: {
+  admin: Admin;
+  onRedirect: () => void;
+  onRemove: () => void;
+}) {
+  const isSuper = admin.role === 'SUPER_ADMIN';
+  const initials = admin.name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  return (
+    <Card className="h-full flex flex-col">
+      <CardBody className="p-4 flex flex-col h-full">
+        <div className="flex items-start gap-3">
+          <div
+            className={`h-12 w-12 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${
+              isSuper ? 'bg-indigo-100 text-indigo-600' : 'bg-zinc-100 text-zinc-600'
+            }`}
+          >
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-zinc-900 truncate">{admin.name}</p>
+                <p className="text-xs text-zinc-500 truncate">{admin.email}</p>
+              </div>
+              <Badge variant={isSuper ? 'info' : 'default'} size="sm">
+                {isSuper ? 'Ana Yönetici' : 'Blok Yöneticisi'}
+              </Badge>
+            </div>
+            <div className="mt-3 space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-zinc-600">
+                <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span>{formatPhoneNumber(admin.phone)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-zinc-600">
+                <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-1 0V5a2 2 0 00-2-2H8a2 2 0 00-2 2v1m6 4h.01M6 10h.01M18 10h.01M14 14h.01M10 14h.01M6 14h.01" />
+                </svg>
+                <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200 font-mono">
+                  {admin.accountNumber ? formatAccountNumber(admin.accountNumber) : '-'}
+                </code>
+              </div>
+              <div className="flex items-center gap-2 text-zinc-600">
+                <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span className="truncate">
+                  {admin.building ? (
+                    <>
+                      <span className="font-medium">{admin.building.name}</span>
+                      {admin.blockName ? ` · ${admin.blockName}` : ' · Tüm Bloklar'}
+                    </>
+                  ) : isSuper ? (
+                    'Tüm Siteler ve Bloklar'
+                  ) : (
+                    'Atanmadı'
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {admin.role === 'BLOCK_ADMIN' && (
+          <div className="mt-auto pt-4 border-t border-zinc-100 flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={onRedirect}>
+              Yeni Siteye Yönlendir
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onRemove} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              Yetkiyi Kaldır
+            </Button>
+          </div>
+        )}
+      </CardBody>
+    </Card>
   );
 }
 
