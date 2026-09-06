@@ -282,7 +282,7 @@ export default function ResidentDashboard() {
           <div>
             <button
               onClick={() => setSelectedUnitId(null)}
-              className="inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-1.5 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 rounded-lg shadow-sm hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-300 transition-all mb-3"
+              className="inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-900 rounded-lg shadow-sm hover:bg-zinc-800 transition-all mb-3"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
