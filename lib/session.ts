@@ -9,6 +9,10 @@ export interface SessionUnit {
   floor: string;
   buildingId: string;
   buildingName: string;
+  buildingImage?: string | null;
+  buildingAddress?: string | null;
+  buildingType?: string | null;
+  blockImages?: any;
 }
 
 export interface SessionUser {
@@ -21,6 +25,7 @@ export interface SessionUser {
   role: 'SUPER_ADMIN' | 'BLOCK_ADMIN' | 'RESIDENT';
   buildingId?: string | null;
   buildingName?: string | null;
+  buildingImage?: string | null;
   blockName?: string | null;
   units: SessionUnit[];
 }
@@ -41,7 +46,7 @@ export async function getSession(): Promise<SessionUser | null> {
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
     include: {
-      building: { select: { id: true, name: true } },
+      building: { select: { id: true, name: true, image: true, blockImages: true, address: true, type: true } },
       units: {
         select: {
           id: true,
@@ -49,7 +54,7 @@ export async function getSession(): Promise<SessionUser | null> {
           doorNo: true,
           floor: true,
           buildingId: true,
-          building: { select: { name: true } },
+          building: { select: { id: true, name: true, image: true, blockImages: true, address: true, type: true } },
         },
       },
     },
@@ -69,6 +74,7 @@ export async function getSession(): Promise<SessionUser | null> {
     role: user.role,
     buildingId: user.buildingId,
     buildingName: user.building?.name ?? null,
+    buildingImage: user.building?.image ?? null,
     blockName: (user as any).blockName ?? null,
     units: user.units.map((u) => ({
       id: u.id,
@@ -77,6 +83,10 @@ export async function getSession(): Promise<SessionUser | null> {
       floor: u.floor,
       buildingId: u.buildingId,
       buildingName: u.building.name,
+      buildingImage: u.building.image ?? null,
+      buildingAddress: u.building.address ?? null,
+      buildingType: u.building.type ?? null,
+      blockImages: u.building.blockImages ?? null,
     })),
   };
 }

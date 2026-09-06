@@ -47,6 +47,10 @@ interface UserUnit {
   floor: string;
   buildingId: string;
   buildingName: string;
+  buildingImage?: string | null;
+  buildingAddress?: string | null;
+  buildingType?: string | null;
+  blockImages?: any;
 }
 
 interface UserProfile {
@@ -89,36 +93,47 @@ function ResidentHome({ user, units, onSelectUnit }: ResidentHomeProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {units.map((unit) => (
-          <button
-            key={unit.id}
-            onClick={() => onSelectUnit(unit.id)}
-            className="group relative h-56 rounded-2xl overflow-hidden shadow-sm border border-zinc-200 text-left transition-all duration-300 hover:shadow-lg hover:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
-          >
-            <img
-              src="/bannerbina.jpg"
-              alt={unit.buildingName}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/90 via-zinc-900/45 to-transparent" />
-            <div className="absolute inset-0 p-6 flex flex-col justify-end">
-              <p className="text-white text-xl font-medium truncate mb-1">{unit.buildingName}</p>
-              <div className="flex items-center gap-2 text-zinc-200 text-sm">
-                <span>{unit.blockName}</span>
-                <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                <span>No: {unit.doorNo}</span>
-                <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                <span>Kat: {unit.floor}</span>
+        {units.map((unit) => {
+          const unitImg = unit.blockImages?.[unit.blockName] || unit.buildingImage;
+          return (
+            <button
+              key={unit.id}
+              onClick={() => onSelectUnit(unit.id)}
+              className="group relative h-56 rounded-2xl overflow-hidden shadow-sm border border-zinc-200 text-left transition-all duration-300 hover:shadow-lg hover:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
+            >
+              {unitImg ? (
+                <img
+                  src={unitImg}
+                  alt={unit.buildingName}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center">
+                  <svg className="w-16 h-16 text-zinc-700 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/90 via-zinc-900/45 to-transparent" />
+              <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                <p className="text-white text-xl font-medium truncate mb-1">{unit.buildingName}</p>
+                <div className="flex items-center gap-2 text-zinc-200 text-sm">
+                  <span>{unit.blockName}</span>
+                  <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                  <span>No: {unit.doorNo}</span>
+                  <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                  <span>Kat: {unit.floor}</span>
+                </div>
+                <div className="mt-4 flex items-center text-white text-xs font-semibold tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Detayları Gör
+                  <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
-              <div className="mt-4 flex items-center text-white text-xs font-semibold tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                Detayları Gör
-                <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -276,46 +291,96 @@ export default function ResidentDashboard() {
 
   return (
     <div className="page-container">
-      {/* Top Header */}
-      <div className="section-header mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div>
-            <button
-              onClick={() => setSelectedUnitId(null)}
-              className="inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-900 rounded-lg shadow-sm hover:bg-zinc-800 transition-all mb-3"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              Dairelerime Dön
-            </button>
-            <h1 className="text-3xl font-light text-zinc-900 mb-1">
-              {selectedUnit?.buildingName}
-            </h1>
-            <p className="text-zinc-500 font-light text-sm">
-              {selectedUnit?.blockName} · No: {selectedUnit?.doorNo} · Kat: {selectedUnit?.floor}
-            </p>
-          </div>
+      {/* Top Header Navigation */}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <button
+          onClick={() => setSelectedUnitId(null)}
+          className="inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-1.5 text-xs font-semibold text-white bg-zinc-900 border border-zinc-900 rounded-lg shadow-sm hover:bg-zinc-800 transition-all"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Dairelerime Dön
+        </button>
 
-          <div className="flex items-center gap-2">
-            {currentUser && currentUser.units.length > 1 && (
-              <button
-                onClick={() => setSelectedUnitId(null)}
-                className="text-xs font-medium text-zinc-600 hover:text-zinc-900 underline underline-offset-2 transition-colors"
-              >
-                Evlerimi Değiştir
-              </button>
-            )}
-            {selectedUnit && (
-              <div className="bg-zinc-50 border border-zinc-200 px-4 py-2 rounded-xl flex items-center gap-2 text-xs text-zinc-700">
-                <span className="font-medium text-zinc-900">{selectedUnit.buildingName}</span>
-                <span className="text-zinc-300">•</span>
-                <span>{selectedUnit.blockName} No: {selectedUnit.doorNo}</span>
-              </div>
-            )}
-          </div>
-        </div>
+        {currentUser && currentUser.units.length > 1 && (
+          <button
+            onClick={() => setSelectedUnitId(null)}
+            className="text-xs font-medium text-zinc-600 hover:text-zinc-900 underline underline-offset-2 transition-colors"
+          >
+            Evlerimi Değiştir ({currentUser.units.length} Daire)
+          </button>
+        )}
       </div>
+
+      {/* Building Header Card */}
+      <Card className="mb-6 overflow-hidden">
+        <CardBody className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            {/* Building / Block Image in Left Corner */}
+            <div className="w-full sm:w-44 h-32 rounded-xl overflow-hidden border border-zinc-200 flex-shrink-0 bg-zinc-100 relative">
+              {(() => {
+                const imgUrl = selectedUnit?.blockImages?.[selectedUnit.blockName] || selectedUnit?.buildingImage;
+                if (imgUrl) {
+                  return (
+                    <img
+                      src={imgUrl}
+                      alt={selectedUnit?.buildingName || 'Bina'}
+                      className="w-full h-full object-cover"
+                    />
+                  );
+                }
+                return (
+                  <div className="w-full h-full bg-gradient-to-br from-zinc-100 via-zinc-200/70 to-zinc-200 flex flex-col items-center justify-center text-zinc-500 select-none p-3">
+                    <div className="h-10 w-10 rounded-xl bg-white shadow-sm border border-zinc-200/80 flex items-center justify-center">
+                      <svg className="h-5 w-5 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <span className="text-[10px] font-semibold text-zinc-600 tracking-wider uppercase mt-1.5 truncate max-w-[120px] text-center">
+                      {selectedUnit?.blockName || 'Bina'}
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Building & Unit Details */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+              <div>
+                <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+                  <h1 className="text-2xl sm:text-3xl font-light text-zinc-900 truncate">
+                    {selectedUnit?.buildingName}
+                  </h1>
+                  <Badge variant="success" size="sm">Aktif Daire</Badge>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-700 mt-2">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-zinc-100 border border-zinc-200">
+                    {selectedUnit?.blockName}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-zinc-100 border border-zinc-200">
+                    Kapı No: {selectedUnit?.doorNo}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-zinc-100 border border-zinc-200">
+                    Kat: {selectedUnit?.floor}
+                  </span>
+                </div>
+              </div>
+
+              {selectedUnit?.buildingAddress && (
+                <div className="mt-3 flex items-center gap-1.5 text-xs text-zinc-500">
+                  <svg className="h-4 w-4 text-zinc-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="truncate">{selectedUnit.buildingAddress}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardBody>
+      </Card>
 
       {dataLoading ? (
         <div className="flex items-center justify-center h-64">
