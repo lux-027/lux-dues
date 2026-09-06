@@ -12,12 +12,16 @@ export interface SessionUnit {
   buildingImage?: string | null;
   buildingAddress?: string | null;
   buildingType?: string | null;
+  defaultDueAmount?: number | null;
+  buildingDefaultDueAmount?: number | null;
   blockImages?: any;
 }
 
 export interface SessionUser {
   id: string;
   accountNumber: number;
+  adminAccountNumber?: number | null;
+  residentAccountNumber?: number | null;
   name: string;
   email: string;
   phone: string;
@@ -46,7 +50,7 @@ export async function getSession(): Promise<SessionUser | null> {
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
     include: {
-      building: { select: { id: true, name: true, image: true, blockImages: true, address: true, type: true } },
+      building: { select: { id: true, name: true, image: true, blockImages: true, address: true, type: true, defaultDueAmount: true } },
       units: {
         select: {
           id: true,
@@ -54,7 +58,8 @@ export async function getSession(): Promise<SessionUser | null> {
           doorNo: true,
           floor: true,
           buildingId: true,
-          building: { select: { id: true, name: true, image: true, blockImages: true, address: true, type: true } },
+          defaultDueAmount: true,
+          building: { select: { id: true, name: true, image: true, blockImages: true, address: true, type: true, defaultDueAmount: true } },
         },
       },
     },
@@ -67,6 +72,8 @@ export async function getSession(): Promise<SessionUser | null> {
   return {
     id: user.id,
     accountNumber: user.accountNumber,
+    adminAccountNumber: (user as any).adminAccountNumber ?? null,
+    residentAccountNumber: (user as any).residentAccountNumber ?? null,
     name: user.name,
     email: user.email,
     phone: user.phone,
@@ -86,6 +93,8 @@ export async function getSession(): Promise<SessionUser | null> {
       buildingImage: u.building.image ?? null,
       buildingAddress: u.building.address ?? null,
       buildingType: u.building.type ?? null,
+      defaultDueAmount: u.defaultDueAmount ? Number(u.defaultDueAmount) : null,
+      buildingDefaultDueAmount: u.building.defaultDueAmount ? Number(u.building.defaultDueAmount) : null,
       blockImages: u.building.blockImages ?? null,
     })),
   };

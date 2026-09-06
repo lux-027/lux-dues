@@ -8,8 +8,14 @@ import { prisma } from './prisma';
 export async function generateUniqueAccountNumber(): Promise<number> {
   while (true) {
     const candidate = Math.floor(100000000 + Math.random() * 900000000);
-    const existing = await prisma.user.findUnique({
-      where: { accountNumber: candidate },
+    const existing = await (prisma as any).user.findFirst({
+      where: {
+        OR: [
+          { accountNumber: candidate },
+          { adminAccountNumber: candidate },
+          { residentAccountNumber: candidate },
+        ],
+      },
     });
     if (!existing) return candidate;
   }

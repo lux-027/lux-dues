@@ -25,9 +25,9 @@ interface GeneralNotification {
   id: string;
   title: string;
   message: string;
-  time: string;
+  type?: string;
   isRead: boolean;
-  type?: 'info' | 'success' | 'warning';
+  createdAt: string;
 }
 
 export function NotificationMenu() {
@@ -39,19 +39,21 @@ export function NotificationMenu() {
 
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
   useEffect(() => {
     fetchInvitations();
-    // Example notifications or placeholder
-    setNotifications([
-      {
-        id: '1',
-        title: 'LuxDues Sistemine Hoş Geldiniz',
-        message: 'Tüm aidat ve site yönetimi işlemlerinizi panelinizden kolayca takip edebilirsiniz.',
-        time: 'Bugün',
-        isRead: true,
-        type: 'info',
-      },
-    ]);
+    fetchNotifications();
   }, []);
 
   useEffect(() => {
@@ -75,6 +77,19 @@ export function NotificationMenu() {
       }
     } catch (error) {
       console.error('Error fetching invitations:', error);
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAll: true }),
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -103,7 +118,8 @@ export function NotificationMenu() {
     }
   };
 
-  const totalUnread = invitations.length;
+  const unreadNotifications = notifications.filter((n) => !n.isRead).length;
+  const totalUnread = invitations.length + unreadNotifications;
 
   return (
     <div className="relative" ref={menuRef}>
@@ -243,16 +259,38 @@ export function NotificationMenu() {
                     <p className="text-xs text-zinc-400">Henüz bir bildiriminiz bulunmuyor.</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-zinc-100">
-                    {notifications.map((notif) => (
-                      <div key={notif.id} className="p-3.5 hover:bg-zinc-50 transition-colors">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className="text-xs font-semibold text-zinc-900">{notif.title}</p>
-                          <span className="text-[10px] text-zinc-400">{notif.time}</span>
-                        </div>
-                        <p className="text-xs text-zinc-600 leading-relaxed">{notif.message}</p>
+                  <div>
+                    {unreadNotifications > 0 && (
+                      <div className="p-2 bg-zinc-50 border-b border-zinc-100 flex items-center justify-between">
+                        <span className="text-[11px] text-zinc-500 font-medium">{unreadNotifications} okunmamış bildirim</span>
+                        <button
+                          type="button"
+                          onClick={markAllNotificationsRead}
+                          className="text-[11px] text-zinc-600 hover:text-zinc-900 font-medium underline"
+                        >
+                          Tümünü Okundu İşaretle
+                        </button>
                       </div>
-                    ))}
+                    )}
+                    <div className="divide-y divide-zinc-100">
+                      {notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className={`p-3.5 hover:bg-zinc-50 transition-colors ${!notif.isRead ? 'bg-indigo-50/30' : ''}`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-1.5">
+                              {!notif.isRead && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 flex-shrink-0" />}
+                              <p className="text-xs font-semibold text-zinc-900">{notif.title}</p>
+                            </div>
+                            <span className="text-[10px] text-zinc-400 flex-shrink-0">
+                              {new Date(notif.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-600 leading-relaxed">{notif.message}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

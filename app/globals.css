@@ -6,7 +6,11 @@
   * {
     @apply border-zinc-200;
   }
-  
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-white text-zinc-900 font-sans font-light antialiased;
   }

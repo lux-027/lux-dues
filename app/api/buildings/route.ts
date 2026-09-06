@@ -12,6 +12,17 @@ export async function GET(request: NextRequest) {
           select: {
             units: true,
             admins: true,
+            complaints: true,
+            specialProjects: true,
+          },
+        },
+        units: {
+          select: {
+            id: true,
+            isVacant: true,
+            residents: {
+              select: { id: true },
+            },
           },
         },
       },

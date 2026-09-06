@@ -39,12 +39,26 @@ export async function POST(request: NextRequest) {
     } else {
       user = await prisma.user.findFirst({
         where: {
+          email: 'sakin@luxdues.com',
           role: UserRole.RESIDENT,
         },
         include: {
           building: true,
+          units: true,
         },
       });
+
+      if (!user) {
+        user = await prisma.user.findFirst({
+          where: {
+            role: UserRole.RESIDENT,
+          },
+          include: {
+            building: true,
+            units: true,
+          },
+        });
+      }
 
       if (!user) {
         const firstBuilding = await prisma.building.findFirst();

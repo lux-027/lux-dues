@@ -2,6 +2,7 @@ import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import HomeClient from './HomeClient';
+import { StructuredData } from '@/components/StructuredData';
 
 // Server component: resolves the session and public platform stats before the
 // first paint so the header and stats never flash empty/loading states.
@@ -15,9 +16,12 @@ export default async function LandingPage() {
   ]);
 
   return (
-    <HomeClient
-      initialSession={session ? { name: session.name, role: session.role, avatarUrl: session.avatarUrl } : null}
-      initialStats={{ totalBuildings, totalUnits, totalAdmins }}
-    />
+    <>
+      <StructuredData />
+      <HomeClient
+        initialSession={session ? { name: session.name, role: session.role, avatarUrl: session.avatarUrl } : null}
+        initialStats={{ totalBuildings, totalUnits, totalAdmins }}
+      />
+    </>
   );
 }

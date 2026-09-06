@@ -21,6 +21,7 @@ interface Resident {
   name: string;
   email: string;
   phone: string;
+  avatarUrl?: string | null;
 }
 
 interface Due {
@@ -41,6 +42,7 @@ interface Unit {
   ownerName: string;
   residentPhone: string;
   defaultDueAmount?: string | number | null;
+  isVacant?: boolean;
   residents: Resident[];
 }
 
@@ -490,10 +492,32 @@ export default function ResidentsPage() {
                       {formatPhoneNumber(unit.residentPhone)}
                     </TableCell>
                     <TableCell>
-                      {unit.residents.length > 0 ? (
-                        <Badge variant="success">
-                          {unit.residents[0].name} {unit.residents.length > 1 ? `(+${unit.residents.length - 1})` : ''}
-                        </Badge>
+                      {unit.isVacant ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          Boş Daire (Aidatsız)
+                        </span>
+                      ) : unit.residents.length > 0 ? (
+                        <div className="flex items-center gap-2">
+                          {unit.residents[0].avatarUrl ? (
+                            <img
+                              src={unit.residents[0].avatarUrl}
+                              alt={unit.residents[0].name}
+                              className="w-6 h-6 rounded-full object-cover border border-zinc-200 flex-shrink-0"
+                            />
+                          ) : (
+                            <span className="w-6 h-6 rounded-full bg-zinc-800 text-white text-[10px] font-semibold flex items-center justify-center flex-shrink-0">
+                              {unit.residents[0].name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase()}
+                            </span>
+                          )}
+                          <Badge variant="success">
+                            {unit.residents[0].name} {unit.residents.length > 1 ? `(+${unit.residents.length - 1})` : ''}
+                          </Badge>
+                        </div>
                       ) : (
                         <Badge variant="default">Kullanıcı Bekleniyor</Badge>
                       )}

@@ -5,7 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
 import { BuildingIllustration } from '@/components/BuildingIllustration';
 import { Logo } from '@/components/Logo';
-import { Input, Textarea, Button, ConfirmModal } from '@/components/ui';
+import { Input, Textarea, Button } from '@/components/ui';
+import { Footer } from '@/components/Footer';
+import { DashboardShowcase } from '@/components/DashboardShowcase';
+import { ProfileMenu } from '@/components/ProfileMenu';
 
 // Central contact address for the whole site. Always route contact/support
 // messages here, with the subject line indicating they came from the LuxDues page.
@@ -123,17 +126,6 @@ export default function HomeClient({
   // Seeded from the server (via getSession()) so the header never flashes
   // the logged-out state before the client re-checks the session.
   const [session, setSession] = useState<SessionSummary | null>(initialSession);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  const handleLogout = async () => {
-    setShowLogoutConfirm(false);
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/';
-  };
-
-  const handleLogoutClick = () => {
-    setShowLogoutConfirm(true);
-  };
 
   const handleStart = () => {
     if (!session) return;
@@ -206,22 +198,7 @@ export default function HomeClient({
 
             <div className="flex items-center gap-2 sm:gap-3">
               {session ? (
-                <>
-                  <div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-sm font-semibold overflow-hidden">
-                    {session.avatarUrl ? (
-                      <img src={session.avatarUrl} alt={session.name} className="w-full h-full object-cover" />
-                    ) : (
-                      session.name.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <span className="hidden sm:inline text-sm text-zinc-700 font-medium">{session.name}</span>
-                  <button
-                    onClick={handleLogoutClick}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors"
-                  >
-                    Çıkış Yap
-                  </button>
-                </>
+                <ProfileMenu />
               ) : (
                 <>
                   <button
@@ -347,6 +324,9 @@ export default function HomeClient({
         </div>
       </section>
 
+      {/* Modern Dashboard Showcase Mockup */}
+      <DashboardShowcase />
+
       {/* Features */}
       <section id="ozellikler" className="bg-zinc-50 border-t border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -407,7 +387,7 @@ export default function HomeClient({
             },
           ].map((item) => (
             <div key={item.step} className="relative">
-              <span className="text-5xl font-light text-zinc-200">{item.step}</span>
+              <span className="text-5xl font-light text-zinc-400">{item.step}</span>
               <h3 className="text-lg font-medium text-zinc-900 mt-2 mb-2">{item.title}</h3>
               <p className="text-sm text-zinc-600 font-light leading-relaxed">{item.description}</p>
             </div>
@@ -529,35 +509,7 @@ export default function HomeClient({
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Logo size={52} wordmarkClassName="text-sm" />
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <a
-                href={`mailto:${CONTACT_EMAIL}`}
-                className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-              >
-                {CONTACT_EMAIL}
-              </a>
-              <p className="text-sm text-zinc-500">
-                © 2026 LuxDues. Tüm hakları saklıdır.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      <ConfirmModal
-        open={showLogoutConfirm}
-        title="Çıkış Yap"
-        description="Oturumunuzu kapatmak istediğinize emin misiniz?"
-        confirmText="Çıkış Yap"
-        cancelText="Vazgeç"
-        variant="warning"
-        onConfirm={handleLogout}
-        onCancel={() => setShowLogoutConfirm(false)}
-      />
+      <Footer />
 
       <AuthModal
         key={`${authModal.context}-${authModal.tab}-${authModal.open}-${authModal.showRoleSelector}-${authModal.registerOnly}`}

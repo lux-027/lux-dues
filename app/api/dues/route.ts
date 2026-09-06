@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const whereUnit: any = { buildingId };
+      const whereUnit: any = { buildingId, isVacant: false };
       if (blockName && blockName !== 'ALL') {
         whereUnit.blockName = blockName;
       }

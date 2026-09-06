@@ -23,11 +23,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Geçersiz Kullanıcı ID formatı' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { accountNumber: parsedNumber },
+    const user = await (prisma as any).user.findFirst({
+      where: {
+        OR: [
+          { accountNumber: parsedNumber },
+          { adminAccountNumber: parsedNumber },
+          { residentAccountNumber: parsedNumber },
+        ],
+      },
       select: {
         id: true,
         accountNumber: true,
+        adminAccountNumber: true,
+        residentAccountNumber: true,
         name: true,
         phone: true,
         email: true,

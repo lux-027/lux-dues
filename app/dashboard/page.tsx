@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardBody } from '@/components/ui';
-import { Button, Badge, Input, Textarea } from '@/components/ui';
+import { Button, Badge, Input, Textarea, ConfirmModal } from '@/components/ui';
 import { PhonePromptModal } from '@/components/PhonePromptModal';
 
 interface Due {
@@ -50,6 +50,8 @@ interface UserUnit {
   buildingImage?: string | null;
   buildingAddress?: string | null;
   buildingType?: string | null;
+  defaultDueAmount?: number | null;
+  buildingDefaultDueAmount?: number | null;
   blockImages?: any;
 }
 
@@ -149,9 +151,12 @@ export default function ResidentDashboard() {
   const [loading, setLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [showPastComplaints, setShowPastComplaints] = useState(false);
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
   const [showDuesDetail, setShowDuesDetail] = useState(false);
   const [duesDetailYear, setDuesDetailYear] = useState(new Date().getFullYear());
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [leavingUnit, setLeavingUnit] = useState(false);
 
   useEffect(() => {
     fetchMe();
@@ -170,11 +175,6 @@ export default function ResidentDashboard() {
         const meData = await meRes.json();
         const user: UserProfile | null = meData.user || null;
         setCurrentUser(user);
-
-        if (user?.role === 'SUPER_ADMIN' || user?.role === 'BLOCK_ADMIN') {
-          router.push('/admin');
-          return;
-        }
 
         const phone = user?.phone;
         if (!phone || phone.startsWith('google:')) {
@@ -249,6 +249,31 @@ export default function ResidentDashboard() {
   const totalDebt = dues
     .filter((d) => d.status === 'UNPAID')
     .reduce((sum, d) => sum + parseFloat(d.amount), 0);
+
+  const determinedDue = selectedUnit?.defaultDueAmount ?? selectedUnit?.buildingDefaultDueAmount ?? null;
+
+  const handleLeaveUnit = async () => {
+    if (!selectedUnitId) return;
+    setLeavingUnit(true);
+    try {
+      const res = await fetch(`/api/units/${selectedUnitId}/leave`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        setShowLeaveConfirm(false);
+        setSelectedUnitId(null);
+        await fetchMe();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Daireden ayrılırken bir hata oluştu');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('İşlem sırasında bir hata oluştu');
+    } finally {
+      setLeavingUnit(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -369,7 +394,7 @@ export default function ResidentDashboard() {
               </div>
 
               {selectedUnit?.buildingAddress && (
-                <div className="mt-3 flex items-center gap-1.5 text-xs text-zinc-500">
+                <div className="mt-2.5 flex items-center gap-1.5 text-xs text-zinc-500">
                   <svg className="h-4 w-4 text-zinc-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -377,6 +402,21 @@ export default function ResidentDashboard() {
                   <span className="truncate">{selectedUnit.buildingAddress}</span>
                 </div>
               )}
+
+              {/* Daireden Ayrıl Butonu */}
+              <div className="mt-3 pt-2.5 border-t border-zinc-100 flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowLeaveConfirm(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100/80 rounded-lg transition-colors border border-red-200/60"
+                  title="Bu dairenin takibini sonlandır"
+                >
+                  <svg className="h-3.5 w-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Daireden Ayrıl</span>
+                </button>
+              </div>
             </div>
           </div>
         </CardBody>
@@ -391,14 +431,27 @@ export default function ResidentDashboard() {
           {/* Summary Card */}
           <Card className="mb-6">
             <CardBody>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Toplam Aidat Borcu</p>
                   <p className="text-3xl font-light text-zinc-900">
                     {totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-700">
+
+                {determinedDue != null && (
+                  <div className="sm:border-l sm:border-zinc-200 sm:pl-6">
+                    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">
+                      Yönetimce Belirlenen Aylık Aidat
+                    </p>
+                    <p className="text-xl font-semibold text-zinc-900 flex items-baseline gap-1">
+                      {determinedDue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                      <span className="text-xs font-normal text-zinc-500">/ ay</span>
+                    </p>
+                  </div>
+                )}
+
+                <div className="h-12 w-12 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-700 self-start sm:self-center">
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -415,10 +468,17 @@ export default function ResidentDashboard() {
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-medium text-zinc-900">Aidat Borçlarım</h2>
+                  <div>
+                    <h2 className="text-base font-medium text-zinc-900">Aidat Borçlarım</h2>
+                    {determinedDue != null && (
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Belirlenen Aylık Tutar: <strong>{determinedDue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</strong>
+                      </p>
+                    )}
+                  </div>
                   {dues.length > 0 && (
-                    <span className="text-xs text-zinc-400 flex items-center gap-1">
-                      Detay
+                    <span className="text-xs text-zinc-400 flex items-center gap-1 hover:text-zinc-700 transition-colors">
+                      Detay Gör
                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
@@ -428,7 +488,29 @@ export default function ResidentDashboard() {
               </CardHeader>
               <CardBody>
                 {dues.length === 0 ? (
-                  <p className="text-sm text-zinc-500 py-4">Henüz bir aidat kaydınız bulunmuyor.</p>
+                  determinedDue != null ? (
+                    <div className="py-2 space-y-3">
+                      <div className="p-4 bg-zinc-50 border border-zinc-200/80 rounded-xl">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                            Aylık Aidat Bedeli
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Yönetici Belirledi
+                          </span>
+                        </div>
+                        <p className="text-2xl font-semibold text-zinc-900">
+                          {determinedDue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+                          <span className="text-xs font-normal text-zinc-500 ml-1">/ ay</span>
+                        </p>
+                        <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
+                          Yönetici tarafından bu daire için belirlenen aylık aidat tutarı <strong>{determinedDue.toLocaleString('tr-TR')} ₺</strong>&apos;dir. Şu an için adınıza tahakkuk etmiş ödenmemiş borç bulunmamaktadır.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-500 py-4">Henüz bir aidat kaydınız bulunmuyor.</p>
+                  )
                 ) : (
                   <div className="space-y-3">
                     {dues.map((due) => (
@@ -455,21 +537,29 @@ export default function ResidentDashboard() {
             {/* Şikayet ve İstek / Yorum Kutusu */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h2 className="text-base font-medium text-zinc-900">Şikayet ve İstek Kutusu</h2>
                     <p className="text-xs text-zinc-500 mt-0.5">Bina yönetimine talep veya öneri iletin</p>
                   </div>
-                  <Button size="sm" variant="secondary" onClick={() => setShowComplaintForm(true)}>
-                    Yeni Talep / Yorum
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => setShowPastComplaints(true)}>
+                      <svg className="h-4 w-4 mr-1 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Geçmiş Taleplerim {complaints.length > 0 && `(${complaints.length})`}
+                    </Button>
+                    <Button size="sm" variant="primary" onClick={() => setShowComplaintForm(true)}>
+                      + Yeni Talep
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardBody>
                 {complaints.length === 0 ? (
                   <div className="py-6 text-center">
                     <p className="text-sm text-zinc-500 mb-3">Henüz ilettiğiniz bir talep veya yorum bulunmuyor.</p>
-                    <Button size="sm" variant="ghost" onClick={() => setShowComplaintForm(true)}>
+                    <Button size="sm" variant="primary" onClick={() => setShowComplaintForm(true)}>
                       + İlk Talebinizi İletin
                     </Button>
                   </div>
@@ -478,7 +568,7 @@ export default function ResidentDashboard() {
                     {complaints.map((complaint) => (
                       <div
                         key={complaint.id}
-                        className="p-3 bg-zinc-50/70 border border-zinc-100 rounded-xl space-y-1"
+                        className="p-3 bg-zinc-50/70 border border-zinc-100 rounded-xl space-y-1 hover:border-zinc-200 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <p className="font-medium text-zinc-900 text-sm">{complaint.subject}</p>
@@ -559,6 +649,15 @@ export default function ResidentDashboard() {
         />
       )}
 
+      {showPastComplaints && (
+        <ResidentPastComplaintsModal
+          complaints={complaints}
+          getStatusBadge={getStatusBadge}
+          onClose={() => setShowPastComplaints(false)}
+          onNewComplaint={() => setShowComplaintForm(true)}
+        />
+      )}
+
       {showPhonePrompt && (
         <PhonePromptModal
           onClose={() => setShowPhonePrompt(false)}
@@ -579,6 +678,18 @@ export default function ResidentDashboard() {
           onClose={() => setShowDuesDetail(false)}
         />
       )}
+
+      <ConfirmModal
+        open={showLeaveConfirm}
+        title="Daireden Ayrıl"
+        description={`${selectedUnit?.buildingName} ${selectedUnit?.blockName} No: ${selectedUnit?.doorNo} dairesinin aidat takip görüntülemesinden ayrılmak istediğinize emin misiniz? Bina yöneticisine bildirim iletilecektir.`}
+        variant="danger"
+        confirmText="Evet, Daireden Ayrıl"
+        cancelText="Vazgeç"
+        loading={leavingUnit}
+        onConfirm={handleLeaveUnit}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
     </div>
   );
 }
@@ -833,6 +944,117 @@ function ComplaintFormModal({ userBuildingId, onClose, onSuccess }: ComplaintFor
               </Button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// MODAL: RESIDENT'S PAST COMPLAINTS & REQUESTS HISTORY
+// -------------------------------------------------------------
+interface ResidentPastComplaintsModalProps {
+  complaints: Complaint[];
+  onClose: () => void;
+  onNewComplaint: () => void;
+  getStatusBadge: (status: string) => React.ReactNode;
+}
+
+function ResidentPastComplaintsModal({
+  complaints,
+  onClose,
+  onNewComplaint,
+  getStatusBadge,
+}: ResidentPastComplaintsModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="fixed inset-0 bg-zinc-900/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
+
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl transform transition-all overflow-hidden flex flex-col max-h-[85vh]">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-zinc-50">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-700 border border-zinc-200">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900">Geçmiş Taleplerim</h3>
+                <p className="text-xs text-zinc-500">Yönetime ilettiğiniz tüm şikayet ve istekler</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="p-6 overflow-y-auto space-y-4">
+            {complaints.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mx-auto mb-3 text-zinc-400">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                </div>
+                <h4 className="text-sm font-medium text-zinc-900 mb-1">Geçmiş talep bulunamadı</h4>
+                <p className="text-xs text-zinc-500 mb-4">Henüz yönetime iletilmiş bir talep veya öneriniz bulunmuyor.</p>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {
+                    onClose();
+                    onNewComplaint();
+                  }}
+                >
+                  Yeni Talep İlet
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {complaints.map((c) => (
+                  <div
+                    key={c.id}
+                    className="p-4 bg-zinc-50/80 border border-zinc-200/80 rounded-xl space-y-2 hover:bg-zinc-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-semibold text-zinc-900 text-sm">{c.subject}</h4>
+                      {getStatusBadge(c.status)}
+                    </div>
+                    <p className="text-xs text-zinc-600 whitespace-pre-line leading-relaxed">{c.description}</p>
+                    <div className="flex items-center justify-between pt-2 border-t border-zinc-200/60 text-[11px] text-zinc-400">
+                      <span>Tarih: {new Date(c.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="capitalize">{c.status === 'RESOLVED' ? 'Çözümlendi' : c.status === 'IN_PROGRESS' ? 'İşlemde' : 'Yanıt Bekliyor'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-3.5 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between">
+            <span className="text-xs text-zinc-500">Toplam {complaints.length} talep</span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={onClose}>
+                Kapat
+              </Button>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => {
+                  onClose();
+                  onNewComplaint();
+                }}
+              >
+                + Yeni Talep İlet
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -44,9 +44,11 @@ enum InvitationStatus {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  accountNumber Int      @unique @default(autoincrement())
-  name          String
+  id                    String   @id @default(cuid())
+  accountNumber         Int      @unique @default(autoincrement())
+  adminAccountNumber    Int?     @unique
+  residentAccountNumber Int?     @unique
+  name                  String
   phone         String   @unique
   email         String   @unique
   password      String?
@@ -68,6 +70,7 @@ model User {
 
   sentFriendships     AdminFriendship[] @relation("AdminFriendshipRequester")
   receivedFriendships AdminFriendship[] @relation("AdminFriendshipAddressee")
+  notifications       Notification[]    @relation("UserNotifications")
 
   @@index([email])
   @@index([phone])
@@ -107,6 +110,7 @@ model Unit {
   ownerName        String
   residentPhone    String
   defaultDueAmount Decimal? @db.Decimal(10, 2)
+  isVacant         Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -236,4 +240,20 @@ model AdminFriendship {
   @@index([addresseeId])
   @@index([status])
 }
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
 
