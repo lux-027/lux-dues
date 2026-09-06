@@ -368,10 +368,7 @@ export default function BuildingDetailPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {blockStats.map((block) => {
-              const dayIndex = Math.floor(Date.now() / 86400000);
               const storedBlockImage = building?.blockImages?.[block.name];
-              const fallbackImage = `https://loremflickr.com/300/300/city,corporate,office,skyscraper,modern,urban,apartment?lock=${building.id}-${block.name}-${dayIndex}`;
-              const imageUrl = storedBlockImage || fallbackImage;
               return (
                 <Card
                   key={block.name}
@@ -403,11 +400,7 @@ export default function BuildingDetailPage() {
                         className="relative w-28 h-32 flex-shrink-0 overflow-hidden"
                         style={{ clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0% 100%)' }}
                       >
-                        <img
-                          src={imageUrl}
-                          alt={block.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <BlockVisual src={storedBlockImage} name={block.name} />
                       </div>
                     </div>
                   </CardBody>
@@ -726,6 +719,37 @@ function AddBlockModal({ buildingId, existingBlocks, onClose, onSuccess }: AddBl
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// COMPONENT: BLOCK VISUAL (Image or Clean Building Placeholder)
+// -------------------------------------------------------------
+function BlockVisual({ src, name }: { src?: string | null; name: string }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="w-full h-full object-cover"
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-zinc-100 via-zinc-200/70 to-zinc-200 flex flex-col items-center justify-center text-zinc-600 pl-3 pr-1 select-none">
+      <div className="h-10 w-10 rounded-xl bg-white/90 shadow-sm border border-zinc-200/80 flex items-center justify-center">
+        <svg className="h-5 w-5 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+      <span className="text-[10px] font-semibold text-zinc-600 tracking-wider uppercase mt-1.5 truncate max-w-[80px] text-center">
+        {name}
+      </span>
     </div>
   );
 }
