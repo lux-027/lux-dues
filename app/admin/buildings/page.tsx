@@ -389,7 +389,7 @@ export default function BuildingsPage() {
           </CardBody>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredBuildings.map((building, index) => {
             const buildingUnits = building.units || [];
             const bTotalUnits = building._count.units || 0;
@@ -405,7 +405,7 @@ export default function BuildingsPage() {
               >
                 <div>
                   {/* Visual Header Image Banner */}
-                  <div className="relative h-44 w-full overflow-hidden bg-zinc-900">
+                  <div className="relative h-32 w-full overflow-hidden bg-zinc-900">
                     <img
                       src={building.image || getBuildingImageUrl(building.id, index % 10)}
                       alt={building.name}
@@ -414,34 +414,34 @@ export default function BuildingsPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-900/30 to-transparent" />
                     
                     {/* Building Type & Blocks Tag */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/95 backdrop-blur-md text-zinc-900 shadow-sm">
+                    <div className="absolute top-2 left-2 flex items-center gap-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/95 backdrop-blur-md text-zinc-900 shadow-sm">
                         {building.type === BuildingType.APARTMENT ? (
-                          <svg className="h-3.5 w-3.5 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <svg className="h-3 w-3 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                         ) : (
-                          <svg className="h-3.5 w-3.5 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <svg className="h-3 w-3 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h5V10H3v11zm7 0h5V6h-5v15zm7 0h5V10h-5v11z" />
                           </svg>
                         )}
                         {getBuildingTypeLabel(building.type)}
                       </span>
-                      <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-black/40 backdrop-blur-md text-white border border-white/20">
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/40 backdrop-blur-md text-white border border-white/20">
                         {building.totalBlocks} Blok
                       </span>
                     </div>
 
                     {/* Title and Address on Image */}
-                    <div className="absolute bottom-3 left-4 right-4 text-white">
+                    <div className="absolute bottom-2 left-3 right-3 text-white">
                       <Link
                         href={`/admin/buildings/${building.id}`}
-                        className="block text-lg font-semibold truncate hover:underline hover:text-zinc-100 transition-colors"
+                        className="block text-sm font-semibold truncate hover:underline hover:text-zinc-100 transition-colors"
                       >
                         {building.name}
                       </Link>
-                      <p className="text-xs text-zinc-300 truncate mt-0.5 flex items-center gap-1">
-                        <svg className="h-3.5 w-3.5 text-zinc-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <p className="text-[10px] text-zinc-300 truncate mt-0.5 flex items-center gap-1">
+                        <svg className="h-3 w-3 text-zinc-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
@@ -451,31 +451,31 @@ export default function BuildingsPage() {
                   </div>
 
                   {/* Stats Grid */}
-                  <div className="p-4 space-y-3 bg-zinc-50/50 border-b border-zinc-100">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="bg-white p-2.5 rounded-xl border border-zinc-200/80 shadow-xs">
-                        <p className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 mb-0.5">Daire</p>
-                        <p className="text-base font-semibold text-zinc-900">{bTotalUnits}</p>
+                  <div className="p-3 space-y-2 bg-zinc-50/50 border-b border-zinc-100">
+                    <div className="grid grid-cols-3 gap-1.5 text-center">
+                      <div className="bg-white p-2 rounded-lg border border-zinc-200/80 shadow-xs">
+                        <p className="text-[9px] uppercase font-semibold tracking-wider text-zinc-400 mb-0.5">Daire</p>
+                        <p className="text-sm font-semibold text-zinc-900">{bTotalUnits}</p>
                       </div>
-                      <div className="bg-white p-2.5 rounded-xl border border-zinc-200/80 shadow-xs">
-                        <p className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 mb-0.5">Sakin</p>
-                        <p className="text-base font-semibold text-zinc-900">{bRegisteredResidents}</p>
+                      <div className="bg-white p-2 rounded-lg border border-zinc-200/80 shadow-xs">
+                        <p className="text-[9px] uppercase font-semibold tracking-wider text-zinc-400 mb-0.5">Sakin</p>
+                        <p className="text-sm font-semibold text-zinc-900">{bRegisteredResidents}</p>
                       </div>
-                      <div className="bg-white p-2.5 rounded-xl border border-zinc-200/80 shadow-xs">
-                        <p className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 mb-0.5">Yönetici</p>
-                        <p className="text-base font-semibold text-zinc-900">{building._count.admins}</p>
+                      <div className="bg-white p-2 rounded-lg border border-zinc-200/80 shadow-xs">
+                        <p className="text-[9px] uppercase font-semibold tracking-wider text-zinc-400 mb-0.5">Yönetici</p>
+                        <p className="text-sm font-semibold text-zinc-900">{building._count.admins}</p>
                       </div>
                     </div>
 
                     {/* Occupancy Indicator Bar */}
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[11px] text-zinc-600">
-                        <span>Doluluk Durumu</span>
+                      <div className="flex items-center justify-between text-[10px] text-zinc-600">
+                        <span>Doluluk</span>
                         <span className="font-semibold text-zinc-900">
                           {bOccupiedUnits} Dolu {bVacantUnits > 0 ? `(${bVacantUnits} Boş)` : ''}
                         </span>
                       </div>
-                      <div className="w-full h-1.5 rounded-full bg-zinc-200 overflow-hidden">
+                      <div className="w-full h-1 rounded-full bg-zinc-200 overflow-hidden">
                         <div
                           className="h-full bg-zinc-900 rounded-full transition-all duration-500"
                           style={{ width: `${bOccupancyPercent}%` }}
@@ -486,14 +486,14 @@ export default function BuildingsPage() {
                 </div>
 
                 {/* Action Buttons Footer */}
-                <div className="p-3.5 bg-white space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 bg-white space-y-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <Link href={`/admin/buildings/${building.id}/residents`} className="w-full">
                       <button
                         type="button"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+                        className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors"
                       >
-                        <svg className="h-3.5 w-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="h-3 w-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         <span>Sakinler ({bTotalUnits})</span>
@@ -503,20 +503,20 @@ export default function BuildingsPage() {
                     <Link href={`/admin/buildings/${building.id}/dues`} className="w-full">
                       <button
                         type="button"
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+                        className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors"
                       >
-                        <svg className="h-3.5 w-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="h-3 w-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                         </svg>
-                        <span>Aidat Takibi</span>
+                        <span>Aidat</span>
                       </button>
                     </Link>
                   </div>
 
                   <Link href={`/admin/buildings/${building.id}`} className="w-full block">
-                    <Button variant="primary" size="sm" className="w-full justify-center">
-                      <span>Bina Yönetim Paneli</span>
-                      <svg className="h-3.5 w-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <Button variant="primary" size="sm" className="w-full justify-center text-xs">
+                      <span>Yönetim Paneli</span>
+                      <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </Button>

@@ -26,6 +26,7 @@ export async function GET() {
             name: true,
             email: true,
             phone: true,
+            avatarUrl: true,
           },
         },
         building: {
@@ -55,6 +56,7 @@ export async function GET() {
               name: true,
               email: true,
               phone: true,
+              avatarUrl: true,
             },
           },
           building: {
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { receiverAccountNumber, buildingId, blockName } = body;
+    const { receiverAccountNumber, buildingId, blockName, replaceExisting, existingInvitationId } = body;
 
     if (!receiverAccountNumber || !buildingId) {
       return NextResponse.json({ error: 'Kullanıcı ID ve Bina seçilmelidir' }, { status: 400 });
@@ -107,13 +109,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Kendinize davet gönderemezsiniz' }, { status: 400 });
     }
 
-    if (receiver.role === UserRole.RESIDENT) {
-      return NextResponse.json(
-        { error: 'Sakin kullanıcılar yönetici olarak davet edilemez. Sadece daireye davet edilebilirler.' },
-        { status: 400 }
-      );
-    }
-
     // Check if building exists
     const building = await prisma.building.findUnique({
       where: { id: buildingId },
@@ -122,23 +117,86 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Bina bulunamadı' }, { status: 404 });
     }
 
-    // Check if user is already admin of this block/building
-    if (receiver.role === UserRole.BLOCK_ADMIN && receiver.buildingId === buildingId && receiver.blockName === (blockName || null)) {
-      return NextResponse.json({ error: 'Bu kullanıcı zaten bu bloğun yöneticisidir' }, { status: 400 });
+    // Prevent inviting a user who is already an active admin of this building/block.
+    if (receiver.buildingId === buildingId && receiver.blockName === (blockName || null) &&
+        (receiver.role === UserRole.BLOCK_ADMIN || receiver.role === UserRole.SUPER_ADMIN)) {
+      return NextResponse.json({ error: 'Bu kullanıcı zaten bu bina/blok için yöneticidir' }, { status: 400 });
     }
 
-    // Check if there is already an active pending invitation
-    const existing = await prisma.adminInvitation.findFirst({
+    // Check if this building/block already has an active accepted admin.
+    const activeAdmin = await prisma.user.findFirst({
       where: {
-        receiverId: receiver.id,
+        buildingId,
+        blockName: blockName || null,
+        role: { in: [UserRole.BLOCK_ADMIN, UserRole.SUPER_ADMIN] },
+      },
+      select: {
+        id: true,
+        name: true,
+        accountNumber: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (activeAdmin && activeAdmin.id !== receiver.id) {
+      return NextResponse.json(
+        {
+          error: 'Bu bina/blokta zaten aktif bir yönetici var. Yeni yönetici daveti göndermeden önce mevcut yöneticinin yetkisini kaldırın.',
+          activeAdminExists: true,
+          activeAdmin,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Check if there is already a pending invitation for this building/block (any receiver).
+    const existingPending = await prisma.adminInvitation.findFirst({
+      where: {
         buildingId,
         blockName: blockName || null,
         status: InvitationStatus.PENDING,
       },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            accountNumber: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+          },
+        },
+      },
     });
 
-    if (existing) {
-      return NextResponse.json({ error: 'Bu kullanıcıya zaten bekleyen bir davet gönderilmiş' }, { status: 409 });
+    if (existingPending) {
+      if (existingPending.receiverId === receiver.id) {
+        return NextResponse.json(
+          { error: 'Bu kullanıcıya zaten bekleyen bir davet gönderilmiş' },
+          { status: 409 }
+        );
+      }
+
+      if (replaceExisting && existingInvitationId && existingPending.id === existingInvitationId) {
+        await prisma.adminInvitation.update({
+          where: { id: existingPending.id },
+          data: { status: InvitationStatus.CANCELLED },
+        });
+      } else {
+        return NextResponse.json(
+          {
+            error: 'Bu bina/bloka zaten başka bir kullanıcıya gönderilmiş bekleyen bir yönetici daveti var.',
+            pendingExists: true,
+            existingInvitation: {
+              id: existingPending.id,
+              receiver: existingPending.receiver,
+              createdAt: existingPending.createdAt,
+            },
+          },
+          { status: 409 }
+        );
+      }
     }
 
     const invitation = await prisma.adminInvitation.create({
@@ -156,6 +214,7 @@ export async function POST(request: NextRequest) {
             accountNumber: true,
             name: true,
             email: true,
+            avatarUrl: true,
           },
         },
         building: {

@@ -24,56 +24,56 @@ export function DashboardShowcase() {
         </div>
 
         {/* Mockup Browser Container */}
-        <div className="relative mx-auto max-w-5xl rounded-3xl bg-zinc-900 p-2 sm:p-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.18)] ring-1 ring-zinc-900/10">
-          <div className="rounded-2xl bg-white overflow-hidden border border-zinc-200 shadow-inner">
+        <div className="relative mx-auto max-w-5xl rounded-2xl bg-zinc-900 p-1.5 sm:p-2 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.18)] ring-1 ring-zinc-900/10">
+          <div className="rounded-xl bg-white overflow-hidden border border-zinc-200 shadow-inner">
             {/* macOS Browser Header */}
-            <div className="bg-zinc-100 px-4 py-3 border-b border-zinc-200 flex items-center justify-between gap-4 select-none">
+            <div className="bg-zinc-100 px-3 py-2 border-b border-zinc-200 flex items-center justify-between gap-3 select-none">
               {/* Traffic light dots */}
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E] shadow-2xs inline-block" />
-                <span className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] shadow-2xs inline-block" />
-                <span className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29] shadow-2xs inline-block" />
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] border border-[#E0443E] shadow-2xs inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] border border-[#DEA123] shadow-2xs inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] border border-[#1AAB29] shadow-2xs inline-block" />
               </div>
 
               {/* Address bar */}
-              <div className="flex-1 max-w-md mx-auto hidden sm:flex items-center justify-center gap-2 px-3 py-1 bg-white rounded-lg border border-zinc-200/80 text-xs text-zinc-600 font-mono shadow-2xs">
-                <svg className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="flex-1 max-w-md mx-auto hidden sm:flex items-center justify-center gap-2 px-2 py-0.5 bg-white rounded-lg border border-zinc-200/80 text-[10px] text-zinc-600 font-mono shadow-2xs">
+                <svg className="h-3 w-3 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <span className="truncate">https://app.luxdues.com/admin/dashboard</span>
               </div>
 
               {/* Right Status */}
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Canlı Sistem
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-100 text-emerald-800">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                  Canlı
                 </span>
               </div>
             </div>
 
             {/* Application Inside Layout */}
-            <div className="flex flex-col lg:flex-row min-h-[460px] bg-zinc-50/50">
+            <div className="flex flex-col lg:flex-row min-h-[320px] bg-zinc-50/50">
               {/* Left Mini Sidebar */}
-              <div className="w-full lg:w-48 bg-white border-b lg:border-b-0 lg:border-r border-zinc-200 p-3 flex lg:flex-col justify-between flex-shrink-0">
-                <div className="space-y-4 w-full">
-                  <div className="px-2 pt-1 hidden lg:block">
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Mülk Portalı</p>
-                    <p className="text-xs font-semibold text-zinc-900 truncate">Lux Apartment</p>
+              <div className="w-full lg:w-40 bg-white border-b lg:border-b-0 lg:border-r border-zinc-200 p-2 flex lg:flex-col justify-between flex-shrink-0">
+                <div className="space-y-3 w-full">
+                  <div className="px-1.5 pt-0.5 hidden lg:block">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Mülk Portalı</p>
+                    <p className="text-[10px] font-semibold text-zinc-900 truncate">Lux Apartment</p>
                   </div>
 
                   {/* Navigation Links */}
-                  <div className="flex lg:flex-col gap-1 w-full overflow-x-auto">
+                  <div className="flex lg:flex-col gap-0.5 w-full overflow-x-auto">
                     <button
                       type="button"
                       onClick={() => setActiveTab('overview')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-xl text-left flex items-center gap-2 transition-colors whitespace-nowrap ${
+                      className={`px-2 py-1 text-[10px] font-medium rounded-lg text-left flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                         activeTab === 'overview'
                           ? 'bg-zinc-900 text-white shadow-2xs font-semibold'
                           : 'text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                       </svg>
                       <span>Genel Bakış</span>
@@ -82,13 +82,13 @@ export function DashboardShowcase() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('dues')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-xl text-left flex items-center gap-2 transition-colors whitespace-nowrap ${
+                      className={`px-2 py-1 text-[10px] font-medium rounded-lg text-left flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                         activeTab === 'dues'
                           ? 'bg-zinc-900 text-white shadow-2xs font-semibold'
                           : 'text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                       <span>Aidat Takibi</span>
@@ -97,13 +97,13 @@ export function DashboardShowcase() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('cashflow')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-xl text-left flex items-center gap-2 transition-colors whitespace-nowrap ${
+                      className={`px-2 py-1 text-[10px] font-medium rounded-lg text-left flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                         activeTab === 'cashflow'
                           ? 'bg-zinc-900 text-white shadow-2xs font-semibold'
                           : 'text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                       </svg>
                       <span>Kasa & Bankalar</span>
@@ -111,30 +111,30 @@ export function DashboardShowcase() {
                   </div>
                 </div>
 
-                <div className="hidden lg:block pt-4 border-t border-zinc-100">
-                  <div className="p-2.5 bg-zinc-50 rounded-xl border border-zinc-200/70 text-[11px] text-zinc-500">
+                <div className="hidden lg:block pt-3 border-t border-zinc-100">
+                  <div className="p-2 bg-zinc-50 rounded-lg border border-zinc-200/70 text-[9px] text-zinc-500">
                     <p className="font-semibold text-zinc-800">7/24 Online</p>
-                    <p className="text-[10px] text-zinc-400 mt-0.5">Otomatik Mutabakat</p>
+                    <p className="text-[8px] text-zinc-400 mt-0.5">Otomatik Mutabakat</p>
                   </div>
                 </div>
               </div>
 
               {/* Main Dashboard Panel Body */}
-              <div className="flex-1 p-4 sm:p-6 space-y-5 overflow-x-auto">
+              <div className="flex-1 p-3 sm:p-4 space-y-3 overflow-x-auto">
                 {/* Top Metrics Row (Donut Cards) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Card 1: Tahsil Edilecekler */}
-                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200/90 shadow-2xs space-y-4">
+                  <div className="bg-white p-3 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Tahsil Edilecekler</h4>
-                      <span className="text-[11px] font-semibold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
-                        501 Daire / Hesap
+                      <h4 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider">Tahsil Edilecekler</h4>
+                      <span className="text-[9px] font-semibold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+                        48 Daire / Hesap
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-3">
                       {/* CSS / SVG Donut */}
-                      <div className="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
+                      <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
                         <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 36 36">
                           <path
                             className="text-zinc-100"
@@ -164,44 +164,44 @@ export function DashboardShowcase() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-xs font-bold text-zinc-900">2.42M ₺</span>
-                          <span className="text-[9px] text-zinc-400">Toplam</span>
+                          <span className="text-[10px] font-bold text-zinc-900">158.5K ₺</span>
+                          <span className="text-[8px] text-zinc-400">Toplam</span>
                         </div>
                       </div>
 
                       {/* Legends */}
-                      <div className="space-y-2 text-xs flex-1">
+                      <div className="space-y-1.5 text-[10px] flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-zinc-600">
-                            <span className="w-2.5 h-2.5 rounded-sm bg-sky-500 flex-shrink-0" />
+                          <span className="flex items-center gap-1 text-zinc-600">
+                            <span className="w-2 h-2 rounded-sm bg-sky-500 flex-shrink-0" />
                             Vadesi Gelmemiş
                           </span>
-                          <span className="font-semibold text-zinc-900 font-mono">1.903.377 ₺</span>
+                          <span className="font-semibold text-zinc-900 font-mono">124.6K ₺</span>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-zinc-600">
-                            <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 flex-shrink-0" />
+                          <span className="flex items-center gap-1 text-zinc-600">
+                            <span className="w-2 h-2 rounded-sm bg-rose-500 flex-shrink-0" />
                             Geciken Borçlar
                           </span>
-                          <span className="font-semibold text-rose-600 font-mono">518.290 ₺</span>
+                          <span className="font-semibold text-rose-600 font-mono">33.9K ₺</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Card 2: Ödenecekler (Giderler) */}
-                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200/90 shadow-2xs space-y-4">
+                  <div className="bg-white p-3 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Ödenecekler (Giderler)</h4>
-                      <span className="text-[11px] font-semibold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
-                        22 Hizmet & Tedarikçi
+                      <h4 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider">Ödenecekler (Giderler)</h4>
+                      <span className="text-[9px] font-semibold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+                        12 Hizmet & Tedarikçi
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-center gap-3">
                       {/* CSS / SVG Donut */}
-                      <div className="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
+                      <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
                         <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 36 36">
                           <path
                             className="text-zinc-100"
@@ -231,27 +231,27 @@ export function DashboardShowcase() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-xs font-bold text-zinc-900">1.08M ₺</span>
-                          <span className="text-[9px] text-zinc-400">Gider</span>
+                          <span className="text-[10px] font-bold text-zinc-900">87.4K ₺</span>
+                          <span className="text-[8px] text-zinc-400">Gider</span>
                         </div>
                       </div>
 
                       {/* Legends */}
-                      <div className="space-y-2 text-xs flex-1">
+                      <div className="space-y-1.5 text-[10px] flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-zinc-600">
-                            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 flex-shrink-0" />
+                          <span className="flex items-center gap-1 text-zinc-600">
+                            <span className="w-2 h-2 rounded-sm bg-emerald-500 flex-shrink-0" />
                             Vadesi Gelmemiş
                           </span>
-                          <span className="font-semibold text-zinc-900 font-mono">212.971 ₺</span>
+                          <span className="font-semibold text-zinc-900 font-mono">17.5K ₺</span>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-zinc-600">
-                            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 flex-shrink-0" />
+                          <span className="flex items-center gap-1 text-zinc-600">
+                            <span className="w-2 h-2 rounded-sm bg-amber-500 flex-shrink-0" />
                             Planlanan Ödemeler
                           </span>
-                          <span className="font-semibold text-amber-700 font-mono">867.698 ₺</span>
+                          <span className="font-semibold text-amber-700 font-mono">69.9K ₺</span>
                         </div>
                       </div>
                     </div>
@@ -259,44 +259,44 @@ export function DashboardShowcase() {
                 </div>
 
                 {/* Bank & Cash Flow Integrations Card */}
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-zinc-200/90 shadow-2xs space-y-3">
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">30 Günlük Nakit Akışı & Banka Entegrasyonları</h4>
-                      <p className="text-[11px] text-zinc-500 mt-0.5">Otomatik hesap hareketleri ve anlık bakiye mutabakatı</p>
+                      <h4 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider">30 Günlük Nakit Akışı & Banka Entegrasyonları</h4>
+                      <p className="text-[9px] text-zinc-500 mt-0.5">Otomatik hesap hareketleri ve anlık bakiye mutabakatı</p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                      +1.340.997 ₺ Net Kasa
+                    <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                      +42.1K ₺ Net Kasa
                     </span>
                   </div>
 
                   {/* Graph Visual Mock */}
-                  <div className="relative h-24 w-full pt-2 flex items-end justify-between gap-1 border-b border-zinc-100">
-                    {[35, 42, 40, 55, 60, 48, 70, 65, 80, 75, 90, 85, 95, 110, 105, 120, 130, 125, 140, 150].map((val, idx) => (
-                      <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
+                  <div className="relative h-16 w-full pt-1 flex items-end justify-between gap-0.5 border-b border-zinc-100">
+                    {[35, 42, 40, 45, 50, 48, 55, 52, 58, 55, 62, 60, 65, 70, 68, 72, 75, 73, 78, 80].map((val, idx) => (
+                      <div key={idx} className="flex-1 flex flex-col items-center gap-0.5 group">
                         <div
-                          className={`w-full rounded-t-md transition-all ${
+                          className={`w-full rounded-t-sm transition-all ${
                             idx >= 15 ? 'bg-zinc-900 group-hover:bg-zinc-700' : 'bg-zinc-200 group-hover:bg-zinc-300'
                           }`}
-                          style={{ height: `${(val / 150) * 60}px` }}
+                          style={{ height: `${(val / 80) * 40}px` }}
                         />
                       </div>
                     ))}
                   </div>
 
                   {/* Bank Accounts Grid */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                    <div className="p-2 bg-zinc-50 rounded-xl border border-zinc-200/60">
-                      <p className="text-[10px] text-zinc-400 uppercase font-semibold">Banka Hesabı 1</p>
-                      <p className="text-xs font-bold text-zinc-900 font-mono mt-0.5">106.249 ₺</p>
+                  <div className="grid grid-cols-3 gap-1.5 pt-0.5 text-center">
+                    <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
+                      <p className="text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 1</p>
+                      <p className="text-[10px] font-bold text-zinc-900 font-mono mt-0.5">21.8K ₺</p>
                     </div>
-                    <div className="p-2 bg-zinc-50 rounded-xl border border-zinc-200/60">
-                      <p className="text-[10px] text-zinc-400 uppercase font-semibold">Banka Hesabı 2</p>
-                      <p className="text-xs font-bold text-zinc-900 font-mono mt-0.5">822.348 ₺</p>
+                    <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
+                      <p className="text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 2</p>
+                      <p className="text-[10px] font-bold text-zinc-900 font-mono mt-0.5">14.6K ₺</p>
                     </div>
-                    <div className="p-2 bg-zinc-50 rounded-xl border border-zinc-200/60">
-                      <p className="text-[10px] text-zinc-400 uppercase font-semibold">Nakit Kasa</p>
-                      <p className="text-xs font-bold text-zinc-900 font-mono mt-0.5">67.700 ₺</p>
+                    <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
+                      <p className="text-[8px] text-zinc-400 uppercase font-semibold">Nakit Kasa</p>
+                      <p className="text-[10px] font-bold text-zinc-900 font-mono mt-0.5">5.7K ₺</p>
                     </div>
                   </div>
                 </div>

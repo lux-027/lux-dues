@@ -118,7 +118,11 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                     <span className="font-medium text-zinc-800">{portalInfo.email}</span>
                     <span>•</span>
                     <span className="text-[11px] bg-zinc-100 text-zinc-700 px-1.5 py-0.5 rounded border border-zinc-200 font-mono">
-                      ID: {portalInfo.accountNumber}
+                      ID: {formatAccountNumber(
+                        current === 'admin'
+                          ? (portalInfo.adminAccountNumber || portalInfo.accountNumber)
+                          : (portalInfo.residentAccountNumber || portalInfo.accountNumber)
+                      )}
                     </span>
                   </>
                 ) : (
@@ -227,7 +231,9 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                                     : 'bg-zinc-100 text-zinc-800 border-zinc-200'
                                 }`}
                               >
-                                Yönetici ID: {formatAccountNumber(portalInfo?.adminAccountNumber || portalInfo?.accountNumber || 0)}
+                                {portalInfo?.adminAccountNumber
+                                  ? `Yönetici ID: ${formatAccountNumber(portalInfo.adminAccountNumber)}`
+                                  : 'ID atanmadı'}
                               </span>
                             </div>
                           )}
@@ -351,7 +357,9 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                                     : 'bg-zinc-100 text-zinc-800 border-zinc-200'
                                 }`}
                               >
-                                Sakin ID: {formatAccountNumber(portalInfo?.residentAccountNumber || portalInfo?.accountNumber || 0)}
+                                {portalInfo?.residentAccountNumber
+                                  ? `Sakin ID: ${formatAccountNumber(portalInfo.residentAccountNumber)}`
+                                  : 'ID atanmadı'}
                               </span>
                             </div>
                           )}

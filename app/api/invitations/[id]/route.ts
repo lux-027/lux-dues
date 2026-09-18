@@ -61,26 +61,53 @@ export async function PATCH(
     }
 
     if (action === 'ACCEPT') {
-      // Transaction: Accept invitation and assign User as BLOCK_ADMIN for this building/block
-      const [updatedInvite, updatedUser] = await prisma.$transaction([
-        prisma.adminInvitation.update({
+      // Accept invitation, assign user as admin, and ensure sender/receiver become friends.
+      const [updatedInvite, updatedUser] = await prisma.$transaction(async (tx) => {
+        const invite = await tx.adminInvitation.update({
           where: { id },
           data: { status: InvitationStatus.ACCEPTED },
-        }),
-        prisma.user.update({
+        });
+
+        const user = await tx.user.update({
           where: { id: session.id },
           data: {
             role: session.role === UserRole.SUPER_ADMIN ? UserRole.SUPER_ADMIN : UserRole.BLOCK_ADMIN,
             buildingId: invitation.buildingId,
             blockName: invitation.blockName || null,
           },
-        }),
-      ]);
+        });
+
+        const existingFriendship = await tx.adminFriendship.findFirst({
+          where: {
+            OR: [
+              { requesterId: invitation.senderId, addresseeId: session.id },
+              { requesterId: session.id, addresseeId: invitation.senderId },
+            ],
+          },
+        });
+
+        if (!existingFriendship) {
+          await tx.adminFriendship.create({
+            data: {
+              requesterId: invitation.senderId,
+              addresseeId: session.id,
+              status: InvitationStatus.ACCEPTED,
+            },
+          });
+        } else if (existingFriendship.status !== InvitationStatus.ACCEPTED) {
+          await tx.adminFriendship.update({
+            where: { id: existingFriendship.id },
+            data: { status: InvitationStatus.ACCEPTED },
+          });
+        }
+
+        return [invite, user];
+      });
 
       return NextResponse.json({
         invitation: updatedInvite,
         user: updatedUser,
-        message: 'Yöneticilik daveti kabul edildi',
+        message: 'Yöneticilik daveti kabul edildi ve arkadaş olarak eklendi',
       });
     }
 

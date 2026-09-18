@@ -2,8 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { getAuth, reload, getIdToken } from 'firebase/auth';
-import { verifyEmailActionCode } from '@/lib/firebase';
 
 interface PendingRegistration {
   name: string;
@@ -18,54 +16,22 @@ function VerifyEmailContent() {
   const [message, setMessage] = useState('E-posta adresiniz doğrulanıyor...');
 
   useEffect(() => {
-    const oobCode = searchParams.get('oobCode');
+    const token = searchParams.get('token');
 
-    if (!oobCode) {
+    if (!token) {
       setStatus('error');
       setMessage('Doğrulama kodu eksik.');
       return;
     }
 
-    const code = oobCode;
     let cancelled = false;
 
     async function run() {
       try {
-        const verifiedEmail = await verifyEmailActionCode(code);
-
-        const auth = getAuth();
-        if (auth.currentUser) {
-          await reload(auth.currentUser);
-        }
-
-        const idToken = auth.currentUser ? await getIdToken(auth.currentUser, true) : null;
-
-        if (cancelled) return;
-
-        const pendingRaw = localStorage.getItem('pendingRegistration');
-        const pending: PendingRegistration | null = pendingRaw ? JSON.parse(pendingRaw) : null;
-
-        if (!pending || !idToken) {
-          setStatus('success');
-          setMessage(
-            verifiedEmail
-              ? `${verifiedEmail} adresi doğrulandı. Şimdi giriş yapabilirsiniz.`
-              : 'E-posta adresiniz doğrulandı. Şimdi giriş yapabilirsiniz.'
-          );
-          return;
-        }
-
-        const endpoint =
-          pending.role === 'admin' ? '/api/auth/register-admin' : '/api/auth/register';
-
-        const res = await fetch(endpoint, {
+        const res = await fetch('/api/auth/verify-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            idToken,
-            name: pending.name,
-            phone: pending.phone,
-          }),
+          body: JSON.stringify({ token }),
         });
 
         const data = await res.json();
@@ -74,7 +40,39 @@ function VerifyEmailContent() {
 
         if (!res.ok) {
           setStatus('error');
-          setMessage(data.error || 'Kayıt tamamlanırken bir hata oluştu.');
+          setMessage(data.error || 'Doğrulama başarısız oldu.');
+          return;
+        }
+
+        const pendingRaw = localStorage.getItem('pendingRegistration');
+        const pending: PendingRegistration | null = pendingRaw ? JSON.parse(pendingRaw) : null;
+
+        if (!pending) {
+          setStatus('success');
+          setMessage('E-posta adresiniz doğrulandı. Şimdi giriş yapabilirsiniz.');
+          return;
+        }
+
+        const endpoint =
+          pending.role === 'admin' ? '/api/auth/register-admin' : '/api/auth/register';
+
+        const registerRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idToken: data.idToken,
+            name: pending.name,
+            phone: pending.phone,
+          }),
+        });
+
+        const registerData = await registerRes.json();
+
+        if (cancelled) return;
+
+        if (!registerRes.ok) {
+          setStatus('error');
+          setMessage(registerData.error || 'Kayıt tamamlanırken bir hata oluştu.');
           return;
         }
 

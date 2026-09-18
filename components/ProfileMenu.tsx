@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { formatPhoneNumber } from '@/lib/phone';
+import { formatPhoneNumber, normalizePhoneNumber } from '@/lib/phone';
 import { formatAccountNumber } from '@/lib/userId';
 import { Button } from '@/components/ui';
 
@@ -134,7 +134,7 @@ export function ProfileMenu() {
       const response = await fetch('/api/auth/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone }),
+        body: JSON.stringify({ name, phone: normalizePhoneNumber(phone) }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -267,7 +267,7 @@ export function ProfileMenu() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="fixed -left-[9999px] top-0 opacity-0 w-px h-px"
         onChange={handleAvatarSelect}
       />
 
@@ -277,7 +277,7 @@ export function ProfileMenu() {
         type="file"
         accept="image/*"
         capture="user"
-        className="hidden"
+        className="fixed -left-[9999px] top-0 opacity-0 w-px h-px"
         onChange={handleAvatarSelect}
       />
 
@@ -321,7 +321,7 @@ export function ProfileMenu() {
 
           <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 border border-zinc-200/80">
             {/* Header with Ambient Glow & Profile Info */}
-            <div className="relative px-6 pt-6 pb-5 bg-gradient-to-b from-zinc-50 via-white to-white border-b border-zinc-100 overflow-hidden">
+            <div className="relative px-6 pt-6 pb-5 bg-gradient-to-b from-zinc-50 via-white to-white border-b border-zinc-100">
               <div className="absolute top-0 right-0 w-40 h-40 bg-zinc-200/50 rounded-full blur-3xl pointer-events-none -mr-12 -mt-12" />
               
               <div className="flex items-start justify-between relative z-10 mb-4">
@@ -369,7 +369,7 @@ export function ProfileMenu() {
 
                   {/* Photo Action Popup / Dropdown */}
                   {showPhotoOptions && (
-                    <div className="absolute left-0 top-18 w-48 bg-white rounded-2xl shadow-xl border border-zinc-200 py-2 z-30 text-xs animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute left-0 top-18 w-48 bg-white rounded-2xl shadow-xl border border-zinc-200 py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
                       <button
                         type="button"
                         onClick={() => {
@@ -531,10 +531,11 @@ export function ProfileMenu() {
                   {editing ? (
                     <input
                       type="text"
+                      inputMode="tel"
                       className="input-field text-xs py-2"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="5XX XXX XX XX"
+                      onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                      placeholder="0 5XX XXX XX XX"
                     />
                   ) : (
                     <p className="text-sm font-medium text-zinc-800">

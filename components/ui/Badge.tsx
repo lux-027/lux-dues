@@ -16,21 +16,21 @@ export const Badge: React.FC<BadgeProps> = ({
   leftIcon,
 }) => {
   const variantClasses = {
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    info: 'bg-blue-100 text-blue-800',
-    default: 'bg-zinc-100 text-zinc-800',
+    success: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+    warning: 'bg-amber-100 text-amber-800 border border-amber-200',
+    danger: 'bg-red-100 text-red-800 border border-red-200',
+    info: 'bg-blue-100 text-blue-800 border border-blue-200',
+    default: 'bg-zinc-100 text-zinc-900 border border-zinc-200',
   };
 
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-3 py-1 text-xs',
+    sm: 'px-2 py-0.5 text-[11px]',
+    md: 'px-3 py-1.5 text-xs',
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-semibold shadow-sm ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
       {leftIcon}
       {children}

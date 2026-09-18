@@ -8,6 +8,10 @@ import { Badge } from '@/components/ui';
 import { ConfirmModal } from '@/components/ui';
 import { BUILDING_ARCHIVE_IMAGES } from '@/lib/buildingImages';
 import { BuildingType } from '@prisma/client';
+import { Download, FileText, FileSpreadsheet } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface Building {
   id: string;
@@ -36,6 +40,7 @@ export default function BuildingDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [reportLoading, setReportLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -71,6 +76,77 @@ export default function BuildingDetailPage() {
     });
     return Array.from(stats.entries()).map(([name, count]) => ({ name, count }));
   }, [building, isSite]);
+
+  const exportBlockReport = async (blockName: string, format: 'pdf' | 'excel') => {
+    if (!building) return;
+    setReportLoading(blockName);
+
+    try {
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      
+      const res = await fetch(
+        `/api/reports/dues?buildingId=${building.id}&year=${currentYear}&month=${currentMonth}&block=${encodeURIComponent(blockName)}`
+      );
+      
+      if (res.ok) {
+        const data = await res.json();
+        
+        if (format === 'pdf') {
+          const doc = new jsPDF();
+          doc.setFontSize(18);
+          doc.text(`${blockName} Aidat Raporu`, 14, 22);
+          doc.setFontSize(11);
+          doc.text(`Bina: ${building.name}`, 14, 32);
+          doc.text(`Dönem: ${currentMonth}/${currentYear}`, 14, 40);
+          
+          const tableData = data.map((item: any) => [
+            item.blockName,
+            item.doorNo,
+            item.ownerName,
+            `₺${item.amount.toFixed(2)}`,
+            item.status === 'PAID' ? 'Ödendi' : 'Ödenmedi',
+            new Date(item.dueDate).toLocaleDateString('tr-TR'),
+          ]);
+
+          autoTable(doc, {
+            head: [['Blok', 'Daire', 'Sahibi', 'Tutar', 'Durum', 'Son Ödeme']],
+            body: tableData,
+            startY: 50,
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [24, 24, 27] },
+          });
+
+          doc.save(`${blockName}-aidat-raporu-${currentYear}-${currentMonth}.pdf`);
+        } else {
+          const worksheetData = [
+            [`${blockName} Aidat Raporu`],
+            [`Bina: ${building.name}`],
+            [`Dönem: ${currentMonth}/${currentYear}`],
+            [],
+            ['Blok', 'Daire', 'Sahibi', 'Tutar', 'Durum', 'Son Ödeme'],
+            ...data.map((item: any) => [
+              item.blockName,
+              item.doorNo,
+              item.ownerName,
+              item.amount,
+              item.status === 'PAID' ? 'Ödendi' : 'Ödenmedi',
+              new Date(item.dueDate).toLocaleDateString('tr-TR'),
+            ]),
+          ];
+
+          const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Rapor');
+          XLSX.writeFile(workbook, `${blockName}-aidat-raporu-${currentYear}-${currentMonth}.xlsx`);
+        }
+      }
+    } catch (error) {
+      console.error('Rapor hatası:', error);
+    } finally {
+      setReportLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -389,11 +465,41 @@ export default function BuildingDetailPage() {
                             </svg>
                           </div>
                         </div>
-                        <div className="flex items-center text-sm text-zinc-500">
-                          <span>Sakinleri Yönet</span>
-                          <svg className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="text-xs py-1 px-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                exportBlockReport(block.name, 'pdf');
+                              }}
+                              disabled={reportLoading === block.name}
+                              leftIcon={<FileText className="h-3 w-3" />}
+                            >
+                              PDF
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="text-xs py-1 px-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                exportBlockReport(block.name, 'excel');
+                              }}
+                              disabled={reportLoading === block.name}
+                              leftIcon={<FileSpreadsheet className="h-3 w-3" />}
+                            >
+                              Excel
+                            </Button>
+                          </div>
+                          <div className="flex items-center text-sm text-zinc-500">
+                            <span>Sakinleri Yönet</span>
+                            <svg className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
                         </div>
                       </div>
                       <div

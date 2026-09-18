@@ -1,5 +1,6 @@
 export { Card, CardHeader, CardBody, CardFooter } from './Card';
 export { Input, Textarea, Select } from './Input';
+export { DatePicker } from './DatePicker';
 export { PhoneInput } from './PhoneInput';
 export { CurrencyInput } from './CurrencyInput';
 export { Button, IconButton } from './Button';

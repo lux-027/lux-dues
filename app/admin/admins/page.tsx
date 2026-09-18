@@ -6,6 +6,7 @@ import { Button, Badge, Select } from '@/components/ui';
 import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
 import { formatAccountNumber } from '@/lib/userId';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface Building {
   id: string;
@@ -20,6 +21,7 @@ interface Admin {
   name: string;
   email: string;
   phone: string;
+  avatarUrl?: string | null;
   role: 'SUPER_ADMIN' | 'BLOCK_ADMIN';
   buildingId: string | null;
   blockName?: string | null;
@@ -33,6 +35,7 @@ interface FriendUser {
   name: string;
   email: string;
   phone: string;
+  avatarUrl?: string | null;
   role: 'SUPER_ADMIN' | 'BLOCK_ADMIN' | 'RESIDENT';
 }
 
@@ -52,6 +55,7 @@ interface SentInvitation {
     name: string;
     email: string;
     phone: string;
+    avatarUrl?: string | null;
   };
   building: {
     id: string;
@@ -68,7 +72,6 @@ export default function AdminsPage() {
   const [sentInvitations, setSentInvitations] = useState<SentInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showFriendModal, setShowFriendModal] = useState(false);
   const [redirectAdmin, setRedirectAdmin] = useState<Admin | null>(null);
   const [search, setSearch] = useState('');
   const [friendData, setFriendData] = useState<{
@@ -86,6 +89,26 @@ export default function AdminsPage() {
 
   useEffect(() => {
     fetchData();
+
+    // Polling and visibility refetch so changes made by other users are reflected live.
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchData();
+      }
+    }, 5000);
+
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        fetchData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -230,17 +253,6 @@ export default function AdminsPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => setShowFriendModal(true)}
-              variant="secondary"
-              leftIcon={
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-              }
-            >
-              Yönetici Arkadaş Ekle
-            </Button>
-            <Button
               onClick={() => setShowInviteModal(true)}
               leftIcon={
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -248,7 +260,7 @@ export default function AdminsPage() {
                 </svg>
               }
             >
-              Yönetici Davet Et
+              Binaya Yönetici Ata
             </Button>
           </div>
         </div>
@@ -310,9 +322,7 @@ export default function AdminsPage() {
                 <CardBody className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                        {inv.receiver.name.charAt(0)}
-                      </div>
+                      <UserAvatar name={inv.receiver.name} avatarUrl={inv.receiver.avatarUrl} size={40} />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-zinc-900 truncate">{inv.receiver.name}</p>
                         <p className="text-xs text-zinc-500 font-mono truncate">{formatAccountNumber(inv.receiver.accountNumber)}</p>
@@ -353,9 +363,7 @@ export default function AdminsPage() {
               <Card key={f.id}>
                 <CardBody className="p-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                      {f.requester.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
-                    </div>
+                    <UserAvatar name={f.requester.name} avatarUrl={f.requester.avatarUrl} size={40} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-zinc-900 truncate">{f.requester.name}</p>
                       <p className="text-xs text-zinc-500 font-mono truncate">{formatAccountNumber(f.requester.accountNumber)}</p>
@@ -388,9 +396,7 @@ export default function AdminsPage() {
               <Card key={f.id}>
                 <CardBody className="p-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                      {f.addressee.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
-                    </div>
+                    <UserAvatar name={f.addressee.name} avatarUrl={f.addressee.avatarUrl} size={40} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-zinc-900 truncate">{f.addressee.name}</p>
                       <p className="text-xs text-zinc-500 font-mono truncate">{formatAccountNumber(f.addressee.accountNumber)}</p>
@@ -425,9 +431,7 @@ export default function AdminsPage() {
               <Card key={friend.id}>
                 <CardBody className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-12 w-12 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                      {friend.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
-                    </div>
+                    <UserAvatar name={friend.name} avatarUrl={friend.avatarUrl} size={48} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-zinc-900 truncate">{friend.name}</p>
                       <p className="text-xs text-zinc-500 truncate">{friend.email}</p>
@@ -452,33 +456,31 @@ export default function AdminsPage() {
       {/* Aktif Yöneticiler */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 className="text-lg font-medium text-zinc-900">Aktif Yöneticiler</h2>
-        <div className="relative w-60 sm:w-72">
+        <div className="relative w-full sm:w-72">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
           <input
             type="text"
-            className="input-field w-full pr-20"
-            placeholder="Ara (isim, e-posta, telefon, ID)"
+            className="input-field w-full pl-10 pr-9 py-2.5"
+            placeholder="İsim, e-posta, telefon veya ID ile ara"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-              }
-            }}
           />
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={() => setSearch(search.trim())}
-            className="absolute right-1.5 top-1.5 bottom-1.5"
-            leftIcon={
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-400 hover:text-zinc-600 transition-colors"
+              aria-label="Aramayı temizle"
+            >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
-            }
-          >
-            Ara
-          </Button>
+            </button>
+          )}
         </div>
       </div>
 
@@ -511,20 +513,12 @@ export default function AdminsPage() {
         </div>
       )}
 
-      {showFriendModal && (
-        <SendFriendRequestModal
-          onClose={() => setShowFriendModal(false)}
-          onSuccess={() => {
-            setShowFriendModal(false);
-            fetchData();
-          }}
-        />
-      )}
-
       {showInviteModal && (
         <InviteAdminModal
           buildings={buildings}
           friends={friendData.friends}
+          sentInvitations={sentInvitations}
+          admins={admins}
           prefillAccountNumber={redirectAdmin?.accountNumber}
           onClose={() => {
             setShowInviteModal(false);
@@ -566,22 +560,12 @@ function AdminCard({
   onRemove: () => void;
 }) {
   const isSuper = admin.role === 'SUPER_ADMIN';
-  const initials = admin.name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
 
   return (
     <Card className="h-full flex flex-col">
       <CardBody className="p-4 flex flex-col h-full">
         <div className="flex items-start gap-3">
-          <div
-            className="h-12 w-12 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold text-sm flex-shrink-0"
-          >
-            {initials}
-          </div>
+          <UserAvatar name={admin.name} avatarUrl={admin.avatarUrl} size={48} />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
@@ -643,164 +627,13 @@ function AdminCard({
 }
 
 // -------------------------------------------------------------
-// MODAL: SEND ADMIN FRIEND REQUEST
-// -------------------------------------------------------------
-interface SendFriendRequestModalProps {
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-function SendFriendRequestModal({ onClose, onSuccess }: SendFriendRequestModalProps) {
-  const [accountNumberInput, setAccountNumberInput] = useState('');
-  const [lookedUpUser, setLookedUpUser] = useState<FriendUser | null>(null);
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupError, setLookupError] = useState('');
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleLookup = async () => {
-    const trimmed = accountNumberInput.trim();
-    if (!trimmed) {
-      setLookupError('Lütfen bir Kullanıcı ID girin');
-      setLookedUpUser(null);
-      return;
-    }
-
-    setLookupLoading(true);
-    setLookupError('');
-    setError('');
-    try {
-      const res = await fetch(`/api/users/lookup?accountNumber=${encodeURIComponent(trimmed)}`);
-      const data = await res.json();
-      if (res.ok && data.user) {
-        setLookedUpUser(data.user);
-      } else {
-        setLookedUpUser(null);
-        setLookupError(data.error || 'Kullanıcı bulunamadı');
-      }
-    } catch {
-      setLookedUpUser(null);
-      setLookupError('Bağlantı hatası oluştu');
-    } finally {
-      setLookupLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!lookedUpUser) {
-      setError('Lütfen önce geçerli bir kullanıcı bulun');
-      return;
-    }
-
-    setSubmitLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/admin-friendships', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountNumber: lookedUpUser.accountNumber }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        onSuccess();
-      } else {
-        setError(data.error || 'İstek gönderilemedi');
-      }
-    } catch {
-      setError('İstek gönderilemedi');
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
-
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md transform transition-all overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">Yönetici Arkadaş Ekle</h3>
-            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label className="input-label">Kullanıcı ID</label>
-              <div className="flex items-center gap-2 mt-1">
-                <input
-                  type="text"
-                  className="input-field font-mono"
-                  placeholder="Örn: 000 000 002"
-                  value={accountNumberInput}
-                  onChange={(e) => {
-                    setAccountNumberInput(e.target.value);
-                    setLookedUpUser(null);
-                    setLookupError('');
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleLookup();
-                    }
-                  }}
-                />
-                <Button type="button" variant="secondary" onClick={handleLookup} loading={lookupLoading}>
-                  Bul
-                </Button>
-              </div>
-              {lookupError && <p className="text-xs text-red-600 mt-1.5">{lookupError}</p>}
-            </div>
-
-            {lookedUpUser && (
-              <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-zinc-900">{lookedUpUser.name}</span>
-                    <Badge variant="success">Kayıtlı Kullanıcı</Badge>
-                  </div>
-                  <p className="text-xs text-zinc-600 mt-0.5">
-                    {lookedUpUser.email} • {formatPhoneNumber(lookedUpUser.phone)}
-                  </p>
-                </div>
-                <code className="text-xs bg-white px-2 py-1 rounded border border-emerald-200 font-mono text-emerald-800">
-                  {formatAccountNumber(lookedUpUser.accountNumber)}
-                </code>
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={submitLoading}>
-                İptal
-              </Button>
-              <Button type="submit" loading={submitLoading} disabled={!lookedUpUser}>
-                İstek Gönder
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// -------------------------------------------------------------
-// MODAL: INVITE ADMIN BY USER ID
+// MODAL: ASSIGN MANAGER TO BUILDING
 // -------------------------------------------------------------
 interface InviteAdminModalProps {
   buildings: Building[];
   friends: FriendUser[];
+  sentInvitations: SentInvitation[];
+  admins: Admin[];
   prefillAccountNumber?: number;
   onClose: () => void;
   onSuccess: () => void;
@@ -812,12 +645,21 @@ interface LookedUpUser {
   name: string;
   email: string;
   phone: string;
+  avatarUrl?: string | null;
   role: string;
 }
 
-function InviteAdminModal({ buildings, friends, prefillAccountNumber, onClose, onSuccess }: InviteAdminModalProps) {
+function InviteAdminModal({
+  buildings,
+  friends,
+  sentInvitations,
+  admins,
+  prefillAccountNumber,
+  onClose,
+  onSuccess,
+}: InviteAdminModalProps) {
   const [accountNumberInput, setAccountNumberInput] = useState(prefillAccountNumber ? formatAccountNumber(prefillAccountNumber) : '');
-  const [buildingId, setBuildingId] = useState(buildings[0]?.id || '');
+  const [buildingId, setBuildingId] = useState('');
   const [blockName, setBlockName] = useState('');
   const [availableBlocks, setAvailableBlocks] = useState<string[]>([]);
 
@@ -827,6 +669,14 @@ function InviteAdminModal({ buildings, friends, prefillAccountNumber, onClose, o
 
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [replaceConfirm, setReplaceConfirm] = useState<{
+    open: boolean;
+    existingInvitationId: string | null;
+    receiverName: string;
+  }>({ open: false, existingInvitationId: null, receiverName: '' });
+
+  const isRedirect = !!prefillAccountNumber;
 
   // Prefill edilmiş kullanıcı varsa açılışta otomatik arat
   useEffect(() => {
@@ -874,6 +724,20 @@ function InviteAdminModal({ buildings, friends, prefillAccountNumber, onClose, o
     }
   }, [buildingId]);
 
+  const selectedBuildingName = useMemo(() => {
+    return buildings.find((b) => b.id === buildingId)?.name || '';
+  }, [buildings, buildingId]);
+
+  const buildingStatus = useMemo(() => {
+    const pending = sentInvitations.find(
+      (i) => i.building.id === buildingId && (i.blockName || '') === (blockName || '') && i.status === 'PENDING'
+    );
+    const active = admins.find(
+      (a) => a.buildingId === buildingId && (a.blockName || '') === (blockName || '') && a.role === 'BLOCK_ADMIN'
+    );
+    return { pending, active };
+  }, [sentInvitations, admins, buildingId, blockName]);
+
   const handleLookup = async () => {
     const trimmed = accountNumberInput.trim();
     if (!trimmed) {
@@ -901,6 +765,57 @@ function InviteAdminModal({ buildings, friends, prefillAccountNumber, onClose, o
     }
   };
 
+  const doInvite = async (replaceId?: string) => {
+    if (!lookedUpUser) return;
+
+    // No building selected: send a plain friend request.
+    if (!buildingId) {
+      const res = await fetch('/api/admin-friendships', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountNumber: lookedUpUser.accountNumber }),
+      });
+
+      if (res.ok) {
+        onSuccess();
+        return;
+      }
+
+      const data = await res.json();
+      setError(data.error || 'Arkadaşlık isteği gönderilirken bir hata oluştu');
+      return;
+    }
+
+    const res = await fetch('/api/invitations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        receiverAccountNumber: lookedUpUser.accountNumber,
+        buildingId,
+        blockName: blockName || undefined,
+        ...(replaceId ? { replaceExisting: true, existingInvitationId: replaceId } : {}),
+      }),
+    });
+
+    if (res.ok) {
+      onSuccess();
+      return;
+    }
+
+    const data = await res.json();
+
+    if (res.status === 409 && data.pendingExists && data.existingInvitation) {
+      setReplaceConfirm({
+        open: true,
+        existingInvitationId: data.existingInvitation.id,
+        receiverName: data.existingInvitation.receiver?.name || '',
+      });
+      return;
+    }
+
+    setError(data.error || 'Talep gönderilirken bir hata oluştu');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lookedUpUser) {
@@ -908,213 +823,286 @@ function InviteAdminModal({ buildings, friends, prefillAccountNumber, onClose, o
       return;
     }
 
-    setSubmitLoading(true);
     setError('');
 
-    try {
-      const response = await fetch('/api/invitations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          receiverAccountNumber: lookedUpUser.accountNumber,
-          buildingId,
-          blockName: blockName || undefined,
-        }),
-      });
+    if (buildingId && buildingStatus.active) {
+      setError('Bu bina/blokta zaten aktif bir yönetici var. Önce mevcut yöneticinin yetkisini kaldırın.');
+      return;
+    }
 
-      if (response.ok) {
-        onSuccess();
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Talep gönderilirken bir hata oluştu');
+    if (buildingId && buildingStatus.pending) {
+      if (buildingStatus.pending.receiver.id === lookedUpUser.id) {
+        setError('Bu kullanıcıya bu bina/blok için zaten bekleyen bir davet gönderilmiş.');
+        return;
       }
-    } catch (err) {
-      setError('Talep gönderilirken bir hata oluştu');
+
+      setReplaceConfirm({
+        open: true,
+        existingInvitationId: buildingStatus.pending.id,
+        receiverName: buildingStatus.pending.receiver.name,
+      });
+      return;
+    }
+
+    setSubmitLoading(true);
+    try {
+      await doInvite();
     } finally {
       setSubmitLoading(false);
     }
   };
 
+  const handleReplaceConfirm = async () => {
+    if (!replaceConfirm.existingInvitationId) return;
+    setSubmitLoading(true);
+    setReplaceConfirm((prev) => ({ ...prev, open: false }));
+    try {
+      await doInvite(replaceConfirm.existingInvitationId);
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const submitDisabled = !lookedUpUser || !!(buildingId && buildingStatus.active);
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
+    <>
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
 
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg transform transition-all overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <div>
-              <h3 className="text-lg font-medium text-zinc-900">
-                {prefillAccountNumber ? 'Yöneticiyi Yeni Siteye Yönlendir' : 'Yönetici Davet Et'}
-              </h3>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                {prefillAccountNumber
-                  ? 'Yöneticinin yeni atanacağı site ve bloğu seçin'
-                  : "Kullanıcının 9 haneli ID kodunu girerek talep gönderin"}
-              </p>
-            </div>
-            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {error}
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg transform transition-all overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
+              <div>
+                <h3 className="text-lg font-medium text-zinc-900">
+                  {isRedirect ? 'Yöneticiyi Yeni Siteye Yönlendir' : 'Yönetici Ekle / Davet Et'}
+                </h3>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {isRedirect
+                    ? 'Yöneticinin yeni atanacağı site ve bloğu seçin'
+                    : 'Kullanıcıyı bulun; isterseniz binaya yönetici olarak atayın veya sadece arkadaş olarak ekleyin.'}
+                </p>
               </div>
-            )}
+              <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-            {buildings.length === 0 ? (
-              <p className="text-sm text-zinc-500 py-4">
-                Yönetici atamak için önce bir bina oluşturmalısınız.
-              </p>
-            ) : (
-              <>
-                {friends.length > 0 && (
+            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              {buildings.length === 0 ? (
+                <p className="text-sm text-zinc-500 py-4">
+                  Yönetici atamak için önce bir bina oluşturmalısınız.
+                </p>
+              ) : (
+                <>
+                  {/* Kullanıcı ID Arama */}
                   <div>
-                    <label className="input-label">Yönetici Arkadaşlarım</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-                      {friends.map((friend) => (
-                        <button
-                          key={friend.id}
+                    <label className="input-label">Yönetici Kullanıcı ID</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="text"
+                        className="input-field font-mono"
+                        placeholder="Örn: 000 000 002"
+                        value={accountNumberInput}
+                        readOnly={isRedirect}
+                        disabled={isRedirect}
+                        onChange={(e) => {
+                          setAccountNumberInput(e.target.value);
+                          setLookedUpUser(null);
+                          setLookupError('');
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !isRedirect) {
+                            e.preventDefault();
+                            handleLookup();
+                          }
+                        }}
+                      />
+                      {!isRedirect && (
+                        <Button
                           type="button"
-                          onClick={() => {
-                            setAccountNumberInput(formatAccountNumber(friend.accountNumber));
-                            setLookedUpUser(friend as LookedUpUser);
-                            setLookupError('');
-                          }}
-                          className={`flex items-center gap-2 p-2 border rounded-lg text-left transition-all ${
-                            lookedUpUser?.id === friend.id
-                              ? 'border-zinc-900 bg-zinc-50'
-                              : 'border-zinc-200 hover:border-zinc-400 bg-white'
-                          }`}
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleLookup}
+                          loading={lookupLoading}
                         >
-                          <div className="h-8 w-8 rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                            {friend.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-zinc-900 truncate">{friend.name}</p>
-                            <p className="text-xs text-zinc-500 font-mono">{formatAccountNumber(friend.accountNumber)}</p>
-                          </div>
-                        </button>
-                      ))}
+                          Kullanıcıyı Bul
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                )}
-
-                {/* Kullanıcı ID Arama */}
-                <div>
-                  <label className="input-label">Kullanıcı ID</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="text"
-                      className="input-field font-mono"
-                      placeholder="Örn: 000 000 002"
-                      value={accountNumberInput}
-                      readOnly={!!prefillAccountNumber}
-                      disabled={!!prefillAccountNumber}
-                      onChange={(e) => {
-                        setAccountNumberInput(e.target.value);
-                        setLookedUpUser(null);
-                        setLookupError('');
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !prefillAccountNumber) {
-                          e.preventDefault();
-                          handleLookup();
-                        }
-                      }}
-                    />
-                    {!prefillAccountNumber && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleLookup}
-                        loading={lookupLoading}
-                      >
-                        Kullanıcıyı Bul
-                      </Button>
+                    {lookupError && (
+                      <p className="text-xs text-red-600 mt-1.5">{lookupError}</p>
                     )}
                   </div>
-                  {lookupError && (
-                    <p className="text-xs text-red-600 mt-1.5">{lookupError}</p>
-                  )}
-                </div>
 
-                {/* Bulunan Kullanıcı Önizleme Kartı */}
-                {lookedUpUser && (
-                  <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-zinc-900">{lookedUpUser.name}</span>
-                        <Badge variant="success">Kayıtlı Kullanıcı</Badge>
+                  {/* Bulunan Kullanıcı Önizleme Kartı */}
+                  {lookedUpUser && (
+                    <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-zinc-900">{lookedUpUser.name}</span>
+                          <Badge variant="success">Kayıtlı Kullanıcı</Badge>
+                        </div>
+                        <p className="text-xs text-zinc-600 mt-0.5">
+                          {lookedUpUser.email} • {formatPhoneNumber(lookedUpUser.phone)}
+                        </p>
                       </div>
-                      <p className="text-xs text-zinc-600 mt-0.5">
-                        {lookedUpUser.email} • {formatPhoneNumber(lookedUpUser.phone)}
+                      <code className="text-xs bg-white px-2 py-1 rounded border border-emerald-200 font-mono text-emerald-800">
+                        {formatAccountNumber(lookedUpUser.accountNumber)}
+                      </code>
+                    </div>
+                  )}
+
+                  {/* Hedef Bina & Blok Seçimi */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className="form-group">
+                      <Select
+                        label="Yetkilendirilecek Bina / Site (Opsiyonel)"
+                        value={buildingId}
+                        onChange={(e) => {
+                          setBuildingId(e.target.value);
+                          setBlockName('');
+                          setError('');
+                        }}
+                        options={[
+                          { value: '', label: 'Bina seçilmedi (sadece arkadaş ekle)' },
+                          ...buildings.map((b) => ({ value: b.id, label: b.name })),
+                        ]}
+                      />
+                    </div>
+
+                    {buildingId && (
+                      <div className="form-group">
+                        <Select
+                          label="Yetkili Blok"
+                          value={blockName}
+                          onChange={(e) => {
+                            setBlockName(e.target.value);
+                            setError('');
+                          }}
+                          options={[
+                            { value: '', label: 'Tüm Bloklar (Tüm Site)' },
+                            ...availableBlocks.map((blk) => ({ value: blk, label: `${blk}` })),
+                          ]}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bina/blok durumu uyarıları */}
+                  {buildingStatus.active && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+                      <p className="font-semibold">Aktif yönetici mevcut</p>
+                      <p className="text-amber-700 mt-0.5">
+                        <span className="font-medium">{buildingStatus.active.name}</span> bu bina/blok için zaten aktif yöneticidir.
+                        Yeni yönetici daveti göndermek için önce mevcut yöneticinin yetkisini kaldırın.
                       </p>
                     </div>
-                    <code className="text-xs bg-white px-2 py-1 rounded border border-emerald-200 font-mono text-emerald-800">
-                      {formatAccountNumber(lookedUpUser.accountNumber)}
-                    </code>
+                  )}
+
+                  {buildingStatus.pending && (
+                    <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl text-sm text-sky-800">
+                      <p className="font-semibold">Bekleyen davet var</p>
+                      <p className="text-sky-700 mt-0.5">
+                        <span className="font-medium">{buildingStatus.pending.receiver.name}</span> kullanıcısına bu bina/blok için
+                        bekleyen bir davet gönderilmiş. Yeni davet göndermek istiyorsanız eski davet iptal edilecektir.
+                      </p>
+                    </div>
+                  )}
+
+                  {friends.length > 0 && (
+                    <div>
+                      <label className="input-label">Yönetici Arkadaşlarım</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                        {friends.map((friend) => (
+                          <button
+                            key={friend.id}
+                            type="button"
+                            onClick={() => {
+                              setAccountNumberInput(formatAccountNumber(friend.accountNumber));
+                              setLookedUpUser(friend as LookedUpUser);
+                              setLookupError('');
+                            }}
+                            className={`flex items-center gap-2 p-2 border rounded-lg text-left transition-all ${
+                              lookedUpUser?.id === friend.id
+                                ? 'border-zinc-900 bg-zinc-50'
+                                : 'border-zinc-200 hover:border-zinc-400 bg-white'
+                            }`}
+                          >
+                            <UserAvatar name={friend.name} avatarUrl={friend.avatarUrl} size={32} />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-zinc-900 truncate">{friend.name}</p>
+                              <p className="text-xs text-zinc-500 font-mono">{formatAccountNumber(friend.accountNumber)}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600 space-y-1">
+                    <p className="font-medium text-zinc-800">İşlem Bilgisi:</p>
+                    <p>
+                      Bina seçilmezse kullanıcıya <strong>yönetici arkadaşlık isteği</strong> gönderilir; kabul edildiğinde arkadaş olarak eklenir.
+                    </p>
+                    <p>
+                      Bina seçilirse kullanıcıya <strong>bina yöneticiliği daveti</strong> gönderilir; kabul edildiğinde hem arkadaş hem de
+                      <span className="font-medium"> {selectedBuildingName || 'seçilen bina'} </span>
+                      yöneticisi olur.
+                    </p>
+                    <p>
+                      Seçili bina/blokta zaten bekleyen davet veya aktif yönetici varsa yeni yönetici daveti gönderilemez;
+                      eski davet iptal edilebilir veya mevcut yönetici yetkisi kaldırıldıktan sonra yeni davet gönderilebilir.
+                    </p>
                   </div>
-                )}
+                </>
+              )}
 
-                {/* Hedef Bina & Blok Seçimi */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="form-group">
-                    <Select
-                      label="Yetkilendirilecek Bina / Site"
-                      value={buildingId}
-                      onChange={(e) => {
-                        setBuildingId(e.target.value);
-                        setBlockName('');
-                      }}
-                      options={buildings.map((b) => ({ value: b.id, label: b.name }))}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <Select
-                      label="Yetkili Blok"
-                      value={blockName}
-                      onChange={(e) => setBlockName(e.target.value)}
-                      options={[
-                        { value: '', label: 'Tüm Bloklar (Tüm Site)' },
-                        ...availableBlocks.map((blk) => ({ value: blk, label: `${blk}` })),
-                      ]}
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600 space-y-1">
-                  <p className="font-medium text-zinc-800">İşlem Bilgisi:</p>
-                  <p>
-                    Talep gönderildikten sonra ilgili kullanıcı siteye giriş yaptığında bir bildirim paneli görür.
-                    Kullanıcı talebi <strong>Kabul Et</strong> butonuna basarak onayladığında ilgili bloğun yöneticisi olur.
-                  </p>
-                </div>
-              </>
-            )}
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={submitLoading}>
-                İptal
-              </Button>
-              <Button
-                type="submit"
-                loading={submitLoading}
-                disabled={buildings.length === 0 || !lookedUpUser}
-              >
-                Yöneticilik Talebi Gönder
-              </Button>
-            </div>
-          </form>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
+                <Button type="button" variant="secondary" onClick={onClose} disabled={submitLoading}>
+                  İptal
+                </Button>
+                <Button
+                  type="submit"
+                  loading={submitLoading}
+                  disabled={submitDisabled}
+                >
+                  {buildingStatus.pending
+                    ? 'Eski Daveti İptal Et ve Yenini Gönder'
+                    : buildingId
+                    ? 'Yöneticilik Talebi Gönder'
+                    : 'Arkadaşlık İsteği Gönder'}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ConfirmModal
+        open={replaceConfirm.open}
+        title="Eski Yönetici Daveti İptal Edilsin mi?"
+        description={
+          replaceConfirm.receiverName
+            ? `${replaceConfirm.receiverName} kullanıcısına gönderilmiş bekleyen yönetici daveti iptal edilecek ve seçtiğiniz yeni kullanıcıya davet gönderilecek. Devam etmek istiyor musunuz?`
+            : 'Bu bina/blok için bekleyen yönetici daveti iptal edilecek ve yeni davet gönderilecek. Devam etmek istiyor musunuz?'
+        }
+        confirmText="Evet, İptal Et ve Yeni Davet Gönder"
+        cancelText="Vazgeç"
+        variant="warning"
+        loading={submitLoading}
+        onConfirm={handleReplaceConfirm}
+        onCancel={() => setReplaceConfirm((prev) => ({ ...prev, open: false }))}
+      />
+    </>
   );
 }
 

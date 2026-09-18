@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const notifications = await (prisma as any).notification.findMany({
+    const notifications = await prisma.notification.findMany({
       where: { userId: session.id },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -35,7 +35,7 @@ export async function PATCH(request: NextRequest) {
     const { notificationId, markAll } = body;
 
     if (markAll) {
-      await (prisma as any).notification.updateMany({
+      await prisma.notification.updateMany({
         where: { userId: session.id, isRead: false },
         data: { isRead: true },
       });
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (notificationId) {
-      await (prisma as any).notification.update({
+      await prisma.notification.update({
         where: { id: notificationId, userId: session.id },
         data: { isRead: true },
       });

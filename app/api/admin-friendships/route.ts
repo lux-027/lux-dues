@@ -20,7 +20,7 @@ export async function GET() {
       where: { addresseeId: userId, status: InvitationStatus.PENDING },
       include: {
         requester: {
-          select: { id: true, accountNumber: true, name: true, email: true, phone: true, role: true },
+          select: { id: true, accountNumber: true, name: true, email: true, phone: true, avatarUrl: true, role: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -30,7 +30,7 @@ export async function GET() {
       where: { requesterId: userId, status: InvitationStatus.PENDING },
       include: {
         addressee: {
-          select: { id: true, accountNumber: true, name: true, email: true, phone: true, role: true },
+          select: { id: true, accountNumber: true, name: true, email: true, phone: true, avatarUrl: true, role: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -43,10 +43,10 @@ export async function GET() {
       },
       include: {
         requester: {
-          select: { id: true, accountNumber: true, name: true, email: true, phone: true, role: true },
+          select: { id: true, accountNumber: true, name: true, email: true, phone: true, avatarUrl: true, role: true },
         },
         addressee: {
-          select: { id: true, accountNumber: true, name: true, email: true, phone: true, role: true },
+          select: { id: true, accountNumber: true, name: true, email: true, phone: true, avatarUrl: true, role: true },
         },
       },
       orderBy: { createdAt: 'desc' },

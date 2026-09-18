@@ -8,6 +8,7 @@ import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
 import { BLOCK_ARCHIVE_IMAGES } from '@/lib/buildingImages';
+import { UserAvatar } from '@/components/UserAvatar';
 import EditUnitModal from './EditUnitModal';
 
 const MONTH_NAMES = [
@@ -61,6 +62,7 @@ interface BuildingInfo {
   type: 'SITE' | 'APARTMENT';
   totalBlocks: number;
   blockImages: Record<string, string> | null;
+  image?: string | null;
   admins?: AdminUser[];
 }
 
@@ -212,8 +214,8 @@ export default function ResidentsPage() {
         blockName,
         doorNo: String(d),
         floor,
-        ownerName: `${blockName} D:${d}`,
-        residentPhone: '+905550000000',
+        ownerName: '',
+        residentPhone: '',
       });
     }
 
@@ -320,69 +322,83 @@ export default function ResidentsPage() {
         <Card className="mb-6 shadow-sm border-zinc-200">
           <CardBody className="p-6">
             <div className="flex flex-col lg:flex-row lg:items-stretch justify-between gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-3xl font-light text-zinc-900 tracking-tight">
-                    {selectedBlock === 'ALL' || !selectedBlock ? 'Tüm Bloklar ve Daireler' : `${selectedBlock} Daireleri`}
-                  </h1>
-                  <Badge variant="default" className="text-xs px-3 py-1 font-semibold">{filteredUnits.length} Daire</Badge>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-zinc-500">
-                  <span>Site: <strong className="text-zinc-800">{building?.name}</strong></span>
-                  {selectedBlock && selectedBlock !== 'ALL' && (
-                    <>
-                      <span className="text-zinc-300">•</span>
-                      <span>
-                        Sorumlu Yönetici:{' '}
-                        <strong className="text-zinc-800">
-                          {assignedAdminForSelected ? assignedAdminForSelected.name : 'Ana Yönetici (Siz)'}
-                        </strong>
-                      </span>
-                    </>
-                  )}
+              <div className="flex-1 space-y-2">
+                <div className="flex items-start gap-4">
+                  <div className="w-32 h-32 rounded-xl overflow-hidden border border-zinc-200 flex-shrink-0 bg-zinc-100 hidden lg:block">
+                    <img
+                      src={building?.image || `https://loremflickr.com/400/400/city,corporate,office,skyscraper,modern,urban,apartment?lock=${buildingId}`}
+                      alt={building?.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <h1 className="text-3xl font-light text-zinc-900 tracking-tight">
+                        {selectedBlock === 'ALL' || !selectedBlock ? 'Tüm Bloklar ve Daireler' : `${selectedBlock} Daireleri`}
+                      </h1>
+                      <Badge variant="default" className="text-xs px-3 py-1 font-semibold">{filteredUnits.length} Daire</Badge>
+                      {selectedBlock && selectedBlock !== 'ALL' && (
+                        <button
+                          type="button"
+                          title="Blok adını düzenle"
+                          onClick={() => setShowEditBlockModal(true)}
+                          className="p-1.5 rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-all"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-zinc-500">
+                      <span>Site: <strong className="text-zinc-800">{building?.name}</strong></span>
+                      {selectedBlock && selectedBlock !== 'ALL' && (
+                        <>
+                          <span className="text-zinc-300">•</span>
+                          <span>
+                            Sorumlu Yönetici:{' '}
+                            <strong className="text-zinc-800">
+                              {assignedAdminForSelected ? assignedAdminForSelected.name : 'Ana Yönetici (Siz)'}
+                            </strong>
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="flex flex-col items-end gap-2">
                 {selectedBlock && selectedBlock !== 'ALL' && (
-                  <button
-                    type="button"
-                    title="Blok adını düzenle"
-                    onClick={() => setShowEditBlockModal(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-zinc-900 border border-zinc-900 rounded-lg shadow-sm hover:bg-zinc-800 transition-all"
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setShowAssignAdminModal(true)}
+                    leftIcon={
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    }
                   >
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    <span>Bloğu Düzenle</span>
-                  </button>
+                    {assignedAdminForSelected ? assignedAdminForSelected.name : 'Bina Yöneticisi'}
+                  </Button>
                 )}
                 <div className="flex flex-col items-end gap-2 mt-auto">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setShowAssignAdminModal(true)}
-                      leftIcon={
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                      }
-                    >
-                      Yönetici Belirle
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleOpenBatchModal}
-                      leftIcon={
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5 a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                      }
-                    >
-                      Toplu Daire Ekle
-                    </Button>
+                    {(building?.type === 'APARTMENT' || (selectedBlock && selectedBlock !== 'ALL')) && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleOpenBatchModal}
+                        leftIcon={
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5 a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
+                        }
+                      >
+                        Toplu Daire Ekle
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       onClick={() => setShowCreateModal(true)}
@@ -449,12 +465,18 @@ export default function ResidentsPage() {
                   : 'Henüz daire bulunmuyor'}
               </h3>
               <p className="text-sm text-zinc-500 mb-6 max-w-sm mx-auto">
-                Bu bloğa tek tek daire ekleyebilir veya toplu olarak birden fazla daireyi tek seferde oluşturabilirsiniz.
+                {selectedBlock !== 'ALL'
+                  ? 'Bu bloğa tek tek daire ekleyebilir veya toplu olarak birden fazla daireyi tek seferde oluşturabilirsiniz.'
+                  : building?.type === 'APARTMENT'
+                  ? 'Bu apartmana tek tek daire ekleyebilir veya toplu olarak birden fazla daireyi tek seferde oluşturabilirsiniz.'
+                  : 'Site genelinde toplu daire oluşturulamaz. Lütfen önce bir blok seçin veya tek tek daire ekleyin.'}
               </p>
               <div className="flex justify-center gap-3">
-                <Button variant="secondary" onClick={() => setShowBatchModal(true)}>
-                  Toplu Daire Oluştur (1-10)
-                </Button>
+                {(building?.type === 'APARTMENT' || (selectedBlock && selectedBlock !== 'ALL')) && (
+                  <Button variant="secondary" onClick={() => setShowBatchModal(true)}>
+                    Toplu Daire Oluştur (1-10)
+                  </Button>
+                )}
                 <Button onClick={() => setShowCreateModal(true)}>
                   + Tek Daire Ekle
                 </Button>
@@ -465,79 +487,129 @@ export default function ResidentsPage() {
       ) : (
         <Card>
           <CardBody className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Blok</TableHead>
-                  <TableHead>Kapı No</TableHead>
-                  <TableHead>Malik / Sakin Adı</TableHead>
-                  <TableHead>Telefon</TableHead>
-                  <TableHead>Kayıtlı Sakin</TableHead>
-                  <TableHead className="text-right">İşlemler</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUnits.map((unit) => (
-                  <TableRow key={unit.id}>
-                    <TableCell>
-                      <span className="font-medium text-zinc-900 px-2.5 py-1 bg-zinc-100 rounded-md text-xs">
-                        {unit.blockName}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-medium text-zinc-900 text-sm">
-                      Daire {unit.doorNo}
-                    </TableCell>
-                    <TableCell className="font-medium text-zinc-800">{unit.ownerName}</TableCell>
-                    <TableCell className="font-mono text-xs text-zinc-600">
-                      {formatPhoneNumber(unit.residentPhone)}
-                    </TableCell>
-                    <TableCell>
-                      {unit.isVacant ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          Boş Daire (Aidatsız)
+            {/* Desktop Table View */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10"><span className="sr-only">Profil</span></TableHead>
+                    <TableHead>Blok</TableHead>
+                    <TableHead>Kapı No</TableHead>
+                    <TableHead>Malik / Sakin Adı</TableHead>
+                    <TableHead>Telefon</TableHead>
+                    <TableHead>Kayıtlı Sakin</TableHead>
+                    <TableHead className="text-right">İşlemler</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUnits.map((unit) => (
+                    <TableRow key={unit.id}>
+                      <TableCell>
+                        <UserAvatar
+                          name={unit.residents[0]?.name || unit.ownerName || (unit.isVacant ? 'Boş Daire' : 'Bilinmeyen')}
+                          avatarUrl={unit.residents[0]?.avatarUrl}
+                          size={32}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium text-zinc-900 px-2.5 py-1 bg-zinc-100 rounded-md text-xs">
+                          {unit.blockName}
                         </span>
-                      ) : unit.residents.length > 0 ? (
-                        <div className="flex items-center gap-2">
-                          {unit.residents[0].avatarUrl ? (
-                            <img
-                              src={unit.residents[0].avatarUrl}
-                              alt={unit.residents[0].name}
-                              className="w-6 h-6 rounded-full object-cover border border-zinc-200 flex-shrink-0"
-                            />
-                          ) : (
-                            <span className="w-6 h-6 rounded-full bg-zinc-800 text-white text-[10px] font-semibold flex items-center justify-center flex-shrink-0">
-                              {unit.residents[0].name
-                                .split(' ')
-                                .map((n) => n[0])
-                                .slice(0, 2)
-                                .join('')
-                                .toUpperCase()}
-                            </span>
-                          )}
+                      </TableCell>
+                      <TableCell className="font-medium text-zinc-900 text-sm">
+                        Daire {unit.doorNo}
+                      </TableCell>
+                      <TableCell className="font-medium text-zinc-800">{unit.ownerName}</TableCell>
+                      <TableCell className="font-mono text-xs text-zinc-600">
+                        {formatPhoneNumber(unit.residentPhone)}
+                      </TableCell>
+                      <TableCell>
+                        {unit.isVacant ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            Boş Daire (Aidatsız)
+                          </span>
+                        ) : unit.residents.length > 0 ? (
                           <Badge variant="success">
                             {unit.residents[0].name} {unit.residents.length > 1 ? `(+${unit.residents.length - 1})` : ''}
                           </Badge>
-                        </div>
-                      ) : (
-                        <Badge variant="default">Kullanıcı Bekleniyor</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => {
-                          setEditingUnit(unit);
-                          setShowEditModal(true);
-                        }}
-                      >
-                        Düzenle
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        ) : (
+                          <Badge variant="default">Kullanıcı Bekleniyor</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => {
+                            setEditingUnit(unit);
+                            setShowEditModal(true);
+                          }}
+                        >
+                          Düzenle
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="sm:hidden space-y-3 p-4">
+              {filteredUnits.map((unit) => (
+                <div key={unit.id} className="bg-white border border-zinc-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <UserAvatar
+                      name={unit.residents[0]?.name || unit.ownerName || (unit.isVacant ? 'Boş Daire' : 'Bilinmeyen')}
+                      avatarUrl={unit.residents[0]?.avatarUrl}
+                      size={40}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-zinc-900 px-2 py-0.5 bg-zinc-100 rounded text-xs">
+                          {unit.blockName}
+                        </span>
+                        <span className="font-semibold text-zinc-900 text-sm">
+                          Daire {unit.doorNo}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-zinc-800 truncate">{unit.ownerName}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <svg className="h-4 w-4 text-zinc-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <span className="font-mono text-zinc-600">{formatPhoneNumber(unit.residentPhone)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    {unit.isVacant ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        Boş Daire (Aidatsız)
+                      </span>
+                    ) : unit.residents.length > 0 ? (
+                      <Badge variant="success">
+                        {unit.residents[0].name} {unit.residents.length > 1 ? `(+${unit.residents.length - 1})` : ''}
+                      </Badge>
+                    ) : (
+                      <Badge variant="default">Kullanıcı Bekleniyor</Badge>
+                    )}
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setEditingUnit(unit);
+                        setShowEditModal(true);
+                      }}
+                    >
+                      Düzenle
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardBody>
         </Card>
       )}
@@ -1040,10 +1112,9 @@ function CreateUnitModal({
 
             <div className="form-group">
               <PhoneInput
-                label="İletişim Telefonu"
+                label="İletişim Telefonu (İsteğe Bağlı)"
                 value={formData.residentPhone}
                 onChange={(value) => setFormData({ ...formData, residentPhone: value })}
-                required
               />
             </div>
 
@@ -1109,8 +1180,8 @@ function BatchCreateUnitsModal({
         blockName: blockName.trim() || 'A Blok',
         doorNo: String(d),
         floor,
-        ownerName: `${blockName.trim() || 'A'} Blok D:${d}`,
-        residentPhone: '+905550000000',
+        ownerName: '',
+        residentPhone: '',
         defaultDueAmount,
       });
     }
@@ -1275,6 +1346,8 @@ function AssignAdminModal({ buildingId, blocks, initialBlock, currentAdmins, onC
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     fetchAdmins();
@@ -1319,12 +1392,44 @@ function AssignAdminModal({ buildingId, blocks, initialBlock, currentAdmins, onC
     }
   };
 
+  const handleRemoveAdmin = async () => {
+    if (!currentAdmin) return;
+    setInviting(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admins/${currentAdmin.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        onSuccess();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Yönetici kaldırılamadı');
+      }
+    } catch {
+      setError('Yönetici kaldırılamadı');
+    } finally {
+      setInviting(false);
+    }
+  };
+
   const filteredAdmins = admins.filter(
     (a) =>
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.email.toLowerCase().includes(search.toLowerCase()) ||
       a.phone.includes(search)
   );
+
+  const handleSelectAdmin = (admin: AdminUser) => {
+    setSelectedAdmin(admin);
+    setSearch(admin.name);
+    setShowDropdown(false);
+  };
+
+  const handleInviteSelected = async () => {
+    if (!selectedAdmin) return;
+    await handleInvite(selectedAdmin.id);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1358,22 +1463,26 @@ function AssignAdminModal({ buildingId, blocks, initialBlock, currentAdmins, onC
           )}
 
           {currentAdmin && (
-            <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm">
-              <span className="text-zinc-500">Mevcut sorumlu:</span>{' '}
-              <strong className="text-zinc-900">{currentAdmin.name}</strong>
+            <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-zinc-500 uppercase mb-2">Mevcut Yönetici</p>
+                  <p className="text-base font-semibold text-zinc-900">{currentAdmin.name}</p>
+                  <p className="text-sm text-zinc-600 mt-1">{currentAdmin.email}</p>
+                  <p className="text-sm text-zinc-600">{currentAdmin.phone}</p>
+                </div>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleRemoveAdmin}
+                  loading={inviting}
+                  disabled={inviting}
+                >
+                  Yöneticiyi Kaldır
+                </Button>
+              </div>
             </div>
           )}
-
-          <div>
-            <label className="input-label">Yönetici Ara (İsim, E-posta, Telefon)</label>
-            <input
-              type="text"
-              className="input-field mt-1"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Örn: Ahmet veya ahmet@email.com"
-            />
-          </div>
 
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
@@ -1381,32 +1490,81 @@ function AssignAdminModal({ buildingId, blocks, initialBlock, currentAdmins, onC
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="input-label">Yöneticiler</label>
-            {loading ? (
-              <p className="text-sm text-zinc-500">Yükleniyor...</p>
-            ) : filteredAdmins.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sonuç bulunamadı.</p>
-            ) : (
-              filteredAdmins.map((admin) => (
-                <div
-                  key={admin.id}
-                  className="flex items-center justify-between p-3 border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors"
-                >
+          <div className="space-y-2 relative">
+            <div>
+              <label className="input-label">Yönetici Ara</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="input-field mt-1"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  placeholder="İsim, e-posta veya telefon ile ara..."
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch('');
+                      setSelectedAdmin(null);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {showDropdown && (search || filteredAdmins.length > 0) && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-zinc-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                {loading ? (
+                  <div className="p-3 text-sm text-zinc-500">Yükleniyor...</div>
+                ) : filteredAdmins.length === 0 ? (
+                  <div className="p-3 text-sm text-zinc-500">Sonuç bulunamadı.</div>
+                ) : (
+                  filteredAdmins.map((admin) => (
+                    <div
+                      key={admin.id}
+                      className="flex items-center justify-between p-3 hover:bg-zinc-50 cursor-pointer transition-colors"
+                      onClick={() => handleSelectAdmin(admin)}
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-zinc-900">{admin.name}</p>
+                        <p className="text-xs text-zinc-500">{admin.email} • {admin.phone}</p>
+                      </div>
+                      <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {selectedAdmin && !showDropdown && (
+              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-zinc-900">{admin.name}</p>
-                    <p className="text-xs text-zinc-500">{admin.email} • {admin.phone}</p>
+                    <p className="text-sm font-medium text-zinc-900">{selectedAdmin.name}</p>
+                    <p className="text-xs text-zinc-500">{selectedAdmin.email}</p>
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => handleInvite(admin.id)}
+                    onClick={handleInviteSelected}
                     loading={inviting}
                     disabled={inviting}
                   >
                     Davet Gönder
                   </Button>
                 </div>
-              ))
+              </div>
             )}
           </div>
 
@@ -1415,33 +1573,33 @@ function AssignAdminModal({ buildingId, blocks, initialBlock, currentAdmins, onC
           </div>
         </div>
 
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
-            <svg className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p>
-              Aradığınız yönetici listede yoksa veya yeni bir yönetici eklemek istiyorsanız{' '}
-              <a href="/admin/admins" className="font-semibold underline hover:text-amber-900">
-                Yöneticiler sayfasına gidin
-              </a>
-              . Davet gönderdikten sonra tekrar buradan atama yapabilirsiniz.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 p-5 border-t border-zinc-200">
-            <a
-              href="/admin/admins"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Yöneticiler Sayfasına Git
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+          <svg className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p>
+            Aradığınız yönetici listede yoksa veya yeni bir yönetici eklemek istiyorsanız{' '}
+            <a href="/admin/admins" className="font-semibold underline hover:text-amber-900">
+              Yöneticiler sayfasına gidin
             </a>
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Kapat
-            </Button>
-          </div>
+            . Davet gönderdikten sonra tekrar buradan atama yapabilirsiniz.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 p-5 border-t border-zinc-200">
+          <a
+            href="/admin/admins"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-white bg-zinc-900 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 rounded-xl shadow-sm transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Yöneticiler Sayfasına Git
+          </a>
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Kapat
+          </Button>
+        </div>
       </div>
     </div>
   );

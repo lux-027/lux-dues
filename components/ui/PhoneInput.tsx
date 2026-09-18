@@ -20,7 +20,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   error,
   helperText,
   fullWidth = true,
-  placeholder = '555 123 45 67',
+  placeholder = '0 555 123 45 67',
   value,
   onChange,
   onDisplayChange,
@@ -49,7 +49,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       className={className}
       value={displayValue}
       onChange={handleChange}
-      maxLength={13}
+      maxLength={15}
       inputMode="tel"
       {...props}
     />

@@ -1,7 +1,7 @@
 /**
  * Phone number helpers for Turkish mobile numbers.
  *
- * Display format: 5XX XXX XX XX
+ * Display format: 0 5XX XXX XX XX
  * Storage format (E.164): +905XXXXXXXXX
  */
 
@@ -29,7 +29,7 @@ function toNationalNumber(digits: string): string {
 }
 
 /**
- * Formats a Turkish mobile number for display with spaces: 5XX XXX XX XX.
+ * Formats a Turkish mobile number for display with spaces: 0 5XX XXX XX XX.
  * Non-conforming input is returned as raw digits.
  */
 export function formatPhoneNumber(value: string): string {
@@ -47,7 +47,7 @@ export function formatPhoneNumber(value: string): string {
     national.slice(8, 10),
   ].filter(Boolean);
 
-  return parts.join(' ');
+  return `0 ${parts.join(' ')}`;
 }
 
 /**

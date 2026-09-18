@@ -3,7 +3,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardBody, CardHeader } from '@/components/ui';
-import { Button, Input, Badge, CurrencyInput } from '@/components/ui';
+import { Button, Input, Badge, CurrencyInput, DatePicker } from '@/components/ui';
+import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
 
@@ -20,6 +21,7 @@ interface Due {
   year: number;
   status: 'PAID' | 'UNPAID';
   dueDate: string;
+  updatedAt: string;
   unit?: {
     id: string;
     blockName: string;
@@ -75,6 +77,11 @@ export default function BuildingDuesPage() {
   const [detailUnit, setDetailUnit] = useState<Unit | null>(null);
   const [detailModalYear, setDetailModalYear] = useState<number>(currentSystemYear);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [paidConfirm, setPaidConfirm] = useState<{
+    open: boolean;
+    dueId: string | null;
+    currentStatus: 'PAID' | 'UNPAID' | null;
+  }>({ open: false, dueId: null, currentStatus: null });
 
   useEffect(() => {
     if (buildingId) {
@@ -177,11 +184,10 @@ export default function BuildingDuesPage() {
     };
   };
 
-  // Toggle due status (PAID <-> UNPAID)
-  const handleToggleStatus = async (dueId: string, currentStatus: 'PAID' | 'UNPAID') => {
+  const performToggleStatus = async (dueId: string, currentStatus: 'PAID' | 'UNPAID') => {
+    const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
     try {
       setActionLoadingId(dueId);
-      const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
       const res = await fetch(`/api/dues/${dueId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -198,27 +204,12 @@ export default function BuildingDuesPage() {
     }
   };
 
-  // Quick create single due if not defined yet
-  const handleQuickCreateDue = async (unitId: string, month: number, year: number, amount: number) => {
-    try {
-      const defaultDueDate = new Date(year, month - 1, 20).toISOString();
-      const res = await fetch('/api/dues', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unitId,
-          amount,
-          month,
-          year,
-          dueDate: defaultDueDate,
-        }),
-      });
-
-      if (res.ok) {
-        fetchDues();
-      }
-    } catch (err) {
-      console.error(err);
+  const handleToggleStatus = (dueId: string, currentStatus: 'PAID' | 'UNPAID') => {
+    const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
+    if (newStatus === 'PAID') {
+      setPaidConfirm({ open: true, dueId, currentStatus });
+    } else {
+      performToggleStatus(dueId, currentStatus);
     }
   };
 
@@ -501,7 +492,6 @@ export default function BuildingDuesPage() {
                           <span className="font-medium text-zinc-900">
                             No: {unit.doorNo}
                           </span>
-                          <span className="text-xs text-zinc-400">({unit.floor}. Kat)</span>
                         </div>
                       </TableCell>
 
@@ -533,15 +523,7 @@ export default function BuildingDuesPage() {
                         {currentMonthDue ? (
                           `${Number(currentMonthDue.amount).toLocaleString('tr-TR')} ₺`
                         ) : (
-                          <button
-                            onClick={() => {
-                              const autoDue = Number(unit.defaultDueAmount || building?.defaultDueAmount || 1500);
-                              handleQuickCreateDue(unit.id, selectedMonth, selectedYear, autoDue);
-                            }}
-                            className="text-xs text-zinc-500 hover:text-zinc-900 underline"
-                          >
-                            + Aidat Belirle ({Number(unit.defaultDueAmount || building?.defaultDueAmount || 1500).toLocaleString('tr-TR')} ₺)
-                          </button>
+                          <span className="text-xs text-zinc-500 italic">aidat bilgisi yok</span>
                         )}
                       </TableCell>
 
@@ -579,13 +561,13 @@ export default function BuildingDuesPage() {
                           )}
                           <Button
                             size="sm"
-                            variant="ghost"
+                            variant="primary"
                             onClick={() => {
                               setDetailUnit(unit);
                               setDetailModalYear(selectedYear);
                             }}
                           >
-                            Detay →
+                            Detay
                           </Button>
                         </div>
                       </TableCell>
@@ -649,6 +631,23 @@ export default function BuildingDuesPage() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={paidConfirm.open}
+        title="Ödendi Onayı"
+        description="Bu aidatı ödendi olarak işaretlemek istediğinize emin misiniz?"
+        confirmText="Evet, Ödendi"
+        cancelText="Vazgeç"
+        variant="primary"
+        loading={!!actionLoadingId}
+        onConfirm={() => {
+          if (paidConfirm.dueId && paidConfirm.currentStatus) {
+            performToggleStatus(paidConfirm.dueId, paidConfirm.currentStatus);
+          }
+          setPaidConfirm({ open: false, dueId: null, currentStatus: null });
+        }}
+        onCancel={() => setPaidConfirm({ open: false, dueId: null, currentStatus: null })}
+      />
     </div>
   );
 }
@@ -678,6 +677,11 @@ function UnitDuesDetailModal({
   onStatusChange,
 }: UnitDuesDetailModalProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [paidConfirm, setPaidConfirm] = useState<{
+    open: boolean;
+    dueId: string | null;
+    currentStatus: 'PAID' | 'UNPAID' | null;
+  }>({ open: false, dueId: null, currentStatus: null });
 
   const yearDues = useMemo(() => {
     return allDues.filter((d) => d.year === selectedYear);
@@ -687,10 +691,10 @@ function UnitDuesDetailModal({
   const yearTotalPaid = yearDues.filter((d) => d.status === 'PAID').reduce((acc, d) => acc + Number(d.amount), 0);
   const yearTotalUnpaid = yearTotalExpected - yearTotalPaid;
 
-  const handleToggle = async (dueId: string, currentStatus: 'PAID' | 'UNPAID') => {
+  const performToggle = async (dueId: string, currentStatus: 'PAID' | 'UNPAID') => {
+    const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
     try {
       setLoadingId(dueId);
-      const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
       const res = await fetch(`/api/dues/${dueId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -706,30 +710,12 @@ function UnitDuesDetailModal({
     }
   };
 
-  const defaultDue = Number(unit.defaultDueAmount ?? building?.defaultDueAmount ?? 1500);
-
-  const handleCreateMonthDue = async (month: number) => {
-    try {
-      setLoadingId(`create-${month}`);
-      const defaultDueDate = new Date(selectedYear, month - 1, 20).toISOString();
-      const res = await fetch('/api/dues', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unitId: unit.id,
-          amount: defaultDue,
-          month,
-          year: selectedYear,
-          dueDate: defaultDueDate,
-        }),
-      });
-      if (res.ok) {
-        onStatusChange();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingId(null);
+  const handleToggle = (dueId: string, currentStatus: 'PAID' | 'UNPAID') => {
+    const newStatus = currentStatus === 'PAID' ? 'UNPAID' : 'PAID';
+    if (newStatus === 'PAID') {
+      setPaidConfirm({ open: true, dueId, currentStatus });
+    } else {
+      performToggle(dueId, currentStatus);
     }
   };
 
@@ -738,7 +724,7 @@ function UnitDuesDetailModal({
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
 
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl transform transition-all overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl transform transition-all overflow-hidden flex flex-col max-h-[85vh]">
           {/* Header */}
           <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-zinc-50">
             <div>
@@ -841,6 +827,12 @@ function UnitDuesDetailModal({
                             <span>Son Gün:</span>
                             <span>{new Date(due.dueDate).toLocaleDateString('tr-TR')}</span>
                           </div>
+                          {isPaid && (
+                            <div className="flex justify-between text-[11px] text-emerald-600">
+                              <span>Ödeme Tarihi:</span>
+                              <span>{new Date(due.updatedAt).toLocaleDateString('tr-TR')}</span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <p className="text-xs text-zinc-400 italic">Aidat kaydı açılmamış</p>
@@ -848,7 +840,7 @@ function UnitDuesDetailModal({
                     </div>
 
                     <div className="pt-2 border-t border-zinc-100 mt-1">
-                      {due ? (
+                      {due && (
                         <Button
                           size="sm"
                           variant={isPaid ? 'secondary' : 'primary'}
@@ -857,16 +849,6 @@ function UnitDuesDetailModal({
                           onClick={() => handleToggle(due.id, due.status)}
                         >
                           {isPaid ? 'İptal Et' : 'Ödendi Yap'}
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="w-full text-xs py-1 text-zinc-700 hover:bg-zinc-100"
-                          loading={loadingId === `create-${monthNum}`}
-                          onClick={() => handleCreateMonthDue(monthNum)}
-                        >
-                          + {defaultDue.toLocaleString('tr-TR')} ₺ Aidat Ekle
                         </Button>
                       )}
                     </div>
@@ -883,6 +865,23 @@ function UnitDuesDetailModal({
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={paidConfirm.open}
+        title="Ödendi Onayı"
+        description="Bu aidatı ödendi olarak işaretlemek istediğinize emin misiniz?"
+        confirmText="Evet, Ödendi"
+        cancelText="Vazgeç"
+        variant="primary"
+        loading={!!loadingId}
+        onConfirm={() => {
+          if (paidConfirm.dueId && paidConfirm.currentStatus) {
+            performToggle(paidConfirm.dueId, paidConfirm.currentStatus);
+          }
+          setPaidConfirm({ open: false, dueId: null, currentStatus: null });
+        }}
+        onCancel={() => setPaidConfirm({ open: false, dueId: null, currentStatus: null })}
+      />
     </div>
   );
 }
@@ -912,13 +911,10 @@ function BulkCreateDuesModal({
   onSuccess,
 }: BulkCreateDuesModalProps) {
   const [year, setYear] = useState(defaultYear);
-  const [month, setMonth] = useState(defaultMonth);
+  const [date, setDate] = useState(`${defaultYear}-${String(defaultMonth).padStart(2, '0')}-05`);
   const [blockName, setBlockName] = useState('ALL');
   const [amount, setAmount] = useState(
     building?.defaultDueAmount ? String(building.defaultDueAmount) : '1500'
-  );
-  const [dueDate, setDueDate] = useState(
-    new Date(defaultYear, defaultMonth - 1, 20).toISOString().split('T')[0]
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -948,6 +944,7 @@ function BulkCreateDuesModal({
     setError('');
 
     try {
+      const [dateYear, dateMonth] = date.split('-').map(Number);
       const res = await fetch('/api/dues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -956,9 +953,9 @@ function BulkCreateDuesModal({
           buildingId,
           blockName,
           amount: parseFloat(amount),
-          month: parseInt(String(month)),
-          year: parseInt(String(year)),
-          dueDate: new Date(dueDate).toISOString(),
+          month: dateMonth,
+          year: dateYear,
+          dueDate: new Date(date).toISOString(),
         }),
       });
 
@@ -1004,25 +1001,30 @@ function BulkCreateDuesModal({
                   type="number"
                   className="input-field"
                   value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const y = parseInt(e.target.value) || defaultYear;
+                    setYear(y);
+                    const [_, m, d] = date.split('-');
+                    setDate(`${y}-${m}-${d}`);
+                  }}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label className="input-label">Ay</label>
-                <select
-                  className="input-field"
-                  value={month}
-                  onChange={(e) => setMonth(parseInt(e.target.value))}
+                <DatePicker
+                  label="Tarih (GG.AA.YYYY)"
+                  value={date}
+                  onChange={(v) => {
+                    if (v) {
+                      const [y] = v.split('-');
+                      setYear(parseInt(y));
+                      setDate(v);
+                    }
+                  }}
+                  placeholder="GG.AA.YYYY"
                   required
-                >
-                  {MONTH_NAMES.map((m, idx) => (
-                    <option key={idx + 1} value={idx + 1}>
-                      {idx + 1} - {m}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 
@@ -1044,26 +1046,14 @@ function BulkCreateDuesModal({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="form-group">
-                <CurrencyInput
-                  label="Aidat Tutarı (₺)"
-                  placeholder="Örn: 1.500"
-                  value={amount}
-                  onChange={(value) => setAmount(value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <Input
-                  label="Son Ödeme Tarihi"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="form-group">
+              <CurrencyInput
+                label="Aidat Tutarı (₺)"
+                placeholder="Örn: 1.500"
+                value={amount}
+                onChange={(value) => setAmount(value)}
+                required
+              />
             </div>
 
             <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600">
@@ -1105,9 +1095,28 @@ function SingleCreateDueModal({
   onClose,
   onSuccess,
 }: SingleCreateDueModalProps) {
-  const [unitId, setUnitId] = useState(units[0]?.id || '');
-  const [year, setYear] = useState(defaultYear);
-  const [month, setMonth] = useState(defaultMonth);
+  const isSite = building?.type === 'SITE';
+  const availableBlocks = useMemo(() => [...new Set(units.map((u) => u.blockName))].sort(), [units]);
+
+  const [selectedBlock, setSelectedBlock] = useState(availableBlocks[0] || '');
+  const [selectedDoorNo, setSelectedDoorNo] = useState(units[0]?.doorNo || '');
+
+  const availableDoors = useMemo(() => {
+    return units
+      .filter((u) => (isSite ? u.blockName === selectedBlock : true))
+      .sort((a, b) => a.doorNo.localeCompare(b.doorNo, undefined, { numeric: true }));
+  }, [units, isSite, selectedBlock]);
+
+  const unitId = useMemo(() => {
+    return availableDoors.find((u) => u.doorNo === selectedDoorNo)?.id || '';
+  }, [availableDoors, selectedDoorNo]);
+
+  useEffect(() => {
+    if (availableDoors.length > 0 && !availableDoors.some((u) => u.doorNo === selectedDoorNo)) {
+      setSelectedDoorNo(availableDoors[0].doorNo);
+    }
+  }, [availableDoors]);
+
   const [amount, setAmount] = useState(
     building?.defaultDueAmount ? String(building.defaultDueAmount) : '1500'
   );
@@ -1134,14 +1143,15 @@ function SingleCreateDueModal({
     setError('');
 
     try {
+      const [dueYear, dueMonth] = dueDate.split('-').map(Number);
       const res = await fetch('/api/dues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           unitId,
           amount: parseFloat(amount),
-          month: parseInt(String(month)),
-          year: parseInt(String(year)),
+          month: dueMonth,
+          year: dueYear,
           dueDate: new Date(dueDate).toISOString(),
         }),
       });
@@ -1181,50 +1191,57 @@ function SingleCreateDueModal({
               </div>
             )}
 
-            <div className="form-group">
-              <label className="input-label">Daire Seçin</label>
-              <select
-                className="input-field"
-                value={unitId}
-                onChange={(e) => setUnitId(e.target.value)}
-                required
-              >
-                {units.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.blockName} - No: {u.doorNo} ({u.ownerName})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {isSite ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="input-label">Blok Seçin</label>
+                  <select
+                    className="input-field"
+                    value={selectedBlock}
+                    onChange={(e) => setSelectedBlock(e.target.value)}
+                    required
+                  >
+                    {availableBlocks.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="form-group">
-                <label className="input-label">Yıl</label>
-                <input
-                  type="number"
-                  className="input-field"
-                  value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value))}
-                  required
-                />
+                <div className="form-group">
+                  <label className="input-label">Daire No Seçin</label>
+                  <select
+                    className="input-field"
+                    value={selectedDoorNo}
+                    onChange={(e) => setSelectedDoorNo(e.target.value)}
+                    required
+                  >
+                    {availableDoors.map((u) => (
+                      <option key={u.id} value={u.doorNo}>
+                        No: {u.doorNo} ({u.ownerName})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-
+            ) : (
               <div className="form-group">
-                <label className="input-label">Ay</label>
+                <label className="input-label">Daire No Seçin</label>
                 <select
                   className="input-field"
-                  value={month}
-                  onChange={(e) => setMonth(parseInt(e.target.value))}
+                  value={selectedDoorNo}
+                  onChange={(e) => setSelectedDoorNo(e.target.value)}
                   required
                 >
-                  {MONTH_NAMES.map((m, idx) => (
-                    <option key={idx + 1} value={idx + 1}>
-                      {idx + 1} - {m}
+                  {availableDoors.map((u) => (
+                    <option key={u.id} value={u.doorNo}>
+                      No: {u.doorNo} ({u.ownerName})
                     </option>
                   ))}
                 </select>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="form-group">
@@ -1238,11 +1255,11 @@ function SingleCreateDueModal({
               </div>
 
               <div className="form-group">
-                <Input
-                  label="Son Ödeme Tarihi"
-                  type="date"
+                <DatePicker
+                  label="Başlangıç Tarihi"
                   value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
+                  onChange={(v) => v && setDueDate(v)}
+                  placeholder="GG.AA.YYYY"
                   required
                 />
               </div>

@@ -54,6 +54,32 @@ export function NotificationMenu() {
   useEffect(() => {
     fetchInvitations();
     fetchNotifications();
+
+    // Setup SSE connection for real-time notifications
+    let eventSource: EventSource | null = null;
+
+    try {
+      eventSource = new EventSource('/api/notifications/stream');
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'notification') {
+          setNotifications((prev) => [data.notification, ...prev]);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('SSE error:', error);
+        eventSource?.close();
+      };
+    } catch (error) {
+      console.error('Failed to setup SSE:', error);
+    }
+
+    return () => {
+      eventSource?.close();
+    };
   }, []);
 
   useEffect(() => {

@@ -1,0 +1,15 @@
+import crypto from 'crypto';
+
+export function generateVerificationToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+export function generateVerificationTokenExpiry(): Date {
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 24); // 24 hours
+  return expiry;
+}
+
+export function isTokenExpired(expiryDate: Date): boolean {
+  return new Date() > expiryDate;
+}

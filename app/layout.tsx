@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: "%s | LuxDues",
   },
   description:
-    "LuxDues; apartman, site ve rezidans yönetimleri için geliştirilmiş yeni nesil aidat takip, ortak gider bölüşümü, sakin yönetimi ve şikayet takip platformudur. Çoklu blok desteği, otomatik borçlandırma ve şeffaf finans raporlarıyla site yönetimini kolaylaştırır.",
+    "LuxDues; apartman, site ve rezidans yönetimleri için geliştirilmiş yeni nesil aidat takip, ortak gider bölüşümü, sakin yönetimi ve şikayet takip platformudur. Çoklu blok desteği, otomatik borçlandırma, PDF/Excel raporlama ve şeffaf finans yönetimi ile site yönetimini kolaylaştırır. Türkçe arayüz, mobil uyumlu ve bulut tabanlı.",
   keywords: [
     "aidat takip",
     "aidat takip programı",
@@ -31,7 +31,15 @@ export const metadata: Metadata = {
     "aidat borç takibi",
     "online aidat ödeme",
     "kat mülkiyeti yönetimi",
+    "Türkçe site yönetim",
+    "apartman yönetim sistemi",
+    "site aidat hesaplama",
+    "kat malikleri yönetimi",
+    "site yönetim uygulaması",
+    "aidat tahakkuk",
+    "site yönetim platformu",
     "LuxDues",
+    "Türkiye site yönetim",
   ],
   applicationName: "LuxDues",
   authors: [{ name: "LuxDues Inc.", url: SITE_URL }],
@@ -63,7 +71,7 @@ export const metadata: Metadata = {
     siteName: "LuxDues",
     title: "LuxDues — Site, Apartman ve Aidat Takip Yönetim Sistemi",
     description:
-      "Çoklu blok desteği, otomatik aidat borçlandırması, ortak gider bölüşümü ve sakin portalı ile site yönetimini tek ekrandan yönetin.",
+      "Türkiye'nin en gelişmiş site ve apartman yönetim platformu. Çoklu blok desteği, otomatik aidat borçlandırması, PDF/Excel raporlama, sakin portalı ve şeffaf finans yönetimi. Ücretsiz deneyin.",
     images: [
       {
         url: "/bannerbina.jpg",
@@ -83,9 +91,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "LuxDues — Site, Apartman ve Aidat Takip Yönetim Sistemi",
     description:
-      "Apartman ve site yönetimini dijitalleştiren yeni nesil aidat takip platformu. Şeffaf, hızlı, güvenli.",
+      "Türkiye'nin en gelişmiş site ve apartman yönetim platformu. Çoklu blok desteği, otomatik aidat borçlandırması, PDF/Excel raporlama. Ücretsiz deneyin.",
     images: ["/bannerbina.jpg"],
     creator: "@lux.studio.inc",
+    site: "@lux.studio.inc",
   },
   robots: {
     index: true,
@@ -108,6 +117,8 @@ export const metadata: Metadata = {
     "geo.region": "TR",
     "geo.placename": "Türkiye",
     "content-language": "tr",
+    "article:author": "LuxDues Inc.",
+    "article:publisher": "LuxDues Inc.",
   },
 };
 

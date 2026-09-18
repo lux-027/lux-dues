@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
       const createdUnits = [];
       for (const item of units) {
-        if (!item.blockName || !item.doorNo || !item.ownerName) continue;
+        if (!item.blockName || !item.doorNo) continue;
         const phone = item.residentPhone ? normalizePhoneNumber(item.residentPhone) : '';
         const due = item.defaultDueAmount ? parseFloat(item.defaultDueAmount) : null;
         const unit = await prisma.unit.upsert({
@@ -118,19 +118,22 @@ export async function POST(request: NextRequest) {
     // Single unit creation
     const { buildingId, blockName, doorNo, floor, ownerName, residentPhone, defaultDueAmount } = body;
 
-    if (!buildingId || !blockName || !doorNo || !floor || !ownerName || !residentPhone) {
+    if (!buildingId || !blockName || !doorNo || !floor || !ownerName) {
       return NextResponse.json(
         { error: 'Tüm zorunlu alanları doldurun' },
         { status: 400 }
       );
     }
 
-    const normalizedPhone = normalizePhoneNumber(residentPhone);
-    if (!isValidTurkishPhone(normalizedPhone)) {
-      return NextResponse.json(
-        { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
-        { status: 400 }
-      );
+    let normalizedPhone = '';
+    if (residentPhone) {
+      normalizedPhone = normalizePhoneNumber(residentPhone);
+      if (!isValidTurkishPhone(normalizedPhone)) {
+        return NextResponse.json(
+          { error: 'Geçerli bir Türkiye cep telefonu numarası girin' },
+          { status: 400 }
+        );
+      }
     }
 
     if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {

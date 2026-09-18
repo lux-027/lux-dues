@@ -34,23 +34,41 @@ interface EditUnitModalProps {
   onSuccess: () => void;
 }
 
+function getInitialOwnerName(unit: Unit) {
+  if (!unit.ownerName || unit.ownerName === 'Boş Daire') return '';
+  const generatedName = `${unit.blockName.trim()} D:${unit.doorNo}`;
+  const generatedNameWithBlok = `${unit.blockName.trim()} Blok D:${unit.doorNo}`;
+  if (
+    unit.ownerName === generatedName ||
+    unit.ownerName === generatedNameWithBlok
+  ) {
+    return '';
+  }
+  return unit.ownerName;
+}
+
 export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModalProps) {
   const [formData, setFormData] = useState({
     blockName: unit.blockName,
     doorNo: unit.doorNo,
     floor: unit.floor,
-    ownerName: unit.ownerName,
+    ownerName: getInitialOwnerName(unit),
     residentPhone: unit.residentPhone,
     defaultDueAmount: unit.defaultDueAmount ? String(unit.defaultDueAmount) : '',
   });
   const [isVacant, setIsVacant] = useState(Boolean(unit.isVacant));
   const [activeResident, setActiveResident] = useState<Resident | null>(unit.residents[0] || null);
   const [residentUserId, setResidentUserId] = useState('');
+  const [assigningResident, setAssigningResident] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [removingResident, setRemovingResident] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
+
+  const displayResidentUserId = residentUserId ? formatAccountNumber(residentUserId) : '';
+  const parsedResidentAccountNumber = residentUserId ? parseAccountNumber(residentUserId) : null;
+  const canAssignResident = parsedResidentAccountNumber != null && parsedResidentAccountNumber > 0;
 
   useEffect(() => {
     setMounted(true);
@@ -71,7 +89,7 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
       if (formData.ownerName === 'Boş Daire') {
         setFormData((prev) => ({
           ...prev,
-          ownerName: `${prev.blockName} D:${prev.doorNo}`,
+          ownerName: '',
         }));
       }
     }
@@ -105,6 +123,34 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
     }
   };
 
+  const handleAssignResident = async () => {
+    if (!canAssignResident || !parsedResidentAccountNumber) return;
+
+    setAssigningResident(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/units/${unit.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          residentAccountNumber: parsedResidentAccountNumber,
+        }),
+      });
+
+      if (response.ok) {
+        setResidentUserId('');
+        onSuccess();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Sakin atanırken bir hata oluştu');
+      }
+    } catch {
+      setError('Sakin atanırken bir hata oluştu');
+    } finally {
+      setAssigningResident(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -120,21 +166,6 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
         isVacant,
         defaultDueAmount: formData.defaultDueAmount === '' ? null : parseFloat(formData.defaultDueAmount),
       };
-
-      const trimmedResidentId = residentUserId.trim();
-      if (trimmedResidentId) {
-        if (trimmedResidentId.toLowerCase() === 'remove') {
-          body.residentAccountNumber = 'remove';
-        } else {
-          const parsed = parseAccountNumber(trimmedResidentId);
-          if (!parsed) {
-            setError('Geçerli bir kullanıcı ID girin (Örn: 000 000 001)');
-            setLoading(false);
-            return;
-          }
-          body.residentAccountNumber = parsed;
-        }
-      }
 
       const response = await fetch(`/api/units/${unit.id}`, {
         method: 'PUT',
@@ -221,10 +252,9 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
             </div>
             <div>
               <PhoneInput
-                label={isVacant ? 'Telefon (İsteğe Bağlı)' : 'Telefon'}
+                label="Telefon (İsteğe Bağlı)"
                 value={formData.residentPhone}
                 onChange={(value) => setFormData({ ...formData, residentPhone: value })}
-                required={!isVacant}
               />
             </div>
           </div>
@@ -319,15 +349,39 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
             ) : (
               <div className="space-y-1.5 pt-0.5">
                 <label className="text-xs font-medium text-zinc-700 block">Sakin Ata / Bağla (Kullanıcı ID)</label>
-                <input
-                  type="text"
-                  className="input-field text-xs py-1.5"
-                  value={residentUserId}
-                  onChange={(e) => setResidentUserId(e.target.value)}
-                  placeholder="Örn: 000 000 001"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={11}
+                    className="input-field text-xs py-1.5 flex-1"
+                    value={displayResidentUserId}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                      setResidentUserId(digits);
+                    }}
+                    placeholder="Örn: 000 000 001"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (canAssignResident) {
+                          handleAssignResident();
+                        }
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAssignResident}
+                    disabled={!canAssignResident || assigningResident}
+                    loading={assigningResident}
+                  >
+                    Ekle
+                  </Button>
+                </div>
                 <p className="text-[10px] text-zinc-500">
-                  Daireyi hesabına bağlamak istediğiniz kullanıcının 9 haneli Kullanıcı ID&apos;sini girin ve Kaydet&apos;e tıklayın.
+                  Daireyi hesabına bağlamak istediğiniz kullanıcının 9 haneli Kullanıcı ID&apos;sini girin ve Ekle&apos;ye tıklayın.
                 </p>
               </div>
             )}

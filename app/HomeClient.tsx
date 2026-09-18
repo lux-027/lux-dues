@@ -196,7 +196,7 @@ export default function HomeClient({
               <a href="#iletisim" className="nav-link">İletişim</a>
             </nav>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               {session ? (
                 <ProfileMenu />
               ) : (
@@ -205,37 +205,41 @@ export default function HomeClient({
                     type="button"
                     onClick={() => handleDemoLogin('admin')}
                     disabled={!!demoLoading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors disabled:opacity-50"
                     title="Şifresiz doğrudan yönetici paneline geçiş yapın"
                   >
                     {demoLoading === 'admin' && (
-                      <span className="w-3 h-3 border border-zinc-600 border-t-transparent rounded-full animate-spin" />
+                      <span className="w-2.5 h-2.5 border border-zinc-600 border-t-transparent rounded-full animate-spin" />
                     )}
-                    <span>Demo Yönetici</span>
+                    <span className="hidden sm:inline">Demo Yönetici</span>
+                    <span className="sm:hidden">Demo</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDemoLogin('resident')}
                     disabled={!!demoLoading}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors disabled:opacity-50"
                     title="Şifresiz doğrudan sakin paneline geçiş yapın"
                   >
                     {demoLoading === 'resident' && (
-                      <span className="w-3 h-3 border border-zinc-600 border-t-transparent rounded-full animate-spin" />
+                      <span className="w-2.5 h-2.5 border border-zinc-600 border-t-transparent rounded-full animate-spin" />
                     )}
-                    <span>Demo Sakin</span>
+                    <span className="hidden sm:inline">Demo Sakin</span>
+                    <span className="sm:hidden">Sakin</span>
                   </button>
                   <button
                     onClick={() => openAuth('admin', 'login')}
-                    className="btn-secondary hidden sm:inline-flex"
+                    className="btn-secondary px-2 py-1 sm:px-4 sm:py-2 text-[10px] sm:text-xs"
                   >
-                    Yönetici Girişi
+                    <span className="hidden sm:inline">Yönetici Girişi</span>
+                    <span className="sm:hidden">Yönetici</span>
                   </button>
                   <button
                     onClick={() => openAuth('resident', 'login')}
-                    className="btn-primary"
+                    className="btn-primary px-2.5 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs"
                   >
-                    Site Sakini Girişi
+                    <span className="hidden sm:inline">Site Sakini Girişi</span>
+                    <span className="sm:hidden">Giriş</span>
                   </button>
                 </>
               )}
