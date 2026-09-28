@@ -334,7 +334,7 @@ export function AuthModal({
                     />
                   </svg>
                 </div>
-                <p className="text-sm text-zinc-500">Daire sakinleri için giriş ve kayıt</p>
+                <p className="text-sm text-zinc-500">Daire sakinleri için giriş</p>
               </button>
 
               <button
@@ -377,7 +377,7 @@ export function AuthModal({
                     />
                   </svg>
                 </div>
-                <p className="text-sm text-zinc-500">Blok/site yöneticisi için giriş ve kayıt</p>
+                <p className="text-sm text-zinc-500">Blok/site yöneticisi için giriş</p>
               </button>
             </div>
           ) : (

@@ -6,19 +6,19 @@ export function DashboardShowcase() {
   const [activeTab, setActiveTab] = useState<'overview' | 'dues' | 'cashflow'>('overview');
 
   return (
-    <section className="py-20 sm:py-28 bg-gradient-to-b from-white via-zinc-50/70 to-white relative overflow-hidden border-t border-zinc-200/80">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-28 bg-gradient-to-b from-white via-zinc-50/70 to-white relative overflow-hidden border-t border-zinc-200/80">
       {/* Ambient background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-96 bg-gradient-to-tr from-zinc-200/40 via-indigo-100/20 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Title & Subtitle */}
-        <div className="text-center max-w-3xl mx-auto mb-14 space-y-4">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-zinc-900 tracking-tight leading-tight">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12 lg:mb-14 space-y-3 sm:space-y-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-zinc-900 tracking-tight leading-tight">
             Kolay, Güvenli, Pratik, <br className="hidden sm:inline" />
             <span className="font-semibold text-zinc-900">Hesaplı Site Yönetimi!</span>
           </h2>
 
-          <p className="text-sm sm:text-base text-zinc-600 font-light leading-relaxed max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm md:text-base text-zinc-600 font-light leading-relaxed max-w-2xl mx-auto">
             Temel ilkemiz KMK (Kat Mülkiyeti Kanunu) ve karmaşık muhasebe kodlarını bilmeyen site yöneticilerinin de kolaylıkla yönetim ve muhasebe işlemlerini yapmasını sağlamaktır.
           </p>
         </div>
@@ -36,7 +36,7 @@ export function DashboardShowcase() {
               </div>
 
               {/* Address bar */}
-              <div className="flex-1 max-w-md mx-auto hidden sm:flex items-center justify-center gap-2 px-2 py-0.5 bg-white rounded-lg border border-zinc-200/80 text-[10px] text-zinc-600 font-mono shadow-2xs">
+              <div className="flex-1 max-w-md mx-auto hidden sm:flex items-center justify-center gap-2 px-2 py-0.5 bg-white rounded-lg border border-zinc-200/80 text-[9px] sm:text-[10px] text-zinc-600 font-mono shadow-2xs">
                 <svg className="h-3 w-3 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -56,7 +56,7 @@ export function DashboardShowcase() {
             <div className="flex flex-col lg:flex-row min-h-[320px] bg-zinc-50/50">
               {/* Left Mini Sidebar */}
               <div className="w-full lg:w-40 bg-white border-b lg:border-b-0 lg:border-r border-zinc-200 p-2 flex lg:flex-col justify-between flex-shrink-0">
-                <div className="space-y-3 w-full">
+                <div className="space-y-2 lg:space-y-3 w-full">
                   <div className="px-1.5 pt-0.5 hidden lg:block">
                     <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Mülk Portalı</p>
                     <p className="text-[10px] font-semibold text-zinc-900 truncate">Lux Apartment</p>
@@ -73,10 +73,11 @@ export function DashboardShowcase() {
                           : 'text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                       </svg>
-                      <span>Genel Bakış</span>
+                      <span className="hidden sm:inline">Genel Bakış</span>
+                      <span className="sm:hidden">Genel</span>
                     </button>
 
                     <button
@@ -88,10 +89,11 @@ export function DashboardShowcase() {
                           : 'text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
-                      <span>Aidat Takibi</span>
+                      <span className="hidden sm:inline">Aidat Takibi</span>
+                      <span className="sm:hidden">Aidat</span>
                     </button>
 
                     <button
@@ -103,10 +105,11 @@ export function DashboardShowcase() {
                           : 'text-zinc-600 hover:bg-zinc-100'
                       }`}
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                       </svg>
-                      <span>Kasa & Bankalar</span>
+                      <span className="hidden sm:inline">Kasa & Bankalar</span>
+                      <span className="sm:hidden">Kasa</span>
                     </button>
                   </div>
                 </div>
@@ -120,21 +123,21 @@ export function DashboardShowcase() {
               </div>
 
               {/* Main Dashboard Panel Body */}
-              <div className="flex-1 p-3 sm:p-4 space-y-3 overflow-x-auto">
+              <div className="flex-1 p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-3 overflow-x-auto">
                 {/* Top Metrics Row (Donut Cards) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
                   {/* Card 1: Tahsil Edilecekler */}
-                  <div className="bg-white p-3 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-3">
+                  <div className="bg-white p-2 sm:p-3 md:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-2 sm:space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider">Tahsil Edilecekler</h4>
-                      <span className="text-[9px] font-semibold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+                      <h4 className="text-[9px] sm:text-[10px] font-bold text-zinc-900 uppercase tracking-wider">Tahsil Edilecekler</h4>
+                      <span className="text-[8px] sm:text-[9px] font-semibold text-zinc-500 bg-zinc-100 px-1 sm:px-1.5 py-0.5 rounded-full">
                         48 Daire / Hesap
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       {/* CSS / SVG Donut */}
-                      <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center">
                         <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 36 36">
                           <path
                             className="text-zinc-100"
@@ -164,16 +167,16 @@ export function DashboardShowcase() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-[10px] font-bold text-zinc-900">158.5K ₺</span>
-                          <span className="text-[8px] text-zinc-400">Toplam</span>
+                          <span className="text-[9px] sm:text-[10px] font-bold text-zinc-900">158.5K ₺</span>
+                          <span className="text-[7px] sm:text-[8px] text-zinc-400">Toplam</span>
                         </div>
                       </div>
 
                       {/* Legends */}
-                      <div className="space-y-1.5 text-[10px] flex-1">
+                      <div className="space-y-1 sm:space-y-1.5 text-[9px] sm:text-[10px] flex-1">
                         <div className="flex items-center justify-between">
                           <span className="flex items-center gap-1 text-zinc-600">
-                            <span className="w-2 h-2 rounded-sm bg-sky-500 flex-shrink-0" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-sm bg-sky-500 flex-shrink-0" />
                             Vadesi Gelmemiş
                           </span>
                           <span className="font-semibold text-zinc-900 font-mono">124.6K ₺</span>
@@ -181,7 +184,7 @@ export function DashboardShowcase() {
 
                         <div className="flex items-center justify-between">
                           <span className="flex items-center gap-1 text-zinc-600">
-                            <span className="w-2 h-2 rounded-sm bg-rose-500 flex-shrink-0" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-sm bg-rose-500 flex-shrink-0" />
                             Geciken Borçlar
                           </span>
                           <span className="font-semibold text-rose-600 font-mono">33.9K ₺</span>
@@ -191,17 +194,17 @@ export function DashboardShowcase() {
                   </div>
 
                   {/* Card 2: Ödenecekler (Giderler) */}
-                  <div className="bg-white p-3 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-3">
+                  <div className="bg-white p-2 sm:p-3 md:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-2 sm:space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider">Ödenecekler (Giderler)</h4>
-                      <span className="text-[9px] font-semibold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+                      <h4 className="text-[9px] sm:text-[10px] font-bold text-zinc-900 uppercase tracking-wider">Ödenecekler (Giderler)</h4>
+                      <span className="text-[8px] sm:text-[9px] font-semibold text-zinc-500 bg-zinc-100 px-1 sm:px-1.5 py-0.5 rounded-full">
                         12 Hizmet & Tedarikçi
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       {/* CSS / SVG Donut */}
-                      <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center">
                         <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 36 36">
                           <path
                             className="text-zinc-100"
@@ -231,16 +234,16 @@ export function DashboardShowcase() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-[10px] font-bold text-zinc-900">87.4K ₺</span>
-                          <span className="text-[8px] text-zinc-400">Gider</span>
+                          <span className="text-[9px] sm:text-[10px] font-bold text-zinc-900">87.4K ₺</span>
+                          <span className="text-[7px] sm:text-[8px] text-zinc-400">Gider</span>
                         </div>
                       </div>
 
                       {/* Legends */}
-                      <div className="space-y-1.5 text-[10px] flex-1">
+                      <div className="space-y-1 sm:space-y-1.5 text-[9px] sm:text-[10px] flex-1">
                         <div className="flex items-center justify-between">
                           <span className="flex items-center gap-1 text-zinc-600">
-                            <span className="w-2 h-2 rounded-sm bg-emerald-500 flex-shrink-0" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-sm bg-emerald-500 flex-shrink-0" />
                             Vadesi Gelmemiş
                           </span>
                           <span className="font-semibold text-zinc-900 font-mono">17.5K ₺</span>
@@ -248,7 +251,7 @@ export function DashboardShowcase() {
 
                         <div className="flex items-center justify-between">
                           <span className="flex items-center gap-1 text-zinc-600">
-                            <span className="w-2 h-2 rounded-sm bg-amber-500 flex-shrink-0" />
+                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-sm bg-amber-500 flex-shrink-0" />
                             Planlanan Ödemeler
                           </span>
                           <span className="font-semibold text-amber-700 font-mono">69.9K ₺</span>
@@ -259,44 +262,44 @@ export function DashboardShowcase() {
                 </div>
 
                 {/* Bank & Cash Flow Integrations Card */}
-                <div className="bg-white p-3 sm:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-2 sm:p-3 md:p-4 rounded-xl border border-zinc-200/90 shadow-2xs space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <h4 className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider">30 Günlük Nakit Akışı & Banka Entegrasyonları</h4>
-                      <p className="text-[9px] text-zinc-500 mt-0.5">Otomatik hesap hareketleri ve anlık bakiye mutabakatı</p>
+                      <h4 className="text-[9px] sm:text-[10px] font-bold text-zinc-900 uppercase tracking-wider">30 Günlük Nakit Akışı & Banka Entegrasyonları</h4>
+                      <p className="text-[8px] sm:text-[9px] text-zinc-500 mt-0.5">Otomatik hesap hareketleri ve anlık bakiye mutabakatı</p>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                    <span className="text-[9px] sm:text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 px-1.5 sm:px-2 py-0.5 rounded-lg border border-emerald-200">
                       +42.1K ₺ Net Kasa
                     </span>
                   </div>
 
                   {/* Graph Visual Mock */}
-                  <div className="relative h-16 w-full pt-1 flex items-end justify-between gap-0.5 border-b border-zinc-100">
+                  <div className="relative h-12 sm:h-16 w-full pt-1 flex items-end justify-between gap-0.5 border-b border-zinc-100">
                     {[35, 42, 40, 45, 50, 48, 55, 52, 58, 55, 62, 60, 65, 70, 68, 72, 75, 73, 78, 80].map((val, idx) => (
                       <div key={idx} className="flex-1 flex flex-col items-center gap-0.5 group">
                         <div
                           className={`w-full rounded-t-sm transition-all ${
                             idx >= 15 ? 'bg-zinc-900 group-hover:bg-zinc-700' : 'bg-zinc-200 group-hover:bg-zinc-300'
                           }`}
-                          style={{ height: `${(val / 80) * 40}px` }}
+                          style={{ height: `${(val / 80) * 32}px` }}
                         />
                       </div>
                     ))}
                   </div>
 
                   {/* Bank Accounts Grid */}
-                  <div className="grid grid-cols-3 gap-1.5 pt-0.5 text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-0.5 text-center">
                     <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
-                      <p className="text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 1</p>
-                      <p className="text-[10px] font-bold text-zinc-900 font-mono mt-0.5">21.8K ₺</p>
+                      <p className="text-[7px] sm:text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 1</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5">21.8K ₺</p>
                     </div>
                     <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
-                      <p className="text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 2</p>
-                      <p className="text-[10px] font-bold text-zinc-900 font-mono mt-0.5">14.6K ₺</p>
+                      <p className="text-[7px] sm:text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 2</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5">14.6K ₺</p>
                     </div>
                     <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
-                      <p className="text-[8px] text-zinc-400 uppercase font-semibold">Nakit Kasa</p>
-                      <p className="text-[10px] font-bold text-zinc-900 font-mono mt-0.5">5.7K ₺</p>
+                      <p className="text-[7px] sm:text-[8px] text-zinc-400 uppercase font-semibold">Nakit Kasa</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5">5.7K ₺</p>
                     </div>
                   </div>
                 </div>

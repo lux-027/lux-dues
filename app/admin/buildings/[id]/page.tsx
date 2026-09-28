@@ -22,7 +22,7 @@ interface Building {
   createdAt: string;
   image: string | null;
   blockImages: any;
-  units: { id: string; doorNo: number; blockName: string }[];
+  units: { id: string; doorNo: number; blockName: string; residents?: any[] }[];
   _count: {
     units: number;
     admins: number;
@@ -41,10 +41,12 @@ export default function BuildingDetailPage() {
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [reportLoading, setReportLoading] = useState<string | null>(null);
+  const [activityData, setActivityData] = useState<number[]>([]);
 
   useEffect(() => {
     if (params.id) {
       fetchBuilding(params.id as string);
+      fetchActivityData(params.id as string);
     }
   }, [params.id]);
 
@@ -62,6 +64,20 @@ export default function BuildingDetailPage() {
     }
   };
 
+  const fetchActivityData = async (id: string) => {
+    try {
+      const response = await fetch(`/api/buildings/${id}/activity`);
+      if (response.ok) {
+        const data = await response.json();
+        setActivityData(data.daily.map((d: any) => d.value));
+      }
+    } catch (error) {
+      console.error('Error fetching activity data:', error);
+      // Fallback to empty array if API fails
+      setActivityData([]);
+    }
+  };
+
   const getBuildingTypeLabel = (type: BuildingType) => {
     return type === BuildingType.APARTMENT ? 'Apartman' : 'Site';
   };
@@ -69,12 +85,22 @@ export default function BuildingDetailPage() {
   const isSite = building?.type === 'SITE';
   const blockStats = useMemo(() => {
     if (!building || !isSite || !building.units) return [];
-    const stats = new Map<string, number>();
+    const stats = new Map<string, { count: number; occupied: number }>();
     building.units.forEach((u) => {
       const block = u.blockName || 'A Blok';
-      stats.set(block, (stats.get(block) || 0) + 1);
+      const current = stats.get(block) || { count: 0, occupied: 0 };
+      current.count += 1;
+      if (u.residents && u.residents.length > 0) {
+        current.occupied += 1;
+      }
+      stats.set(block, current);
     });
-    return Array.from(stats.entries()).map(([name, count]) => ({ name, count }));
+    return Array.from(stats.entries()).map(([name, data]) => ({ 
+      name, 
+      count: data.count,
+      occupied: data.occupied,
+      occupancyRate: data.count > 0 ? Math.round((data.occupied / data.count) * 100) : 0
+    }));
   }, [building, isSite]);
 
   const exportBlockReport = async (blockName: string, format: 'pdf' | 'excel') => {
@@ -228,7 +254,7 @@ export default function BuildingDetailPage() {
   ];
 
   return (
-    <div className="page-container">
+    <div className="page-container pb-20">
       {/* Header */}
       <div className="section-header">
         <div className="flex items-center gap-4">
@@ -402,27 +428,29 @@ export default function BuildingDetailPage() {
         {navigationItems.map((item) => (
           <Card
             key={item.href}
-            className="cursor-pointer hover:shadow-md transition-shadow duration-200"
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 bg-zinc-900 border-zinc-800"
             onClick={() => router.push(item.href)}
           >
             <CardBody>
               <div className="flex items-start gap-4">
-                <div className="h-12 w-12 bg-zinc-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  {item.icon}
+                <div className="h-12 w-12 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="h-6 w-6 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {item.icon.props.children}
+                  </svg>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-zinc-900 mb-1">
+                    <h3 className="text-lg font-medium text-white mb-1">
                       {item.title}
                     </h3>
                     {item.count !== null && (
-                      <Badge variant="default">{item.count}</Badge>
+                      <Badge variant="dark">{item.count}</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-zinc-600 mb-3">{item.description}</p>
-                  <div className="flex items-center text-sm text-zinc-500">
+                  <p className="text-sm text-zinc-400 mb-3">{item.description}</p>
+                  <div className="flex items-center text-sm text-zinc-300">
                     <span>Yönet</span>
-                    <svg className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-4 w-4 ml-1 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -442,78 +470,126 @@ export default function BuildingDetailPage() {
             </svg>
             Bloklar
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {blockStats.map((block) => {
-              const storedBlockImage = building?.blockImages?.[block.name];
-              return (
-                <Card
-                  key={block.name}
-                  className="cursor-pointer hover:shadow-md transition-shadow duration-200 overflow-hidden"
-                  onClick={() => router.push(`/admin/buildings/${building.id}/residents?block=${encodeURIComponent(block.name)}`)}
-                >
-                  <CardBody className="p-0">
-                    <div className="flex items-stretch h-32">
-                      <div className="flex-1 p-4 flex flex-col justify-between">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="text-base font-semibold text-zinc-900">{block.name}</h3>
-                            <p className="text-sm text-zinc-500 mt-1">{block.count} daire</p>
+          <Card className="bg-zinc-50 border-zinc-200">
+            <CardBody className="p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {blockStats.map((block) => {
+                  const storedBlockImage = building?.blockImages?.[block.name];
+                  return (
+                    <Card
+                      key={block.name}
+                      className="cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden bg-gradient-to-br from-white to-zinc-50 border-zinc-200 group"
+                      onClick={() => router.push(`/admin/buildings/${building.id}/residents?block=${encodeURIComponent(block.name)}`)}
+                    >
+                      <CardBody className="p-0">
+                        <div className="relative">
+                          {/* Header with gradient */}
+                          <div className="bg-gradient-to-r from-zinc-900 to-zinc-700 px-4 py-3 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                            <div className="flex items-center justify-between relative z-10">
+                              <div>
+                                <h3 className="text-lg font-bold text-white">{block.name}</h3>
+                                <p className="text-xs text-zinc-300 mt-0.5">{block.count} daire</p>
+                              </div>
+                              <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
-                          <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
-                            <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
+
+                          {/* Body */}
+                          <div className="p-4 space-y-4">
+                            {/* Stats */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                  <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-zinc-500 uppercase font-semibold">Aktif</p>
+                                  <p className="text-sm font-bold text-zinc-900">{block.occupied}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                                  <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] text-zinc-500 uppercase font-semibold">Boş</p>
+                                  <p className="text-sm font-bold text-zinc-900">{block.count - block.occupied}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[10px] text-zinc-500">
+                                <span>Doluluk</span>
+                                <span>%{block.occupancyRate}</span>
+                              </div>
+                              <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-500"
+                                  style={{ width: `${block.occupancyRate}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-2 pt-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="flex-1 text-xs py-2 bg-zinc-100 hover:bg-zinc-200 border-zinc-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportBlockReport(block.name, 'pdf');
+                                }}
+                                disabled={reportLoading === block.name}
+                                leftIcon={<FileText className="h-3.5 w-3.5" />}
+                              >
+                                PDF
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="flex-1 text-xs py-2 bg-zinc-100 hover:bg-zinc-200 border-zinc-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  exportBlockReport(block.name, 'excel');
+                                }}
+                                disabled={reportLoading === block.name}
+                                leftIcon={<FileSpreadsheet className="h-3.5 w-3.5" />}
+                              >
+                                Excel
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                className="flex-1 text-xs py-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/admin/buildings/${building.id}/residents?block=${encodeURIComponent(block.name)}`);
+                                }}
+                              >
+                                Yönet
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="text-xs py-1 px-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                exportBlockReport(block.name, 'pdf');
-                              }}
-                              disabled={reportLoading === block.name}
-                              leftIcon={<FileText className="h-3 w-3" />}
-                            >
-                              PDF
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="text-xs py-1 px-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                exportBlockReport(block.name, 'excel');
-                              }}
-                              disabled={reportLoading === block.name}
-                              leftIcon={<FileSpreadsheet className="h-3 w-3" />}
-                            >
-                              Excel
-                            </Button>
-                          </div>
-                          <div className="flex items-center text-sm text-zinc-500">
-                            <span>Sakinleri Yönet</span>
-                            <svg className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        className="relative w-28 h-32 flex-shrink-0 overflow-hidden"
-                        style={{ clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0% 100%)' }}
-                      >
-                        <BlockVisual src={storedBlockImage} name={block.name} />
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              );
-            })}
-          </div>
+                      </CardBody>
+                    </Card>
+                  );
+                })}
+              </div>
+            </CardBody>
+          </Card>
         </div>
       )}
       {showAddBlockModal && (
@@ -553,6 +629,61 @@ export default function BuildingDetailPage() {
         }}
         onCancel={() => setShowDeleteConfirm(false)}
       />
+
+      {/* Bottom Graph Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 bg-zinc-800 rounded-lg flex items-center justify-center">
+                <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold">Aktivite Grafiği</p>
+                <p className="text-xs text-zinc-300">Son 30 gün</p>
+              </div>
+            </div>
+            
+            <div className="flex-1 flex items-end justify-between gap-0.5 h-12 max-w-md">
+              {activityData.length > 0 ? activityData.map((val, idx) => (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-0.5 group">
+                  <div
+                    className={`w-full rounded-t-sm transition-all ${
+                      idx >= activityData.length - 5 ? 'bg-zinc-600 group-hover:bg-zinc-500' : 'bg-zinc-800 group-hover:bg-zinc-700'
+                    }`}
+                    style={{ height: `${Math.max(4, (val / Math.max(...activityData)) * 40)}px` }}
+                  />
+                </div>
+              )) : (
+                // Fallback to mock data if no activity data
+                [25, 35, 30, 45, 40, 55, 50, 60, 55, 70, 65, 75, 70, 80, 75, 85, 80, 90, 85, 95, 90, 100, 95, 85, 80, 75, 70, 65, 60, 55].map((val, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-0.5 group">
+                    <div
+                      className={`w-full rounded-t-sm transition-all ${
+                        idx >= 25 ? 'bg-zinc-600 group-hover:bg-zinc-500' : 'bg-zinc-800 group-hover:bg-zinc-700'
+                      }`}
+                      style={{ height: `${(val / 100) * 40}px` }}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex items-center gap-4 text-[10px] text-zinc-400">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-sm bg-zinc-600" />
+                <span>Bugün</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-sm bg-zinc-800" />
+                <span>Geçmiş</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

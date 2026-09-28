@@ -301,10 +301,10 @@ export default function BuildingsPage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-zinc-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 p-4 sm:p-5 rounded-2xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Search Input */}
-        <div className="relative w-full sm:w-80">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="relative w-full sm:w-96">
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -312,12 +312,12 @@ export default function BuildingsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Bina adı veya adres ara..."
-            className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all"
+            className="w-full pl-12 pr-4 py-3 text-sm bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/20 text-white placeholder:text-zinc-400 transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-xs"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs font-medium"
             >
               Temizle
             </button>
@@ -325,33 +325,33 @@ export default function BuildingsPage() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
           <button
             onClick={() => setTypeFilter('ALL')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all whitespace-nowrap ${
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
               typeFilter === 'ALL'
-                ? 'bg-zinc-900 text-white shadow-sm'
-                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                ? 'bg-white text-zinc-900 shadow-lg'
+                : 'bg-white/10 text-zinc-300 hover:bg-white/20'
             }`}
           >
             Tümü ({stats.totalBuildings})
           </button>
           <button
             onClick={() => setTypeFilter('SITE')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all whitespace-nowrap ${
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
               typeFilter === 'SITE'
-                ? 'bg-zinc-900 text-white shadow-sm'
-                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                ? 'bg-white text-zinc-900 shadow-lg'
+                : 'bg-white/10 text-zinc-300 hover:bg-white/20'
             }`}
           >
             Siteler ({stats.siteCount})
           </button>
           <button
             onClick={() => setTypeFilter('APARTMENT')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all whitespace-nowrap ${
+            className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
               typeFilter === 'APARTMENT'
-                ? 'bg-zinc-900 text-white shadow-sm'
-                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                ? 'bg-white text-zinc-900 shadow-lg'
+                : 'bg-white/10 text-zinc-300 hover:bg-white/20'
             }`}
           >
             Apartmanlar ({stats.aptCount})
@@ -538,40 +538,55 @@ export default function BuildingsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-2">
-            <div className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-800">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
+          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            
+            <div className="relative z-10">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mb-4 shadow-lg">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-white mb-2">Toplu Aidat & Makbuzlandırma</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Her ay tüm bloklara veya belirli dairelere tek tıkla toplu aidat tahakkuk ettirin. Boş daireler otomatik olarak muaf tutulur.
+              </p>
             </div>
-            <h3 className="text-sm font-semibold text-zinc-900">Toplu Aidat & Makbuzlandırma</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
-              Her ay tüm bloklara veya belirli dairelere tek tıkla toplu aidat tahakkuk ettirin. Boş daireler otomatik olarak muaf tutulur.
-            </p>
           </div>
 
-          <div className="p-4 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-2">
-            <div className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-800">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            
+            <div className="relative z-10">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mb-4 shadow-lg">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-white mb-2">Sakin Daveti & ID Eşleme</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Sakinleri 9 haneli Kullanıcı ID ile dairelerine bağlayın. Sakinler borçlarını ve duyuruları kendi panellerinden anında izlesin.
+              </p>
             </div>
-            <h3 className="text-sm font-semibold text-zinc-900">Sakin Daveti & ID Eşleme</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
-              Sakinleri 9 haneli Kullanıcı ID ile dairelerine bağlayın. Sakinler borçlarını ve duyuruları kendi panellerinden anında izlesin.
-            </p>
           </div>
 
-          <div className="p-4 bg-white border border-zinc-200 rounded-2xl shadow-xs space-y-2">
-            <div className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-800">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
+          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            
+            <div className="relative z-10">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-4 shadow-lg">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-white mb-2">Anlık Bildirim & Yönetici Ağı</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Daireden ayrılma, sakin yetkilendirme ve yönetici arkadaşlık talepleri sistem bildirim kutusunda gerçek zamanlı olarak güncellenir.
+              </p>
             </div>
-            <h3 className="text-sm font-semibold text-zinc-900">Anlık Bildirim & Yönetici Ağı</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">
-              Daireden ayrılma, sakin yetkilendirme ve yönetici arkadaşlık talepleri sistem bildirim kutusunda gerçek zamanlı olarak güncellenir.
-            </p>
           </div>
         </div>
       </div>

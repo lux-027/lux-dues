@@ -117,12 +117,12 @@ export default function HomeClient({
 
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactSent, setContactSent] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Platform stats are resolved server-side and passed as initial props so the
   // numbers are present on the first paint without an extra client fetch.
   const [stats] = useState(initialStats);
 
-  const [demoLoading, setDemoLoading] = useState<string | null>(null);
   // Seeded from the server (via getSession()) so the header never flashes
   // the logged-out state before the client re-checks the session.
   const [session, setSession] = useState<SessionSummary | null>(initialSession);
@@ -133,27 +133,6 @@ export default function HomeClient({
       window.location.href = '/admin';
     } else {
       window.location.href = '/dashboard';
-    }
-  };
-
-  const handleDemoLogin = async (role: 'admin' | 'resident') => {
-    try {
-      setDemoLoading(role);
-      const res = await fetch('/api/auth/demo-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
-      const data = await res.json();
-      if (res.ok && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-      } else {
-        alert(data.error || 'Hızlı giriş yapılamadı');
-      }
-    } catch {
-      alert('Hızlı giriş bağlantı hatası');
-    } finally {
-      setDemoLoading(null);
     }
   };
 
@@ -197,79 +176,177 @@ export default function HomeClient({
             </nav>
 
             <div className="flex items-center gap-1.5 sm:gap-3">
-              {session ? (
-                <ProfileMenu />
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handleDemoLogin('admin')}
-                    disabled={!!demoLoading}
-                    className="inline-flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors disabled:opacity-50"
-                    title="Şifresiz doğrudan yönetici paneline geçiş yapın"
-                  >
-                    {demoLoading === 'admin' && (
-                      <span className="w-2.5 h-2.5 border border-zinc-600 border-t-transparent rounded-full animate-spin" />
-                    )}
-                    <span className="hidden sm:inline">Demo Yönetici</span>
-                    <span className="sm:hidden">Demo</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDemoLogin('resident')}
-                    disabled={!!demoLoading}
-                    className="inline-flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg transition-colors disabled:opacity-50"
-                    title="Şifresiz doğrudan sakin paneline geçiş yapın"
-                  >
-                    {demoLoading === 'resident' && (
-                      <span className="w-2.5 h-2.5 border border-zinc-600 border-t-transparent rounded-full animate-spin" />
-                    )}
-                    <span className="hidden sm:inline">Demo Sakin</span>
-                    <span className="sm:hidden">Sakin</span>
-                  </button>
-                  <button
-                    onClick={() => openAuth('admin', 'login')}
-                    className="btn-secondary px-2 py-1 sm:px-4 sm:py-2 text-[10px] sm:text-xs"
-                  >
-                    <span className="hidden sm:inline">Yönetici Girişi</span>
-                    <span className="sm:hidden">Yönetici</span>
-                  </button>
-                  <button
-                    onClick={() => openAuth('resident', 'login')}
-                    className="btn-primary px-2.5 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs"
-                  >
-                    <span className="hidden sm:inline">Site Sakini Girişi</span>
-                    <span className="sm:hidden">Giriş</span>
-                  </button>
-                </>
-              )}
+              {session && <ProfileMenu />}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg text-zinc-600 hover:bg-zinc-100 relative z-[60]"
+                aria-label="Menü"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <>
+              <div className="fixed inset-0 bg-zinc-900/60 z-50 md:hidden transition-opacity duration-300 ease-in-out" onClick={() => setMobileMenuOpen(false)} />
+              <div className="md:hidden fixed top-0 right-0 left-0 bg-white z-50 transition-all duration-300 ease-in-out">
+                {/* Header in Menu */}
+                <div className="sticky top-0 bg-white border-b border-zinc-200 z-10">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                      <Logo size={48} />
+                      <button
+                        type="button"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-2 rounded-lg text-zinc-600 hover:bg-zinc-100"
+                        aria-label="Kapat"
+                      >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Menu Content */}
+                <div className="py-3 px-5">
+                  <nav className="flex flex-col gap-2">
+                    <a
+                      href="#ozellikler"
+                      className="text-zinc-600 hover:text-zinc-900 py-1.5 text-base"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMobileMenuOpen(false);
+                        setTimeout(() => {
+                          const element = document.getElementById('ozellikler');
+                          if (element) {
+                            const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 80;
+                            const startPosition = window.pageYOffset;
+                            const distance = targetPosition - startPosition;
+                            const duration = 1500;
+                            let startTimestamp: number | null = null;
+
+                            const step = (timestamp: number) => {
+                              if (!startTimestamp) startTimestamp = timestamp;
+                              const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                              const easeProgress = 1 - Math.pow(1 - progress, 3);
+                              window.scrollTo(0, startPosition + distance * easeProgress);
+                              if (progress < 1) {
+                                window.requestAnimationFrame(step);
+                              }
+                            };
+
+                            window.requestAnimationFrame(step);
+                          }
+                        }, 350);
+                      }}
+                    >
+                      Özellikler
+                    </a>
+                    <a
+                      href="#nasil-calisir"
+                      className="text-zinc-600 hover:text-zinc-900 py-1.5 text-base"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMobileMenuOpen(false);
+                        setTimeout(() => {
+                          const element = document.getElementById('nasil-calisir');
+                          if (element) {
+                            const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 80;
+                            const startPosition = window.pageYOffset;
+                            const distance = targetPosition - startPosition;
+                            const duration = 1500;
+                            let startTimestamp: number | null = null;
+
+                            const step = (timestamp: number) => {
+                              if (!startTimestamp) startTimestamp = timestamp;
+                              const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                              const easeProgress = 1 - Math.pow(1 - progress, 3);
+                              window.scrollTo(0, startPosition + distance * easeProgress);
+                              if (progress < 1) {
+                                window.requestAnimationFrame(step);
+                              }
+                            };
+
+                            window.requestAnimationFrame(step);
+                          }
+                        }, 350);
+                      }}
+                    >
+                      Nasıl Çalışır
+                    </a>
+                    <a
+                      href="#iletisim"
+                      className="text-zinc-600 hover:text-zinc-900 py-1.5 text-base"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMobileMenuOpen(false);
+                        setTimeout(() => {
+                          const element = document.getElementById('iletisim');
+                          if (element) {
+                            const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 80;
+                            const startPosition = window.pageYOffset;
+                            const distance = targetPosition - startPosition;
+                            const duration = 1500;
+                            let startTimestamp: number | null = null;
+
+                            const step = (timestamp: number) => {
+                              if (!startTimestamp) startTimestamp = timestamp;
+                              const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                              const easeProgress = 1 - Math.pow(1 - progress, 3);
+                              window.scrollTo(0, startPosition + distance * easeProgress);
+                              if (progress < 1) {
+                                window.requestAnimationFrame(step);
+                              }
+                            };
+
+                            window.requestAnimationFrame(step);
+                          }
+                        }, 350);
+                      }}
+                    >
+                      İletişim
+                    </a>
+                  </nav>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </header>
 
       {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600 mb-6">
+            <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-zinc-100 text-zinc-600 mb-2 sm:mb-4 lg:mb-6">
               Site ve Aidat Yönetiminde Yeni Nesil Çözüm
             </span>
-            <h1 className="text-4xl sm:text-5xl font-light text-zinc-900 leading-tight mb-6">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-light text-zinc-900 leading-tight mb-4 sm:mb-6">
               Sitenizi ve aidatlarınızı
               <br />
               <span className="font-medium">tek panelden</span> yönetin
             </h1>
-            <p className="text-lg text-zinc-600 font-light mb-8 max-w-lg">
+            <p className="text-sm sm:text-base lg:text-lg text-zinc-600 font-light mb-6 sm:mb-8 max-w-lg">
               LuxDues; çoklu blok desteği, otomatik ortak masraf bölüşümü ve
               şikayet takibiyle apartman ve site yönetimini kurumsal bir
               deneyime taşır.
             </p>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               {session ? (
                 <button
                   onClick={handleStart}
-                  className="btn-primary"
+                  className="btn-primary text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-3"
                 >
                   Hemen Başla
                 </button>
@@ -277,15 +354,15 @@ export default function HomeClient({
                 <>
                   <button
                     onClick={() => openAuth('resident', 'register', true, true)}
-                    className="btn-primary"
+                    className="btn-primary text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-3"
                   >
                     Ücretsiz Hesap Oluştur
                   </button>
                   <button
-                    onClick={() => openAuth('admin', 'login')}
-                    className="btn-secondary"
+                    onClick={() => openAuth('admin', 'login', true, false)}
+                    className="btn-secondary text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-3"
                   >
-                    Yönetici Olarak Devam Et
+                    Hemen Giriş Yap
                   </button>
                 </>
               )}
@@ -333,29 +410,29 @@ export default function HomeClient({
 
       {/* Features */}
       <section id="ozellikler" className="bg-zinc-50 border-t border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl font-light text-zinc-900 mb-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 lg:mb-14">
+            <h2 className="text-2xl sm:text-3xl font-light text-zinc-900 mb-2 sm:mb-3">
               Yönetimi Basitleştiren Özellikler
             </h2>
-            <p className="text-zinc-600 font-light">
+            <p className="text-sm sm:text-base text-zinc-600 font-light">
               Tek bir platformda aidat, ortak masraf, şikayet ve yönetici
               yetkilendirmesi ihtiyaçlarınızı karşılayın.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {FEATURES.map((feature) => (
-              <div key={feature.title} className="card p-6">
-                <div className="h-11 w-11 bg-zinc-900 rounded-xl flex items-center justify-center mb-4">
-                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div key={feature.title} className="card p-4 sm:p-5 lg:p-6">
+                <div className="h-9 w-9 sm:h-11 sm:w-11 bg-zinc-900 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     {feature.icon}
                   </svg>
                 </div>
-                <h3 className="text-base font-medium text-zinc-900 mb-2">
+                <h3 className="text-sm sm:text-base font-medium text-zinc-900 mb-1.5 sm:mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-zinc-600 font-light leading-relaxed">
+                <p className="text-xs sm:text-sm text-zinc-600 font-light leading-relaxed">
                   {feature.description}
                 </p>
               </div>
@@ -365,14 +442,14 @@ export default function HomeClient({
       </section>
 
       {/* How it works */}
-      <section id="nasil-calisir" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-3xl font-light text-zinc-900 mb-3">Nasıl Çalışır?</h2>
-          <p className="text-zinc-600 font-light">
+      <section id="nasil-calisir" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 lg:mb-14">
+          <h2 className="text-2xl sm:text-3xl font-light text-zinc-900 mb-2 sm:mb-3">Nasıl Çalışır?</h2>
+          <p className="text-sm sm:text-base text-zinc-600 font-light">
             Üç adımda binanızı LuxDues ile dijitalleştirin.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
           {[
             {
               step: '01',
@@ -391,9 +468,9 @@ export default function HomeClient({
             },
           ].map((item) => (
             <div key={item.step} className="relative">
-              <span className="text-5xl font-light text-zinc-400">{item.step}</span>
-              <h3 className="text-lg font-medium text-zinc-900 mt-2 mb-2">{item.title}</h3>
-              <p className="text-sm text-zinc-600 font-light leading-relaxed">{item.description}</p>
+              <span className="text-3xl sm:text-4xl lg:text-5xl font-light text-zinc-400">{item.step}</span>
+              <h3 className="text-base sm:text-lg font-medium text-zinc-900 mt-1.5 sm:mt-2 mb-1.5 sm:mb-2">{item.title}</h3>
+              <p className="text-xs sm:text-sm text-zinc-600 font-light leading-relaxed">{item.description}</p>
             </div>
           ))}
         </div>
@@ -401,15 +478,15 @@ export default function HomeClient({
 
       {/* CTA */}
       <section className="bg-zinc-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h2 className="text-3xl font-light text-white mb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-center">
+          <h2 className="text-2xl sm:text-3xl font-light text-white mb-3 sm:mb-4">
             Yönetimi kolaylaştırmaya hazır mısınız?
           </h2>
-          <p className="text-zinc-400 font-light mb-8 max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-zinc-400 font-light mb-6 sm:mb-8 max-w-xl mx-auto">
             LuxDues ile sitenizin aidat ve masraf süreçlerini dijitalleştirin,
             şeffaflığı ve tahsilat oranınızı artırın.
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             {session ? (
               <a
                 href={
@@ -417,7 +494,7 @@ export default function HomeClient({
                     ? '/admin'
                     : '/dashboard'
                 }
-                className="bg-white text-zinc-900 px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-sm"
+                className="bg-white text-zinc-900 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-xs sm:text-sm w-full sm:w-auto"
               >
                 Hemen Başlıyalım
               </a>
@@ -425,13 +502,13 @@ export default function HomeClient({
               <>
                 <button
                 onClick={() => openAuth('resident', 'register', true, true)}
-                className="bg-white text-zinc-900 px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-sm"
+                className="bg-white text-zinc-900 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-xs sm:text-sm w-full sm:w-auto"
               >
                 Ücretsiz Başlayın
               </button>
               <button
                 onClick={() => openAuth('admin', 'login')}
-                className="border border-zinc-700 text-white px-6 py-3 rounded-xl hover:bg-zinc-800 transition-colors duration-200 font-medium text-sm"
+                className="border border-zinc-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-zinc-800 transition-colors duration-200 font-medium text-xs sm:text-sm w-full sm:w-auto"
               >
                 Yönetici Girişi
               </button>
@@ -443,20 +520,20 @@ export default function HomeClient({
 
       {/* Contact */}
       <section id="iletisim" className="bg-zinc-50 border-t border-zinc-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             <div>
-              <h2 className="text-3xl font-light text-zinc-900 mb-3">İletişim</h2>
-              <p className="text-zinc-600 font-light mb-8 max-w-md">
+              <h2 className="text-2xl sm:text-3xl font-light text-zinc-900 mb-2 sm:mb-3">İletişim</h2>
+              <p className="text-sm sm:text-base text-zinc-600 font-light mb-6 sm:mb-8 max-w-md">
                 Sorularınız, talepleriniz veya demo talebiniz için bize yazın.
                 Ekibimiz en kısa sürede size geri dönüş yapacaktır.
               </p>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex items-center gap-3 text-zinc-900 font-medium hover:text-indigo-600 transition-colors"
+                className="inline-flex items-center gap-2 sm:gap-3 text-zinc-900 font-medium hover:text-indigo-600 transition-colors"
               >
-                <span className="h-10 w-10 bg-white border border-zinc-200 rounded-xl flex items-center justify-center shadow-sm">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <span className="h-8 w-8 sm:h-10 sm:w-10 bg-white border border-zinc-200 rounded-xl flex items-center justify-center shadow-sm">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </span>
@@ -464,15 +541,15 @@ export default function HomeClient({
               </a>
             </div>
 
-            <div className="card p-6">
+            <div className="card p-4 sm:p-5 lg:p-6">
               {contactSent && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+                <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg text-xs sm:text-sm text-green-700">
                   Mail uygulamanız açıldı. Mesajınızı göndermek için e-posta
                   istemcinizden "Gönder"e basmanız yeterli.
                 </div>
               )}
               <form onSubmit={handleContactSubmit}>
-                <div className="form-group">
+                <div className="form-group mb-3 sm:mb-4">
                   <Input
                     label="Ad Soyad"
                     placeholder="Adınız Soyadınız"
@@ -481,7 +558,7 @@ export default function HomeClient({
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="form-group mb-3 sm:mb-4">
                   <Input
                     type="email"
                     label="E-posta"
@@ -491,7 +568,7 @@ export default function HomeClient({
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="form-group mb-3 sm:mb-4">
                   <Textarea
                     label="Mesajınız"
                     placeholder="Size nasıl yardımcı olabiliriz?"
@@ -500,10 +577,10 @@ export default function HomeClient({
                     required
                   />
                 </div>
-                <Button type="submit" fullWidth>
+                <Button type="submit" fullWidth className="text-xs sm:text-sm">
                   Mesaj Gönder
                 </Button>
-                <p className="text-center text-xs text-zinc-500 mt-4">
+                <p className="text-center text-[10px] sm:text-xs text-zinc-500 mt-3 sm:mt-4">
                   Mesajınız "LuxDues Sayfasından" başlığıyla {CONTACT_EMAIL} adresine iletilecektir.
                 </p>
               </form>
