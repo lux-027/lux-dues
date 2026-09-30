@@ -29,7 +29,7 @@ export default function TermsPage() {
       </nav>
 
       {/* Main Content Area */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-1 w-full">
         <LegalPageHeader
           badge="Hukuki Dokümantasyon"
           title="Kullanıcı ve Hizmet Sözleşmesi"
@@ -42,7 +42,7 @@ export default function TermsPage() {
           }
         />
 
-        <div className="bg-white rounded-3xl border border-zinc-200/90 shadow-sm p-6 sm:p-10 space-y-8">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-zinc-200/90 shadow-sm p-4 sm:p-6 lg:p-10 space-y-6 sm:space-y-8">
 
           {/* Legal Content */}
           <div className="prose prose-zinc max-w-none text-xs sm:text-sm text-zinc-600 leading-relaxed space-y-6">

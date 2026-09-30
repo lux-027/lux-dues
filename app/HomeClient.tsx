@@ -68,13 +68,13 @@ function AuthQueryHandler({
   onAuthParam: (tab: 'login' | 'register') => void;
 }) {
   const searchParams = useSearchParams();
+  const auth = searchParams.get('auth');
 
   useEffect(() => {
-    const auth = searchParams.get('auth');
     if (auth === 'login' || auth === 'register') {
       onAuthParam(auth);
     }
-  }, [searchParams, onAuthParam]);
+  }, [auth, onAuthParam]);
 
   return null;
 }
