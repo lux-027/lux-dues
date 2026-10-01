@@ -48,61 +48,86 @@ export default function KVKKPage() {
 
           {/* KVKK Content */}
           <div className="prose prose-zinc max-w-none text-xs sm:text-sm text-zinc-600 leading-relaxed space-y-6">
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">1. Veri Sorumlusunun Kimliği</h2>
               <p>
-                6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, <strong>LuxDues Inc.</strong> ("LuxDues") olarak, veri sorumlusu sıfatıyla, kişisel verilerinizi aşağıda açıklanan amaçlar doğrultusunda, hukuka ve dürüstlük kurallarına uygun olarak işlemekte, saklamakta ve korumaktayız.
+                6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, <strong>LuxDues Inc.</strong> ("LuxDues" veya "Veri Sorumlusu") olarak, kişisel verilerinizi aşağıda açıklanan amaçlar doğrultusunda, hukuka ve dürüstlük kurallarına uygun olarak işlemekte, saklamakta ve korumaktayız. İşbu aydınlatma metni, KVKK'nın 10. maddesi gereğince hazırlanmıştır.
+              </p>
+              <p>
+                <strong>Veri Sorumlusu:</strong> LuxDues Inc.<br/>
+                <strong>Adres:</strong> Gaziantep, Türkiye<br/>
+                <strong>İletişim:</strong> <a href="mailto:lux.studio.tr@gmail.com" className="text-zinc-900 font-semibold underline">lux.studio.tr@gmail.com</a>
               </p>
             </section>
 
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">2. İşlenen Kişisel Verileriniz ve Toplanma Yöntemleri</h2>
-              <p>Platformumuz üzerinden toplanan kişisel verileriniz şunlardır:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li><strong>Kimlik Bilgileri:</strong> Ad, soyad, 9 haneli Kullanıcı ID numarası.</li>
-                <li><strong>İletişim Bilgileri:</strong> E-posta adresi, cep telefonu numarası.</li>
-                <li><strong>Mülk ve Konum Bilgileri:</strong> Bina/site adı, blok adı, kat ve kapı numarası, adres bilgisi.</li>
-                <li><strong>Finansal Bilgiler:</strong> Aidat tutarı, borç durumu, ödeme kayıtları ve proje ödemeleri.</li>
-                <li><strong>İşlem Güvenliği Bilgileri:</strong> Giriş IP adresi, oturum çerezleri, şifrelenmiş parola özetleri.</li>
+              <p>Platformumuz üzerinden toplanan kişisel verileriniz aşağıdaki yöntemlerle işlenmektedir:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong>Kimlik Bilgileri:</strong> Ad, soyad, T.C. kimlik numarası veya vergi numarası (veri girişi sırasında), 9 haneli Kullanıcı ID numarası.</li>
+                <li><strong>İletişim Bilgileri:</strong> E-posta adresi, cep telefonu numarası, adres bilgisi.</li>
+                <li><strong>Mülk ve Konum Bilgileri:</strong> Bina/site adı, blok adı, kat ve kapı numarası, mülk tipi (daire, dükkan, ofis), adres bilgisi.</li>
+                <li><strong>Finansal Bilgiler:</strong> Aidat tutarı, borç durumu, ödeme kayıtları, proje ödemeleri, banka hesap bilgileri (sadece yönetici tarafından girilirse).</li>
+                <li><strong>İşlem Güvenliği Bilgileri:</strong> Giriş IP adresi, oturum çerezleri, şifrelenmiş parola özetleri, cihaz bilgileri.</li>
+                <li><strong>Üyelik Bilgileri:</strong> Kayıt tarihi, son giriş tarihi, hesap aktivite durumu.</li>
               </ul>
+              <p>Kişisel verileriniz, platform kullanımı sırasında elektronik ortamda, açık rıza, sözleşme gerekçesi veya yasal zorunluluk kapsamında toplanmaktadır.</p>
             </section>
 
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">3. Kişisel Verilerin İşlenme Amaçları</h2>
-              <p>Kişisel verileriniz aşağıdaki amaçlarla işlenmektedir:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Bina ve site yönetim hizmetlerinin dijital ortamda eksiksiz yürütülmesi,</li>
-                <li>Daire sakinlerinin aidat ve proje borçlarının takibi, makbuzlandırılması ve şeffaf biçimde görüntülenmesi,</li>
-                <li>Yönetici ve sakinler arasında yetkilendirme, davet ve bildirim mekanizmalarının çalıştırılması,</li>
-                <li>Kullanıcı hesap güvenliğinin sağlanması ve yetkisiz erişimlerin önlenmesi,</li>
-                <li>Mevzuattan doğan yasal yükümlülüklerin yerine getirilmesi.</li>
+              <p>Kişisel verileriniz aşağıdaki amaçlarla KVKK'ya uygun olarak işlenmektedir:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Bina ve site yönetim hizmetlerinin dijital ortamda eksiksiz, şeffaf ve yasalara uygun şekilde yürütülmesi,</li>
+                <li>Bağımsız bölüm sakinlerinin aidat, proje ve gider borçlarının takibi, hesaplanması, makbuzlandırılması ve görüntülenmesi,</li>
+                <li>Yönetici ve sakinler arasında yetkilendirme, davet, bildirim ve iletişim mekanizmalarının çalıştırılması,</li>
+                <li>Kullanıcı hesap güvenliğinin sağlanması, yetkisiz erişimlerin önlenmesi ve şifre yönetimi,</li>
+                <li>Mevzuattan doğan yasal yükümlülüklerin (muhtasar beyanname, vergi vb.) yerine getirilmesi,</li>
+                <li>Platformun geliştirilmesi, kullanıcı deneyiminin iyileştirilmesi ve istatistiksel analizler yapılması,</li>
+                <li>Hukuki uyuşmazlıkların çözümü ve delil oluşturma amaçlarıyla kullanılması.</li>
               </ul>
             </section>
 
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">4. Kişisel Verilerin Aktarımı</h2>
               <p>
-                Kişisel verileriniz; yasal zorunluluklar ve platform hizmetlerinin sunulması haricinde üçüncü şahıslara satılmaz, kiralanmaz veya ticari amaçla devredilmez. Verileriniz, yalnızca mevzuatın izin verdiği yetkili kamu kurum ve kuruluşları ile teknik altyapı sağlayıcılarımız (güvenli sunucu ve veritabanı sağlayıcıları) ile sınırlı olarak paylaşılabilir.
+                Kişisel verileriniz; yasal zorunluluklar ve platform hizmetlerinin sunulması haricinde üçüncü şahıslara satılmaz, kiralanmaz veya ticari amaçla devredilmez. Verileriniz, aşağıdaki durumlarda ve sınırlarla aktarılabilir:
               </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Yasal zorunluluklar: Mahkeme kararı, savcılık talebi veya resmi kurum talepleri doğrultusunda ilgili makamlara aktarım.</li>
+                <li>Teknik altyapı sağlayıcıları: Güvenli sunucu, veritabanı ve bulut hizmetleri sağlayıcıları ile KVKK uyumlu sözleşmeler kapsamında aktarım.</li>
+                <li>Yetkili kişiler: Yöneticiler, sadece kendi yönetimindeki sakinlerin verilerine KVKK uyumlu şekilde erişebilir.</li>
+              </ul>
+              <p>Yurt dışına veri aktarımı yapılmamaktadır. Tüm veriler Türkiye'de bulunan güvenli sunucularda saklanmaktadır.</p>
             </section>
 
-            <section className="space-y-2">
-              <h2 className="text-base font-semibold text-zinc-900">5. Veri Sahibinin KVKK Madde 11 Kapsamındaki Hakları</h2>
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">5. Veri Saklama Süresi</h2>
+              <p>Kişisel verileriniz, KVKK'nın 5. maddesinde belirtilen veri işleme şartlarından herhangi birinin mevcut olduğu süre boyunca saklanacaktır. Hesap silinmesi veya veri işleme şartlarının ortadan kalkması durumunda, kişisel verileriniz KVKK'nın 7. maddesi uyarınca silinmek, yok edilmek veya anonimleştirilmek üzere işleme tabi tutulacaktır. Yasal saklama süreleri (ticari defterler, vergi kayıtları vb.) saklıdır.</p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">6. Veri Sahibinin KVKK Madde 11 Kapsamındaki Hakları</h2>
               <p>KVKK'nın 11. maddesi uyarınca veri sahipleri olarak aşağıdaki haklara sahipsiniz:</p>
-              <ul className="list-disc pl-5 space-y-1">
+              <ul className="list-disc pl-5 space-y-2">
                 <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme,</li>
                 <li>Kişisel verileriniz işlenmişse buna ilişkin bilgi talep etme,</li>
                 <li>Kişisel verilerin işlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
-                <li>Eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme,</li>
-                <li>KVKK'ya uygun olarak kişisel verilerinizin silinmesini veya yok edilmesini talep etme.</li>
+                <li>Yurt içinde veya yurt dışında kişisel verilerinizin aktarıldığı kişileri bilme,</li>
+                <li>Kişisel verilerinizin eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme,</li>
+                <li>KVKK'ya uygun olarak kişisel verilerinizin silinmesini veya yok edilmesini talep etme,</li>
+                <li>İşlenen verilerinizin exclusively otomatik sistemler ile analiz edilmesi durumunda aleyhinize olan sonucun itiraz etme,</li>
+                <li>Kişisel verilerinizin kanuna aykırı olarak işlenmesi nedeniyle zarara uğramanız halinde zararın giderilmesini talep etme.</li>
               </ul>
             </section>
 
-            <section className="space-y-2">
-              <h2 className="text-base font-semibold text-zinc-900">6. Başvuru ve İletişim</h2>
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">7. Başvuru ve İletişim</h2>
               <p>
-                Yukarıda belirtilen haklarınızı kullanmak için taleplerinizi kayıtlı e-posta adresiniz üzerinden <a href="mailto:luxdues@gmail.com" className="text-zinc-900 font-semibold underline">luxdues@gmail.com</a> adresine iletebilirsiniz. Başvurularınız en geç 30 gün içinde ücretsiz olarak sonuçlandırılacaktır.
+                Yukarıda belirtilen haklarınızı kullanmak için taleplerinizi kayıtlı e-posta adresiniz üzerinden <a href="mailto:lux.studio.tr@gmail.com" className="text-zinc-900 font-semibold underline">lux.studio.tr@gmail.com</a> adresine veya platform üzerindeki hesap ayarları bölümünden iletebilirsiniz. Başvurularınız, KVKK'nın 13. maddesi uyarınca en geç 30 gün içinde ücretsiz olarak sonuçlandırılacaktır. Başvurunuzun reddedilmesi veya tamamen yerine getirilmemesi durumunda, gerekçesi ile birlikte bildirim yapılacaktır.
               </p>
+              <p><strong>Yürürlük Tarihi:</strong> 1 Ocak 2026</p>
+              <p><strong>Sürüm:</strong> v1.4</p>
             </section>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
 import { BuildingIllustration } from '@/components/BuildingIllustration';
@@ -155,12 +155,14 @@ export default function HomeClient({
     setContactSent(true);
   };
 
+  const handleAuthParam = useCallback((tab: 'login' | 'register') => {
+    setAuthModal({ open: true, context: 'resident', tab, showRoleSelector: false, registerOnly: false });
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       <Suspense fallback={null}>
-        <AuthQueryHandler
-          onAuthParam={(tab) => setAuthModal({ open: true, context: 'resident', tab, showRoleSelector: false, registerOnly: false })}
-        />
+        <AuthQueryHandler onAuthParam={handleAuthParam} />
       </Suspense>
 
       {/* Top bar */}
@@ -170,9 +172,93 @@ export default function HomeClient({
             <Logo size={48} />
 
             <nav className="hidden md:flex items-center gap-8">
-              <a href="#ozellikler" className="nav-link">Özellikler</a>
-              <a href="#nasil-calisir" className="nav-link">Nasıl Çalışır</a>
-              <a href="#iletisim" className="nav-link">İletişim</a>
+              <a
+                href="#ozellikler"
+                className="nav-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById('ozellikler');
+                  if (element) {
+                    const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 80;
+                    const startPosition = window.pageYOffset;
+                    const distance = targetPosition - startPosition;
+                    const duration = 1500;
+                    let startTimestamp: number | null = null;
+
+                    const step = (timestamp: number) => {
+                      if (!startTimestamp) startTimestamp = timestamp;
+                      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                      const easeProgress = 1 - Math.pow(1 - progress, 3);
+                      window.scrollTo(0, startPosition + distance * easeProgress);
+                      if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                      }
+                    };
+
+                    window.requestAnimationFrame(step);
+                  }
+                }}
+              >
+                Özellikler
+              </a>
+              <a
+                href="#nasil-calisir"
+                className="nav-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById('nasil-calisir');
+                  if (element) {
+                    const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 80;
+                    const startPosition = window.pageYOffset;
+                    const distance = targetPosition - startPosition;
+                    const duration = 1500;
+                    let startTimestamp: number | null = null;
+
+                    const step = (timestamp: number) => {
+                      if (!startTimestamp) startTimestamp = timestamp;
+                      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                      const easeProgress = 1 - Math.pow(1 - progress, 3);
+                      window.scrollTo(0, startPosition + distance * easeProgress);
+                      if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                      }
+                    };
+
+                    window.requestAnimationFrame(step);
+                  }
+                }}
+              >
+                Nasıl Çalışır
+              </a>
+              <a
+                href="#iletisim"
+                className="nav-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById('iletisim');
+                  if (element) {
+                    const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 80;
+                    const startPosition = window.pageYOffset;
+                    const distance = targetPosition - startPosition;
+                    const duration = 1500;
+                    let startTimestamp: number | null = null;
+
+                    const step = (timestamp: number) => {
+                      if (!startTimestamp) startTimestamp = timestamp;
+                      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                      const easeProgress = 1 - Math.pow(1 - progress, 3);
+                      window.scrollTo(0, startPosition + distance * easeProgress);
+                      if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                      }
+                    };
+
+                    window.requestAnimationFrame(step);
+                  }
+                }}
+              >
+                İletişim
+              </a>
             </nav>
 
             <div className="flex items-center gap-1.5 sm:gap-3">

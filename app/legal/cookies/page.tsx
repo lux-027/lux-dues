@@ -51,46 +51,91 @@ export default function CookiesPage() {
 
           {/* Cookies Content */}
           <div className="prose prose-zinc max-w-none text-xs sm:text-sm text-zinc-600 leading-relaxed space-y-6">
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">1. Çerez Nedir?</h2>
               <p>
-                Çerezler (Cookies), web sitelerini ziyaret ettiğinizde tarayıcınız aracılığıyla cihazınıza kaydedilen küçük metin dosyalarıdır. Çerezler, web sitesinin güvenli şekilde çalışmasını, kullanıcı oturumunun korunmasını ve kullanıcı deneyiminin iyileştirilmesini sağlar.
+                Çerezler (Cookies), web sitelerini ziyaret ettiğinizde tarayıcınız aracılığıyla cihazınıza kaydedilen küçük metin dosyalarıdır. Çerezler, web sitesinin güvenli şekilde çalışmasını, kullanıcı oturumunun korunmasını, tercihlerin hatırlanmasını ve kullanıcı deneyiminin iyileştirilmesini sağlar. Çerezler, kişisel veriler değildir ancak kişisel verilerle ilişkilendirilebilir.
               </p>
             </section>
 
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">2. LuxDues Hangi Çerezleri Kullanır?</h2>
-              <p>Platformumuzda yalnızca hizmetin zorunlu olarak çalışmasını sağlayan çerezler kullanılmaktadır:</p>
+              <p>Platformumuzda yalnızca hizmetin zorunlu olarak çalışmasını sağlayan çerezler kullanılmaktadır. Reklam, analiz veya takip amaçlı üçüncü taraf çerezleri kullanılmaz:</p>
               
               <div className="space-y-3 pt-2">
                 <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl">
                   <h3 className="font-semibold text-zinc-900 text-xs">A. Zorunlu Oturum Çerezleri (auth-token)</h3>
                   <p className="text-xs text-zinc-600 mt-0.5">
-                    Kullanıcıların sisteme güvenli şekilde giriş yapmasını, yönetici veya sakin paneli oturumunun korunmasını sağlayan şifrelenmiş HTTP-Only çerezlerdir.
+                    Kullanıcıların sisteme güvenli şekilde giriş yapmasını, yönetici veya sakin paneli oturumunun korunmasını sağlayan şifrelenmiş HTTP-Only çerezlerdir. Bu çerez olmadan platforma giriş yapılamaz.
                   </p>
                 </div>
 
                 <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl">
-                  <h3 className="font-semibold text-zinc-900 text-xs">B. Tercih ve Güvenlik Çerezleri</h3>
+                  <h3 className="font-semibold text-zinc-900 text-xs">B. Tercih ve Oturum Çerezleri</h3>
                   <p className="text-xs text-zinc-600 mt-0.5">
-                    Aktif bina seçimi, seçili blok filtreleri ve oturum güvenliği doğrulama parametrelerini saklamak amacıyla kullanılır.
+                    Aktif bina seçimi, seçili blok filtreleri, dil tercihleri ve oturum güvenliği doğrulama parametrelerini saklamak amacıyla kullanılır. Bu çerezler kullanıcı deneyimini iyileştirir.
+                  </p>
+                </div>
+
+                <div className="p-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl">
+                  <h3 className="font-semibold text-zinc-900 text-xs">C. Güvenlik Çerezleri</h3>
+                  <p className="text-xs text-zinc-600 mt-0.5">
+                    CSRF (Cross-Site Request Forgery) koruması, oturum hijacking önleme ve güvenlik doğrulama amacıyla kullanılır. Bu çerezler güvenliği sağlamak için zorunludur.
                   </p>
                 </div>
               </div>
             </section>
 
-            <section className="space-y-2">
-              <h2 className="text-base font-semibold text-zinc-900">3. Çerezlerin Yönetimi ve Devre Dışı Bırakılması</h2>
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">3. Çerezlerin Saklama Süresi</h2>
               <p>
-                Tarayıcı ayarlarınızı değiştirerek çerezleri dilediğiniz zaman silebilir veya engelleyebilirsiniz. Ancak zorunlu oturum çerezleri devre dışı bırakıldığında, LuxDues platformuna giriş yapamayabilir ve yönetim panellerine erişemezsiniz.
+                Oturum çerezleri, oturum kapandığında veya belirli bir süre sonra otomatik olarak silinir. Tercih çerezleri, kullanıcı tarayıcı ayarlarına veya çerezin doğasına göre 30 gün ile 1 yıl arasında saklanabilir. Çerezlerin detaylı saklama süreleri aşağıdadır:
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong>auth-token:</strong> Oturum süresince (geçerlilik süresi dolduğunda silinir)</li>
+                <li><strong>building-preference:</strong> 1 yıl</li>
+                <li><strong>language-preference:</strong> 1 yıl</li>
+                <li><strong>security-token:</strong> Oturum süresince</li>
+              </ul>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">4. Çerezlerin Yönetimi ve Devre Dışı Bırakılması</h2>
+              <p>
+                Tarayıcı ayarlarınızı değiştirerek çerezleri dilediğiniz zaman silebilir veya engelleyebilirsiniz. Tarayıcılar genellikle çerez yönetimi için ayarlar bölümünde "Gizlilik ve Güvenlik" veya "Çerezler" başlığı altında seçenekler sunar. Ancak zorunlu oturum çerezleri devre dışı bırakıldığında, LuxDues platformuna giriş yapamayabilir ve yönetim panellerine erişemezsiniz.
+              </p>
+              <p>
+                <strong>Popüler Tarayıcılarda Çerez Yönetimi:</strong>
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong>Chrome:</strong> Ayarlar &gt; Gizlilik ve Güvenlik &gt; Çerezler ve diğer site verileri</li>
+                <li><strong>Firefox:</strong> Ayarlar &gt; Gizlilik ve Güvenlik &gt; Çerezler ve Site Verileri</li>
+                <li><strong>Safari:</strong> Ayarlar &gt; Gizlilik &gt; Çerezleri ve Web Sitesi Verilerini Yönet</li>
+                <li><strong>Edge:</strong> Ayarlar &gt; Çerezler ve site izinleri</li>
+              </ul>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">5. Üçüncü Taraf Çerezleri</h2>
+              <p>
+                LuxDues platformu, reklam, analiz veya takip amaçlı üçüncü taraf çerezleri kullanmaz. Platformumuzda Facebook Pixel, Google Analytics veya benzeri üçüncü taraf takip araçları bulunmamaktadır. Bu sayede gizliliğiniz maksimum düzeyde korunur.
               </p>
             </section>
 
-            <section className="space-y-2">
-              <h2 className="text-base font-semibold text-zinc-900">4. İletişim</h2>
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">6. Çerez Politikası Güncellemeleri</h2>
               <p>
-                Çerez politikamız ile ilgili sorularınız için <a href="mailto:luxdues@gmail.com" className="text-zinc-900 font-semibold underline">luxdues@gmail.com</a> adresinden bize ulaşabilirsiniz.
+                LuxDues, çerez politikasını platform güncellemeleri veya mevzuat değişiklikleri doğrultusunda güncelleme hakkını saklı tutar. Güncellemeler platform üzerinde yayımlandığı tarihte yürürlüğe girer. Önemli değişiklikler hakkında kullanıcılar e-posta veya bildirim yoluyla bilgilendirilecektir.
               </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">7. İletişim</h2>
+              <p>
+                Çerez politikamız ile ilgili sorularınız veya talepleriniz için <a href="mailto:lux.studio.tr@gmail.com" className="text-zinc-900 font-semibold underline">lux.studio.tr@gmail.com</a> adresinden bize ulaşabilirsiniz. Talepleriniz KVKK uyarınca en geç 30 gün içinde değerlendirilecektir.
+              </p>
+              <p><strong>Yürürlük Tarihi:</strong> 1 Ocak 2026</p>
+              <p><strong>Sürüm:</strong> v1.4</p>
             </section>
           </div>
         </div>

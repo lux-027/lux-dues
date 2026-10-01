@@ -2,9 +2,41 @@
 
 import Link from 'next/link';
 import { Logo } from './Logo';
+import { useEffect, useState } from 'react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [isHomePage, setIsHomePage] = useState(false);
+
+  useEffect(() => {
+    setIsHomePage(window.location.pathname === '/');
+  }, []);
+
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, targetId: string) => {
+    if (isHomePage) {
+      e.preventDefault();
+      const element = document.getElementById(targetId);
+      if (element) {
+        const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - 80;
+        const startPosition = window.pageYOffset;
+        const distance = targetPosition - startPosition;
+        const duration = 1500;
+        let startTimestamp: number | null = null;
+
+        const step = (timestamp: number) => {
+          if (!startTimestamp) startTimestamp = timestamp;
+          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+          const easeProgress = 1 - Math.pow(1 - progress, 3);
+          window.scrollTo(0, startPosition + distance * easeProgress);
+          if (progress < 1) {
+            window.requestAnimationFrame(step);
+          }
+        };
+
+        window.requestAnimationFrame(step);
+      }
+    }
+  };
 
   return (
     <footer className="bg-zinc-900 text-white border-t border-zinc-800/60 relative overflow-hidden">
@@ -57,7 +89,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#ozellikler" className="hover:text-white transition-colors">
+                <Link
+                  href="/#ozellikler"
+                  className="hover:text-white transition-colors"
+                  onClick={(e) => handleSmoothScroll(e, 'ozellikler')}
+                >
                   Özellikler
                 </Link>
               </li>
@@ -102,11 +138,11 @@ export function Footer() {
             <h4 className="text-[10px] sm:text-xs font-semibold text-white tracking-wider uppercase">İletişim & Destek</h4>
             <ul className="space-y-2 sm:space-y-2.5 text-[10px] sm:text-xs lg:text-sm text-zinc-400">
               <li>
-                <a href="mailto:luxdues@gmail.com" className="hover:text-white transition-colors flex items-center gap-1.5 sm:gap-2">
+                <a href="mailto:lux.studio.tr@gmail.com" className="hover:text-white transition-colors flex items-center gap-1.5 sm:gap-2">
                   <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span>luxdues@gmail.com</span>
+                  <span>lux.studio.tr@gmail.com</span>
                 </a>
               </li>
               <li className="flex items-center gap-1.5 sm:gap-2 text-zinc-400">

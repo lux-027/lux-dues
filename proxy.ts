@@ -3,10 +3,13 @@ import { verifyToken } from '@/lib/auth';
 
 // Public paths that do not require authentication
 const PUBLIC_PATHS = [
+  '/',
   '/login',
   '/verify-email',
   '/api/auth/',
   '/api/stats',
+  '/legal/',
+  '/sss',
 ];
 
 export function proxy(request: NextRequest) {

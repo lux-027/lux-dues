@@ -45,25 +45,61 @@ export default function PrivacyPage() {
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-zinc-200/90 shadow-sm p-4 sm:p-6 lg:p-10 space-y-6 sm:space-y-8">
 
           <div className="prose prose-zinc max-w-none text-xs sm:text-sm text-zinc-600 leading-relaxed space-y-6">
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">1. Veri Gizliliği Prensibimiz</h2>
               <p>
-                LuxDues, kullanıcılarının ve site sakinlerinin verilerini en üst düzey şifreleme ve güvenlik önlemleriyle korumaktadır. Sakin ve yönetici verileri hiçbir koşulda ticari amaçla üçüncü taraflara satılmaz veya paylaşılmaz.
+                LuxDues, kullanıcılarının ve bağımsız bölüm sakinlerinin verilerini en üst düzey şifreleme ve güvenlik önlemleriyle korumaktadır. Sakin ve yönetici verileri hiçbir koşulda ticari amaçla üçüncü taraflara satılmaz, kiralanmaz veya paylaşılmaz. Veri güvenliği, şeffaflık ve kullanıcı mahremiyeti platformumuzun temel değerleridir.
               </p>
             </section>
 
-            <section className="space-y-2">
+            <section className="space-y-3">
               <h2 className="text-base font-semibold text-zinc-900">2. Şifreleme ve Altyapı Güvenliği</h2>
-              <p>
-                Tüm veri transferleri SSL/TLS 256-bit şifreleme protokolü üzerinden gerçekleştirilir. Kullanıcı parolaları tek yönlü güçlü kriptografik özetleme algoritmaları (bcrypt/hash) ile saklanır ve sistem yöneticileri dahil hiç kimse tarafından açık metin olarak görülemez.
-              </p>
+              <p><strong>SSL/TLS Şifreleme:</strong> Tüm veri transferleri SSL/TLS 256-bit şifreleme protokolü üzerinden gerçekleştirilir. Kullanıcı ile sunucu arasındaki tüm iletişim şifrelenir ve third-party saldırılara karşı korunur.</p>
+              <p><strong>Parola Güvenliği:</strong> Kullanıcı parolaları tek yönlü güçlü kriptografik özetleme algoritmaları (bcrypt) ile saklanır ve sistem yöneticileri dahil hiç kimse tarafından açık metin olarak görülemez. Parola sıfırlama süreçleri güvenli kanallar üzerinden yönetilir.</p>
+              <p><strong>Veritabanı Güvenliği:</strong> Tüm veriler, Türkiye'de bulunan güvenli sunucularda saklanır. Veritabanı erişimi yetkilendirilmiş personel ile sınırlıdır ve düzenli güvenlik denetimlerine tabidir.</p>
+              <p><strong>Oturum Güvenliği:</strong> Oturum yönetimi için güvenli HTTP-Only çerezler kullanılır. Çerezler XSS saldırılarına karşı korunur ve otomatik olarak sona erer.</p>
             </section>
 
-            <section className="space-y-2">
-              <h2 className="text-base font-semibold text-zinc-900">3. İletişim</h2>
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">3. Veri Toplama ve Kullanımı</h2>
+              <p>LuxDues, sadece platformun düzgün çalışması için gerekli minimum verileri toplar. Verileriniz aşağıdaki amaçlarla kullanılır:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Hesap oluşturma ve kimlik doğrulama</li>
+                <li>Bina/site yönetimi ve aidat takibi</li>
+                <li>Bildirim ve iletişim hizmetleri</li>
+                <li>Platform güvenliği ve kötüye kullanım önleme</li>
+                <li>Yasal yükümlülüklerin yerine getirilmesi</li>
+              </ul>
+              <p>Verileriniz, açık rızanız olmadan veya yasal zorunluluk olmaksızın farklı amaçlarla kullanılmaz.</p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">4. Veri Erişimi ve Kontrol</h2>
+              <p>Kullanıcılar, kendi verilerine platform üzerinden erişebilir, görüntüleyebilir ve gerekirse düzeltebilir. Hesap silinmesi durumunda, kişisel verileriniz KVKK uyumlu olarak silinir veya anonimleştirilir. Veri işleme süreçleri hakkında detaylı bilgi için KVKK Aydınlatma Metni incelenmelidir.</p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">5. Çerezler ve Takip Teknolojileri</h2>
+              <p>Platformumuz sadece hizmetin zorunlu çalışması için gerekli çerezleri kullanır. Reklam, analiz veya takip amaçlı üçüncü taraf çerezleri kullanılmaz. Çerez politikası hakkında detaylı bilgi için Çerez Politikası incelenmelidir.</p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">6. Üçüncü Taraf Hizmetler</h2>
+              <p>Platformumuz, bazı hizmetlerde güvenilir üçüncü taraf sağlayıcıları (bulut sunucu, e-posta servisi vb.) kullanabilir. Bu sağlayıcılarla KVKK uyumlu sözleşmeler yapılır ve veri güvenliği garanti altına alınır. Verileriniz, ticari amaçla üçüncü taraflarla paylaşılmaz.</p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">7. Güvenlik İhlali Bildirimi</h2>
+              <p>Veri güvenliği ihlali durumunda, KVKK uyarınca ilgili kişilere en geç 72 saat içinde bildirim yapılır. İhlalin etkisi, alınan önlemler ve yapılması gerekenler hakkında detaylı bilgi paylaşılır.</p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-zinc-900">8. İletişim</h2>
               <p>
-                Gizlilik politikamızla ilgili her türlü geri bildirim ve sorularınız için <a href="mailto:luxdues@gmail.com" className="text-zinc-900 font-semibold underline">luxdues@gmail.com</a> adresinden bize ulaşabilirsiniz.
+                Gizlilik politikamızla ilgili her türlü geri bildirim, soru veya talebiniz için <a href="mailto:lux.studio.tr@gmail.com" className="text-zinc-900 font-semibold underline">lux.studio.tr@gmail.com</a> adresinden bize ulaşabilirsiniz. Talepleriniz KVKK uyarınca en geç 30 gün içinde değerlendirilecektir.
               </p>
+              <p><strong>Yürürlük Tarihi:</strong> 1 Ocak 2026</p>
+              <p><strong>Sürüm:</strong> v1.4</p>
             </section>
           </div>
         </div>
