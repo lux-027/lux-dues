@@ -7,14 +7,17 @@ import { UserRole } from '@prisma/client';
 
 // POST /api/auth/google - Exchange a verified Firebase (Google) ID token for
 // our own session cookie. If no account exists yet for the Google email, a
-// new RESIDENT account is auto-provisioned (an admin links it to a unit
-// later). Admin roles can never be obtained through this endpoint.
+// new account is auto-provisioned with the specified role (admin or resident).
 export async function POST(request: NextRequest) {
   try {
-    const { idToken } = await request.json();
+    const { idToken, role } = await request.json();
 
     if (!idToken || typeof idToken !== 'string') {
       return NextResponse.json({ error: 'idToken is required' }, { status: 400 });
+    }
+
+    if (!role || (role !== 'admin' && role !== 'resident')) {
+      return NextResponse.json({ error: 'role must be admin or resident' }, { status: 400 });
     }
 
     let googleUser;
@@ -43,9 +46,10 @@ export async function POST(request: NextRequest) {
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // First time signing in with this Google account — auto-provision a
-      // RESIDENT account. The phone placeholder is never used/exposed; the
-      // account can only be accessed via Google sign-in going forward.
+      // First time signing in with this Google account — auto-provision an
+      // account with the selected role (admin or resident). The phone placeholder
+      // is never used/exposed; the account can only be accessed via Google sign-in going forward.
+      const userRole = role === 'admin' ? UserRole.BLOCK_ADMIN : UserRole.RESIDENT;
       user = await prisma.user.create({
         data: {
           accountNumber: await generateUniqueAccountNumber(),
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
           email,
           phone: `google:${googleUser.uid}`,
           emailVerified: true,
-          role: UserRole.RESIDENT,
+          role: userRole,
         },
       });
     }

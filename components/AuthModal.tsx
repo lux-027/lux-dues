@@ -135,7 +135,7 @@ export function AuthModal({
       const response = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken, role: activeContext }),
       });
       const data = await response.json();
 
