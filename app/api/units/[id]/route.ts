@@ -21,13 +21,17 @@ export async function PUT(
     const existingUnit = await (prisma as any).unit.findUnique({
       where: { id },
       include: {
-        building: { select: { name: true } },
+        building: { select: { id: true, name: true, ownerId: true } },
         residents: { select: { id: true, name: true } },
       },
     });
 
     if (!existingUnit) {
       return NextResponse.json({ error: 'Daire bulunamadı' }, { status: 404 });
+    }
+
+    if (existingUnit.building.ownerId !== session.id && session.buildingId !== existingUnit.building.id) {
+      return NextResponse.json({ error: 'Bu daire için yetkiniz bulunmuyor' }, { status: 403 });
     }
 
     const updateData: any = {

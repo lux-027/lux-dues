@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/session';
 import { BuildingType } from '@prisma/client';
 import { BUILDING_ARCHIVE_IMAGES } from '@/lib/buildingImages';
 
-// GET /api/buildings - List all buildings
+// GET /api/buildings - List buildings owned by or assigned to the current user
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const buildings = await prisma.building.findMany({
+      where: {
+        OR: [
+          { ownerId: session.id },
+          { admins: { some: { id: session.id } } },
+        ],
+      },
       include: {
         _count: {
           select: {
@@ -44,6 +56,11 @@ export async function GET(request: NextRequest) {
 // POST /api/buildings - Create a new building
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'BLOCK_ADMIN')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { name, type, totalBlocks, address, image, blockImages, blocks, unitsPerBlock, defaultDueAmount, blockDues } = body;
 
@@ -71,45 +88,50 @@ export async function POST(request: NextRequest) {
 
     const randomImage = BUILDING_ARCHIVE_IMAGES[Math.floor(Math.random() * BUILDING_ARCHIVE_IMAGES.length)]?.src;
 
-    const building = await prisma.building.create({
-      data: {
-        name,
-        type: type as BuildingType,
-        totalBlocks: blocksList.length,
-        address,
-        image: image || randomImage || null,
-        blockImages: blockImages || null,
-        defaultDueAmount: standardDue,
-      },
-    });
+    const building = await prisma.$transaction(async (tx) => {
+      const created = await tx.building.create({
+        data: {
+          name,
+          type: type as BuildingType,
+          totalBlocks: blocksList.length,
+          address,
+          image: image || randomImage || null,
+          blockImages: blockImages || null,
+          defaultDueAmount: standardDue,
+          ownerId: session.id,
+          admins: { connect: { id: session.id } },
+        },
+      });
 
-    if (unitsPerBlock && parseInt(unitsPerBlock) > 0) {
-      const count = parseInt(unitsPerBlock);
-      const unitsToCreate = [];
-      for (const block of blocksList) {
-        const unitDue = (blockDues && blockDues[block])
-          ? parseFloat(blockDues[block])
-          : standardDue;
+      if (unitsPerBlock && parseInt(unitsPerBlock) > 0) {
+        const count = parseInt(unitsPerBlock);
+        const unitsToCreate = [];
+        for (const block of blocksList) {
+          const blockLabel = isSite ? block : 'A Blok';
+          const unitDue = (blockDues && (blockDues[block] || blockDues[blockLabel]))
+            ? parseFloat(blockDues[block] || blockDues[blockLabel])
+            : standardDue;
 
-        for (let d = 1; d <= count; d++) {
-          const floor = Math.max(1, Math.ceil(d / 4)).toString();
-          unitsToCreate.push({
-            buildingId: building.id,
-            blockName: block,
-            doorNo: d.toString(),
-            floor: floor,
-            ownerName: `${block} D:${d}`,
-            residentPhone: '',
-            defaultDueAmount: unitDue,
-          });
+          for (let d = 1; d <= count; d++) {
+            const floor = Math.max(1, Math.ceil(d / 4)).toString();
+            unitsToCreate.push({
+              buildingId: created.id,
+              blockName: blockLabel,
+              doorNo: d.toString(),
+              floor: floor,
+              ownerName: `${blockLabel} D:${d}`,
+              residentPhone: '',
+              defaultDueAmount: unitDue,
+            });
+          }
+        }
+        if (unitsToCreate.length > 0) {
+          await tx.unit.createMany({ data: unitsToCreate });
         }
       }
-      if (unitsToCreate.length > 0) {
-        await prisma.unit.createMany({
-          data: unitsToCreate,
-        });
-      }
-    }
+
+      return created;
+    });
 
     return NextResponse.json(building, { status: 201 });
   } catch (error) {

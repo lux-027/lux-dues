@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { getSession, SessionUser } from '@/lib/session';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
+
+async function canAccessBuilding(session: SessionUser, buildingId: string) {
+  if (session.buildingId === buildingId) return true;
+  if (session.units.some((u) => u.buildingId === buildingId)) return true;
+  const building = await prisma.building.findUnique({
+    where: { id: buildingId },
+    select: { ownerId: true },
+  });
+  return building?.ownerId === session.id;
+}
 
 // GET /api/units?buildingId=... - List units for a building
 export async function GET(request: NextRequest) {
@@ -18,9 +28,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'buildingId is required' }, { status: 400 });
     }
 
-    // Block admins can only view their own building
-    if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!(await canAccessBuilding(session, buildingId))) {
+      return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
     }
 
     const units = await prisma.unit.findMany({
@@ -76,7 +85,7 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(body.units) && body.buildingId) {
       const { buildingId, units } = body;
 
-      if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {
+      if (!(await canAccessBuilding(session, buildingId))) {
         return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor.' }, { status: 403 });
       }
 
@@ -136,7 +145,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {
+    if (!(await canAccessBuilding(session, buildingId))) {
       return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor.' }, { status: 403 });
     }
 
@@ -198,8 +207,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'buildingId, oldBlockName ve newBlockName gerekli' }, { status: 400 });
     }
 
-    if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!(await canAccessBuilding(session, buildingId))) {
+      return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
     }
 
     const result = await prisma.unit.updateMany({
@@ -238,8 +247,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'buildingId ve blockName gerekli' }, { status: 400 });
     }
 
-    if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!(await canAccessBuilding(session, buildingId))) {
+      return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
     }
 
     const result = await prisma.unit.deleteMany({

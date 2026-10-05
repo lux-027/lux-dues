@@ -155,7 +155,7 @@ export function Footer() {
           </div>
 
           {/* Column 4: İletişim */}
-          <div className="space-y-2 sm:space-y-3">
+          <div className="col-span-3 lg:col-span-1 space-y-2 sm:space-y-3">
             <h4 className="text-[11px] sm:text-xs font-semibold text-white tracking-wider uppercase">İletişim & Destek</h4>
             <ul className="space-y-2 sm:space-y-2.5 text-[11px] sm:text-xs lg:text-sm text-zinc-400">
               <li>

@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/session';
+
+function canAccessBuilding(
+  session: { id: string; role: string; buildingId?: string | null; units: { buildingId: string }[] },
+  building: { id: string; ownerId: string | null }
+) {
+  if (building.ownerId === session.id) return true;
+  if (session.buildingId === building.id) return true;
+  if (session.units.some((u) => u.buildingId === building.id)) return true;
+  return false;
+}
 
 // GET /api/buildings/[id] - Get a single building
 export async function GET(
@@ -7,6 +18,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const building = await prisma.building.findUnique({
       where: {
@@ -37,6 +53,10 @@ export async function GET(
       );
     }
 
+    if (!canAccessBuilding(session, building)) {
+      return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+    }
+
     return NextResponse.json(building);
   } catch (error) {
     console.error('Error fetching building:', error);
@@ -53,9 +73,22 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { name, type, totalBlocks, address, image, blockImages } = body;
+
+    const existing = await prisma.building.findUnique({ where: { id }, select: { id: true, ownerId: true } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Building not found' }, { status: 404 });
+    }
+    if (!canAccessBuilding(session, existing)) {
+      return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+    }
 
     const building = await prisma.building.update({
       where: {
@@ -87,7 +120,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
+    const existing = await prisma.building.findUnique({ where: { id }, select: { id: true, ownerId: true } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Building not found' }, { status: 404 });
+    }
+    if (existing.ownerId !== session.id && session.buildingId !== existing.id) {
+      return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+    }
+
     await prisma.building.delete({
       where: {
         id,
