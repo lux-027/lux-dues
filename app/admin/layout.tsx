@@ -108,11 +108,6 @@ export default function AdminLayout({
                 {/* Menu Header */}
                 <div className="flex items-center justify-between p-4 border-b border-zinc-100/50 bg-gradient-to-r from-zinc-50 to-white rounded-t-3xl">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center">
-                      <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    </div>
                     <span className="font-semibold text-zinc-900 text-sm">Menü</span>
                   </div>
                   <button

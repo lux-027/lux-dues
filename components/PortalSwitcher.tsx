@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Isometric3DBuilding } from './Isometric3DBuilding';
+import { Isometric3DHouse } from './Isometric3DHouse';
 
 import { formatAccountNumber } from '@/lib/userId';
 
@@ -294,9 +295,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                   >
                     {/* Background Graphic Watermark */}
                     <div className="absolute right-0 bottom-0 translate-x-2 translate-y-2 opacity-5 pointer-events-none text-zinc-900">
-                      <svg className="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
+                      <Isometric3DHouse size={128} />
                     </div>
 
                     <div className="flex items-start justify-between gap-3 relative z-10">
@@ -304,13 +303,11 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                         <div
                           className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform ${
                             isCurrentResident
-                              ? 'bg-zinc-800/90 border border-zinc-700/80 text-white'
-                              : 'bg-gradient-to-br from-zinc-100 to-zinc-200 border border-zinc-200 text-zinc-900 group-hover:scale-105'
+                              ? 'bg-white/95 border border-white/40'
+                              : 'bg-gradient-to-br from-zinc-100 to-zinc-200 border border-zinc-200 group-hover:scale-105'
                           }`}
                         >
-                          <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
+                          <Isometric3DHouse size={32} />
                         </div>
 
                         <div className="space-y-1">
@@ -434,11 +431,15 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
         title="Panel ve Yetki Değiştir"
       >
         <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center flex-shrink-0 overflow-hidden">
-          <Isometric3DBuilding size={20} />
+          {current === 'admin' ? (
+            <Isometric3DBuilding size={20} />
+          ) : (
+            <Isometric3DHouse size={20} />
+          )}
         </div>
         <div className="flex flex-col text-left leading-none">
           <span className="text-[10px] font-semibold text-white leading-tight">
-            {current === 'admin' ? 'Yönetici Portalı' : 'Sakin Portalı'}
+            {current === 'admin' ? 'Yönetici' : 'Sakin'}
           </span>
         </div>
         <svg
@@ -463,9 +464,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
           {current === 'admin' ? (
             <Isometric3DBuilding size={26} />
           ) : (
-            <svg className="h-4 w-4 text-zinc-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
+            <Isometric3DHouse size={24} />
           )}
         </div>
         <div className="flex flex-col text-left">

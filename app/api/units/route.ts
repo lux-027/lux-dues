@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Single unit creation
     const { buildingId, blockName, doorNo, floor, ownerName, residentPhone, defaultDueAmount } = body;
 
-    if (!buildingId || !blockName || !doorNo || !floor || !ownerName) {
+    if (!buildingId || !blockName || !doorNo) {
       return NextResponse.json(
         { error: 'Tüm zorunlu alanları doldurun' },
         { status: 400 }
@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
         buildingId,
         blockName,
         doorNo: String(doorNo),
-        floor: String(floor),
-        ownerName,
+        floor: String(floor || '1'),
+        ownerName: ownerName || '',
         residentPhone: normalizedPhone,
         defaultDueAmount: defaultDueAmount ? parseFloat(defaultDueAmount) : null,
       },

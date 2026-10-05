@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 
     const admins = await prisma.user.findMany({
       where: {
+        id: session.id,
         role: { in: [UserRole.SUPER_ADMIN, UserRole.BLOCK_ADMIN] },
       },
       select: {
@@ -39,7 +40,9 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(admins);
+    return NextResponse.json(
+      admins.map((a) => ({ ...a, isCurrentUser: a.id === session.id }))
+    );
   } catch (error) {
     console.error('Error fetching admins:', error);
     return NextResponse.json(

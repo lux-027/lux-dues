@@ -223,18 +223,18 @@ export default function BuildingsPage() {
       {/* Overview Statistics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Stat 1: Total Buildings */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Yönetilen Yapı</span>
-            <span className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
+        <div className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-xs font-medium text-zinc-500 uppercase tracking-wider">Yönetilen Yapı</span>
+            <span className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </span>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-light text-zinc-900">{stats.totalBuildings}</div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-zinc-500">
+            <div className="text-xl sm:text-3xl font-light text-zinc-900">{stats.totalBuildings}</div>
+            <div className="flex items-center gap-1.5 mt-1 text-[10px] sm:text-xs text-zinc-500">
               <span className="font-medium text-zinc-900">{stats.siteCount} Site</span>
               <span>•</span>
               <span className="font-medium text-zinc-900">{stats.aptCount} Apartman</span>
@@ -243,18 +243,18 @@ export default function BuildingsPage() {
         </div>
 
         {/* Stat 2: Total Units & Vacancy */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Toplam Daire</span>
-            <span className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
+        <div className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-xs font-medium text-zinc-500 uppercase tracking-wider">Toplam Daire</span>
+            <span className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
             </span>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-light text-zinc-900">{stats.totalUnits}</div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-zinc-500">
+            <div className="text-xl sm:text-3xl font-light text-zinc-900">{stats.totalUnits}</div>
+            <div className="flex items-center gap-1.5 mt-1 text-[10px] sm:text-xs text-zinc-500">
               <span className="font-medium text-zinc-900">{stats.occupiedUnits} Dolu</span>
               <span>•</span>
               <span className="font-medium text-zinc-900">{stats.vacantUnits} Boş Daire</span>
@@ -263,18 +263,18 @@ export default function BuildingsPage() {
         </div>
 
         {/* Stat 3: Registered Residents */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Sakin Bağlantısı</span>
-            <span className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
+        <div className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-xs font-medium text-zinc-500 uppercase tracking-wider">Sakin Bağlantısı</span>
+            <span className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
             </span>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-light text-zinc-900">{stats.registeredResidents}</div>
-            <div className="flex items-center gap-1 mt-1 text-xs text-zinc-500">
+            <div className="text-xl sm:text-3xl font-light text-zinc-900">{stats.registeredResidents}</div>
+            <div className="flex items-center gap-1 mt-1 text-[10px] sm:text-xs text-zinc-500">
               <span className="font-medium text-zinc-900">%{stats.residentLinkRate}</span>
               <span>online takip oranı</span>
             </div>
@@ -282,18 +282,18 @@ export default function BuildingsPage() {
         </div>
 
         {/* Stat 4: Admins */}
-        <div className="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Yönetici Kadrosu</span>
-            <span className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
+        <div className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-xs font-medium text-zinc-500 uppercase tracking-wider">Yönetici Kadrosu</span>
+            <span className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </span>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-light text-zinc-900">{stats.totalAdmins}</div>
-            <div className="mt-1 text-xs text-zinc-500">
+            <div className="text-xl sm:text-3xl font-light text-zinc-900">{stats.totalAdmins}</div>
+            <div className="mt-1 text-[10px] sm:text-xs text-zinc-500">
               <span>Bina & Blok Yöneticileri</span>
             </div>
           </div>
@@ -301,10 +301,10 @@ export default function BuildingsPage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 p-4 sm:p-5 rounded-2xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         {/* Search Input */}
         <div className="relative w-full sm:w-96">
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -312,12 +312,12 @@ export default function BuildingsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Bina adı veya adres ara..."
-            className="w-full pl-12 pr-4 py-3 text-sm bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/20 text-white placeholder:text-zinc-400 transition-all"
+            className="w-full pl-10 sm:pl-12 pr-3.5 sm:pr-4 py-2 sm:py-3 text-xs sm:text-sm bg-white/10 border border-white/20 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/20 text-white placeholder:text-zinc-400 transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs font-medium"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs font-medium"
             >
               Temizle
             </button>
@@ -328,7 +328,7 @@ export default function BuildingsPage() {
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
           <button
             onClick={() => setTypeFilter('ALL')}
-            className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl transition-all whitespace-nowrap ${
               typeFilter === 'ALL'
                 ? 'bg-white text-zinc-900 shadow-lg'
                 : 'bg-white/10 text-zinc-300 hover:bg-white/20'
@@ -338,7 +338,7 @@ export default function BuildingsPage() {
           </button>
           <button
             onClick={() => setTypeFilter('SITE')}
-            className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl transition-all whitespace-nowrap ${
               typeFilter === 'SITE'
                 ? 'bg-white text-zinc-900 shadow-lg'
                 : 'bg-white/10 text-zinc-300 hover:bg-white/20'
@@ -348,7 +348,7 @@ export default function BuildingsPage() {
           </button>
           <button
             onClick={() => setTypeFilter('APARTMENT')}
-            className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg sm:rounded-xl transition-all whitespace-nowrap ${
               typeFilter === 'APARTMENT'
                 ? 'bg-white text-zinc-900 shadow-lg'
                 : 'bg-white/10 text-zinc-300 hover:bg-white/20'
@@ -380,7 +380,7 @@ export default function BuildingsPage() {
               <h3 className="mt-3 text-base font-medium text-zinc-900">
                 {searchQuery || typeFilter !== 'ALL' ? 'Aramaya uygun bina bulunamadı' : 'Henüz bina eklenmedi'}
               </h3>
-              <p className="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
+              <p className="mt-1 text-[10px] sm:text-xs text-zinc-500 max-w-sm mx-auto">
                 {searchQuery || typeFilter !== 'ALL'
                   ? 'Arama kriterlerinizi temizleyerek tekrar deneyebilirsiniz.'
                   : 'Yeni bir bina veya site ekleyerek yönetime hemen başlayabilirsiniz.'}
@@ -393,9 +393,9 @@ export default function BuildingsPage() {
           {filteredBuildings.map((building, index) => {
             const buildingUnits = building.units || [];
             const bTotalUnits = building._count.units || 0;
-            const bVacantUnits = buildingUnits.filter((u) => u.isVacant).length;
-            const bOccupiedUnits = Math.max(0, bTotalUnits - bVacantUnits);
             const bRegisteredResidents = buildingUnits.filter((u) => u.residents && u.residents.length > 0).length;
+            const bOccupiedUnits = bRegisteredResidents;
+            const bVacantUnits = Math.max(0, bTotalUnits - bOccupiedUnits);
             const bOccupancyPercent = bTotalUnits > 0 ? Math.round((bOccupiedUnits / bTotalUnits) * 100) : 100;
 
             return (
@@ -496,7 +496,7 @@ export default function BuildingsPage() {
                         <svg className="h-3 w-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <span>Sakinler ({bTotalUnits})</span>
+                        <span>Sakinler ({bRegisteredResidents})</span>
                       </button>
                     </Link>
 
@@ -528,66 +528,78 @@ export default function BuildingsPage() {
         </div>
       )}
 
-      {/* Info & Feature Highlights Section */}
-      <div className="pt-4">
-        <div className="mb-5">
-          <h2 className="text-xl font-light text-zinc-900 tracking-tight">LuxDues Yönetim & İşlem Rehberi</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Bina ve site operasyonlarınızı kolaylaştıran gelişmiş yönetim fonksiyonları
-          </p>
-        </div>
+      {/* Info & Feature Highlights Section — separated like a new section */}
+      <div className="relative -mx-4 sm:-mx-6 mt-8 sm:mt-10 bg-white border-y border-zinc-200 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)]">
+        {/* Top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-zinc-900 to-transparent opacity-80" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+        <div className="px-4 sm:px-6 py-6 sm:py-8">
+          {/* Centered Section Masthead */}
+          <div className="text-center mb-6 sm:mb-8">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 text-white text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] shadow-md">
+              <span className="w-1 h-1 rounded-full bg-emerald-400" />
+              Rehber
+            </span>
+            <h2 className="text-xl sm:text-2xl font-light text-zinc-900 tracking-tight mt-3">
+              LuxDues Yönetim & İşlem Rehberi
+            </h2>
+            <p className="text-[11px] sm:text-sm text-zinc-500 mt-1.5 max-w-md mx-auto">
+              Bina ve site operasyonlarınızı kolaylaştıran gelişmiş yönetim fonksiyonları
+            </p>
+          </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl sm:rounded-2xl p-4 sm:p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
             
             <div className="relative z-10">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mb-4 shadow-lg">
-                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center mb-3 sm:mb-4 shadow-lg">
+                <svg className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Toplu Aidat & Makbuzlandırma</h3>
-              <p className="text-xs text-zinc-300 leading-relaxed">
+              <h3 className="text-sm sm:text-base font-bold text-white mb-1.5 sm:mb-2">Toplu Aidat & Makbuzlandırma</h3>
+              <p className="text-[11px] sm:text-xs text-zinc-300 leading-relaxed">
                 Her ay tüm bloklara veya belirli dairelere tek tıkla toplu aidat tahakkuk ettirin. Boş daireler otomatik olarak muaf tutulur.
               </p>
             </div>
           </div>
 
-          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl sm:rounded-2xl p-4 sm:p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
             
             <div className="relative z-10">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mb-4 shadow-lg">
-                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mb-3 sm:mb-4 shadow-lg">
+                <svg className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Sakin Daveti & ID Eşleme</h3>
-              <p className="text-xs text-zinc-300 leading-relaxed">
+              <h3 className="text-sm sm:text-base font-bold text-white mb-1.5 sm:mb-2">Sakin Daveti & ID Eşleme</h3>
+              <p className="text-[11px] sm:text-xs text-zinc-300 leading-relaxed">
                 Sakinleri 9 haneli Kullanıcı ID ile dairelerine bağlayın. Sakinler borçlarını ve duyuruları kendi panellerinden anında izlesin.
               </p>
             </div>
           </div>
 
-          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div className="group relative bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl sm:rounded-2xl p-4 sm:p-5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
             
             <div className="relative z-10">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-4 shadow-lg">
-                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-3 sm:mb-4 shadow-lg">
+                <svg className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </div>
-              <h3 className="text-base font-bold text-white mb-2">Anlık Bildirim & Yönetici Ağı</h3>
-              <p className="text-xs text-zinc-300 leading-relaxed">
+              <h3 className="text-sm sm:text-base font-bold text-white mb-1.5 sm:mb-2">Anlık Bildirim & Yönetici Ağı</h3>
+              <p className="text-[11px] sm:text-xs text-zinc-300 leading-relaxed">
                 Daireden ayrılma, sakin yetkilendirme ve yönetici arkadaşlık talepleri sistem bildirim kutusunda gerçek zamanlı olarak güncellenir.
               </p>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -752,9 +764,9 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
         
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg transform transition-all my-8 max-h-[90vh] flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">
+        <div className="relative bg-white rounded-lg sm:rounded-xl shadow-xl w-full max-w-sm sm:max-w-lg transform transition-all my-8 max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200">
+            <h3 className="text-base sm:text-lg font-medium text-zinc-900">
               {formData.type === BuildingType.SITE ? 'Yeni Site / Kompleks Ekle' : 'Yeni Apartman Ekle'}
             </h3>
             <button
@@ -767,7 +779,7 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
             </button>
           </div>
           
-          <form onSubmit={handleSubmit} className="px-6 py-4 overflow-y-auto space-y-4">
+          <form onSubmit={handleSubmit} className="px-4 sm:px-6 py-3 sm:py-4 overflow-y-auto space-y-3 sm:space-y-4">
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {error}
@@ -797,7 +809,7 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                     setPreviewImage(formData.image);
                     setShowImagePicker(true);
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-sm font-medium transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs sm:text-sm font-medium transition-colors"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -806,7 +818,7 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                   {formData.image ? 'Görseli Değiştir' : 'Görsel Ekle'}
                 </button>
               </div>
-              <p className="text-xs text-zinc-500 mt-1.5">Boş bırakırsanız sistem rastgele bir arşiv görseli atar.</p>
+              <p className="text-[11px] sm:text-[11px] sm:text-xs text-zinc-500 mt-1.5">Boş bırakırsanız sistem rastgele bir arşiv görseli atar.</p>
             </div>
 
             <div className="form-group">
@@ -823,11 +835,11 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
 
             <div className="form-group">
               <label className="input-label">Yapı Türü</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => handleTypeChange(BuildingType.APARTMENT)}
-                  className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-medium text-sm transition-all ${
+                  className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 font-medium text-xs sm:text-sm transition-all ${
                     formData.type === BuildingType.APARTMENT
                       ? 'bg-zinc-900 text-white border-zinc-900'
                       : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
@@ -841,7 +853,7 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                 <button
                   type="button"
                   onClick={() => handleTypeChange(BuildingType.SITE)}
-                  className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 font-medium text-sm transition-all ${
+                  className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 font-medium text-xs sm:text-sm transition-all ${
                     formData.type === BuildingType.SITE
                       ? 'bg-zinc-900 text-white border-zinc-900'
                       : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
@@ -881,7 +893,7 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                   min="0"
                   required
                 />
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">
                   Aidat yönetimi sayfasında bu tutar otomatik olarak kullanılır.
                 </p>
               </div>
@@ -900,7 +912,7 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                 min="1"
                 max="100"
               />
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">
                 Boş bırakırsanız daireleri daha sonra tek tek veya toplu olarak ekleyebilirsiniz.
               </p>
             </div>
@@ -917,7 +929,7 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
+            <div className="flex items-center justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-zinc-200">
               <Button
                 type="button"
                 variant="secondary"

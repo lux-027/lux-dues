@@ -154,7 +154,14 @@ export function NotificationMenu() {
         type="button"
         onClick={() => {
           setOpen(!open);
-          if (!open) fetchInvitations();
+          if (!open) {
+            fetchInvitations();
+            const nextTab = invitations.length > 0 ? 'requests' : 'notifications';
+            setActiveTab(nextTab);
+            if (nextTab === 'notifications' && unreadNotifications > 0) {
+              markAllNotificationsRead();
+            }
+          }
         }}
         className="relative p-2 text-zinc-600 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-200 rounded-full transition-colors focus:outline-none"
         title="Bildirimler ve İstekler"
@@ -198,7 +205,10 @@ export function NotificationMenu() {
 
             <button
               type="button"
-              onClick={() => setActiveTab('notifications')}
+              onClick={() => {
+                setActiveTab('notifications');
+                markAllNotificationsRead();
+              }}
               className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'notifications'
                   ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
@@ -206,6 +216,11 @@ export function NotificationMenu() {
               }`}
             >
               <span>Bildirimler</span>
+              {unreadNotifications > 0 && (
+                <span className="px-1.5 py-0.2 bg-red-500/20 text-red-400 text-[10px] font-bold rounded-full">
+                  {unreadNotifications}
+                </span>
+              )}
             </button>
           </div>
 
@@ -286,18 +301,6 @@ export function NotificationMenu() {
                   </div>
                 ) : (
                   <div>
-                    {unreadNotifications > 0 && (
-                      <div className="p-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
-                        <span className="text-[11px] text-zinc-400 font-medium">{unreadNotifications} okunmamış bildirim</span>
-                        <button
-                          type="button"
-                          onClick={markAllNotificationsRead}
-                          className="text-[11px] text-zinc-300 hover:text-white font-medium underline"
-                        >
-                          Tümünü Okundu İşaretle
-                        </button>
-                      </div>
-                    )}
                     <div className="divide-y divide-zinc-800/60">
                       {notifications.map((notif) => (
                         <div

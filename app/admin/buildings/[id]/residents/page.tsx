@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardBody } from '@/components/ui';
-import { Button, Input, Badge, PhoneInput, CurrencyInput } from '@/components/ui';
+import { Button, Input, Badge, CurrencyInput } from '@/components/ui';
 import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
@@ -83,7 +83,6 @@ export default function ResidentsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -235,23 +234,49 @@ export default function ResidentsPage() {
   };
 
   const handleOpenBatchModal = () => {
-    const targetBlock = selectedBlock && selectedBlock !== 'ALL' ? selectedBlock : allBlockNames[0] || 'A Blok';
-    const existingCount = units.filter((u) => u.blockName === targetBlock).length;
+    setShowBatchModal(true);
+  };
 
-    if (existingCount > 0) {
-      setConfirmModal({
-        open: true,
-        title: 'Mevcut Daireler Silinecek',
-        description: `"${targetBlock}" bloğunda ${existingCount} adet mevcut daire bulunmaktadır. Toplu daire oluşturma işlemi bu mevcut daireleri silip yenilerini oluşturacaktır. Devam etmek istiyor musunuz?`,
-        action: async () => {
+  const handleAddUnit = () => {
+    const targetBlock = selectedBlock && selectedBlock !== 'ALL' ? selectedBlock : allBlockNames[0] || 'A Blok';
+    const blockUnits = units.filter((u) => u.blockName === targetBlock);
+    const nextDoorNo = blockUnits.reduce((max, u) => {
+      const n = parseInt(String(u.doorNo), 10);
+      return isNaN(n) ? max : Math.max(max, n);
+    }, 0) + 1;
+
+    setConfirmModal({
+      open: true,
+      title: 'Yeni Daire Eklenecek',
+      description: `"${targetBlock}" bloğuna Daire ${nextDoorNo} eklenecek. Onaylıyor musunuz?`,
+      action: async () => {
+        setConfirmModal((prev) => ({ ...prev, loading: true }));
+        try {
+          const response = await fetch('/api/units', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              buildingId,
+              blockName: targetBlock,
+              doorNo: String(nextDoorNo),
+              ownerName: '',
+            }),
+          });
           setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
-          setShowBatchModal(true);
-        },
-        loading: false,
-      });
-    } else {
-      setShowBatchModal(true);
-    }
+          if (response.ok) {
+            fetchData();
+          } else {
+            const data = await response.json();
+            alert(data.error || 'Daire eklenirken bir hata oluştu');
+          }
+        } catch (error) {
+          console.error('Error creating unit:', error);
+          alert('Daire eklenirken bir hata oluştu');
+          setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
+        }
+      },
+      loading: false,
+    });
   };
 
   const handleDeleteBlock = async () => {
@@ -303,8 +328,8 @@ export default function ResidentsPage() {
   return (
     <div className="page-container">
       {/* Back Button & Top Navigation */}
-      <div className="section-header mb-6">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="section-header mb-4 sm:mb-6">
+        <div className="flex items-center gap-3 mb-3 sm:mb-4">
           <Button
             variant="primary"
             size="sm"
@@ -319,9 +344,9 @@ export default function ResidentsPage() {
           </Button>
         </div>
 
-        <Card className="mb-6 shadow-sm border-zinc-200">
-          <CardBody className="p-6">
-            <div className="flex flex-col lg:flex-row lg:items-stretch justify-between gap-6">
+        <Card className="mb-4 sm:mb-6 shadow-sm border-zinc-200">
+          <CardBody className="p-4 sm:p-6">
+            <div className="flex flex-col lg:flex-row lg:items-stretch justify-between gap-4 sm:gap-6">
               <div className="flex-1 space-y-2">
                 <div className="flex items-start gap-4">
                   <div className="w-32 h-32 rounded-xl overflow-hidden border border-zinc-200 flex-shrink-0 bg-zinc-100 hidden lg:block">
@@ -332,8 +357,8 @@ export default function ResidentsPage() {
                     />
                   </div>
                   <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h1 className="text-3xl font-light text-zinc-900 tracking-tight">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                      <h1 className="text-lg sm:text-3xl font-light text-zinc-900 tracking-tight">
                         {selectedBlock === 'ALL' || !selectedBlock ? 'Tüm Bloklar ve Daireler' : `${selectedBlock} Daireleri`}
                       </h1>
                       <Badge variant="default" className="text-xs px-3 py-1 font-semibold">{filteredUnits.length} Daire</Badge>
@@ -350,7 +375,7 @@ export default function ResidentsPage() {
                         </button>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-zinc-500">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-zinc-500 flex-wrap">
                       <span>Site: <strong className="text-zinc-800">{building?.name}</strong></span>
                       {selectedBlock && selectedBlock !== 'ALL' && (
                         <>
@@ -368,7 +393,7 @@ export default function ResidentsPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-start lg:items-end gap-2">
                 {selectedBlock && selectedBlock !== 'ALL' && (
                   <Button
                     variant="primary"
@@ -383,8 +408,8 @@ export default function ResidentsPage() {
                     {assignedAdminForSelected ? assignedAdminForSelected.name : 'Bina Yöneticisi'}
                   </Button>
                 )}
-                <div className="flex flex-col items-end gap-2 mt-auto">
-                  <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex flex-col items-start lg:items-end gap-2 mt-auto">
+                  <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
                     {(building?.type === 'APARTMENT' || (selectedBlock && selectedBlock !== 'ALL')) && (
                       <Button
                         variant="secondary"
@@ -401,7 +426,7 @@ export default function ResidentsPage() {
                     )}
                     <Button
                       size="sm"
-                      onClick={() => setShowCreateModal(true)}
+                      onClick={handleAddUnit}
                       leftIcon={
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -436,7 +461,7 @@ export default function ResidentsPage() {
           <button
             type="button"
             onClick={() => router.push(`/admin/buildings/${buildingId}/dues`)}
-            className="w-full flex items-center justify-between gap-4 p-5 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 hover:shadow-md rounded-2xl transition-all text-left"
+            className="w-full flex items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 hover:shadow-md rounded-2xl transition-all text-left"
           >
             <div>
               <h3 className="text-base font-semibold text-zinc-900">{selectedBlock} Aidat Durumu</h3>
@@ -477,7 +502,7 @@ export default function ResidentsPage() {
                     Toplu Daire Oluştur (1-10)
                   </Button>
                 )}
-                <Button onClick={() => setShowCreateModal(true)}>
+                <Button onClick={handleAddUnit}>
                   + Tek Daire Ekle
                 </Button>
               </div>
@@ -555,29 +580,29 @@ export default function ResidentsPage() {
             </div>
 
             {/* Mobile Card View */}
-            <div className="sm:hidden space-y-3 p-4">
+            <div className="sm:hidden space-y-2.5 p-3">
               {filteredUnits.map((unit) => (
-                <div key={unit.id} className="bg-white border border-zinc-200 rounded-xl p-4 space-y-3">
-                  <div className="flex items-start gap-3">
+                <div key={unit.id} className="bg-white border border-zinc-200 rounded-xl p-3 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
                     <UserAvatar
                       name={unit.residents[0]?.name || unit.ownerName || (unit.isVacant ? 'Boş Daire' : 'Bilinmeyen')}
                       avatarUrl={unit.residents[0]?.avatarUrl}
-                      size={40}
+                      size={36}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-zinc-900 px-2 py-0.5 bg-zinc-100 rounded text-xs">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="font-medium text-zinc-900 px-1.5 py-0.5 bg-zinc-100 rounded text-[10px]">
                           {unit.blockName}
                         </span>
                         <span className="font-semibold text-zinc-900 text-sm">
                           Daire {unit.doorNo}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-zinc-800 truncate">{unit.ownerName}</p>
+                      <p className="text-xs font-medium text-zinc-800 truncate">{unit.ownerName}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-xs">
                     <svg className="h-4 w-4 text-zinc-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
@@ -615,19 +640,6 @@ export default function ResidentsPage() {
       )}
 
       {/* Modals */}
-      {showCreateModal && (
-        <CreateUnitModal
-          buildingId={buildingId}
-          existingBlocks={allBlockNames}
-          defaultBlock={selectedBlock && selectedBlock !== 'ALL' ? selectedBlock : allBlockNames[0] || 'A Blok'}
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={() => {
-            setShowCreateModal(false);
-            fetchData();
-          }}
-        />
-      )}
-
       {showBatchModal && (
         <BatchCreateUnitsModal
           buildingId={buildingId}
@@ -982,158 +994,6 @@ function AddBlockModal({ existingBlocks, onClose, onSave }: AddBlockModalProps) 
 }
 
 // -------------------------------------------------------------
-// MODAL: CREATE SINGLE UNIT
-// -------------------------------------------------------------
-interface CreateUnitModalProps {
-  buildingId: string;
-  existingBlocks: string[];
-  defaultBlock: string;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-function CreateUnitModal({
-  buildingId,
-  existingBlocks,
-  defaultBlock,
-  onClose,
-  onSuccess,
-}: CreateUnitModalProps) {
-  const [formData, setFormData] = useState({
-    blockName: defaultBlock,
-    doorNo: '',
-    floor: '1',
-    ownerName: '',
-    residentPhone: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/units', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ buildingId, ...formData }),
-      });
-
-      if (response.ok) {
-        onSuccess();
-      } else {
-        const data = await response.json();
-        setError(data.error || 'Daire oluşturulurken bir hata oluştu');
-      }
-    } catch (err) {
-      setError('Daire oluşturulurken bir hata oluştu');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
-
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg transform transition-all">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">Yeni Daire Ekle ({formData.blockName})</h3>
-            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                <p>{error}</p>
-                {(error.includes('yetki') || error.includes('Oturum') || error.includes('bina için yetki')) && (
-                  <p className="mt-1 text-xs text-red-500">
-                    Bu işlem için SUPER_ADMIN veya bu binaya atanmış BLOCK_ADMIN olmalısınız.
-                  </p>
-                )}
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="form-group">
-                <label className="input-label">Blok</label>
-                <select
-                  className="input-field"
-                  value={formData.blockName}
-                  onChange={(e) => setFormData({ ...formData, blockName: e.target.value })}
-                  required
-                >
-                  <option value="" disabled>Blok seçin</option>
-                  {existingBlocks.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <Input
-                  label="Kapı No"
-                  placeholder="Örn: 12"
-                  value={formData.doorNo}
-                  onChange={(e) => setFormData({ ...formData, doorNo: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <Input
-                label="Kat"
-                placeholder="Örn: 3"
-                value={formData.floor}
-                onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <Input
-                label="Malik / Sakin Adı"
-                placeholder="Örn: Ahmet Yılmaz"
-                value={formData.ownerName}
-                onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <PhoneInput
-                label="İletişim Telefonu (İsteğe Bağlı)"
-                value={formData.residentPhone}
-                onChange={(value) => setFormData({ ...formData, residentPhone: value })}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
-                İptal
-              </Button>
-              <Button type="submit" loading={loading}>
-                Daireyi Kaydet
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// -------------------------------------------------------------
 // MODAL: BATCH CREATE UNITS FOR SELECTED BLOCK
 // -------------------------------------------------------------
 interface BatchCreateUnitsModalProps {
@@ -1173,28 +1033,39 @@ function BatchCreateUnitsModal({
       return;
     }
 
-    const unitsToCreate = [];
-    for (let d = start; d <= end; d++) {
-      const floor = Math.max(1, Math.ceil(d / perFloor)).toString();
-      unitsToCreate.push({
-        blockName: blockName.trim() || 'A Blok',
-        doorNo: String(d),
-        floor,
-        ownerName: '',
-        residentPhone: '',
-        defaultDueAmount,
-      });
-    }
+    const targetBlock = blockName.trim() || 'A Blok';
 
     try {
-      // Önce mevcut bloktaki tüm daireleri sil (baştan oluşturma)
-      const deleteResponse = await fetch(
-        `/api/units?buildingId=${buildingId}&blockName=${encodeURIComponent(blockName.trim() || 'A Blok')}`,
-        { method: 'DELETE' }
+      // Mevcut daireleri çek — sadece olmayan kapı numaraları eklenecek
+      const existingRes = await fetch(`/api/units?buildingId=${buildingId}`);
+      if (!existingRes.ok) {
+        setError('Mevcut daireler kontrol edilirken bir hata oluştu');
+        setLoading(false);
+        return;
+      }
+      const existingUnits = await existingRes.json();
+      const existingDoorNos = new Set(
+        existingUnits
+          .filter((u: any) => u.blockName === targetBlock)
+          .map((u: any) => String(u.doorNo))
       );
 
-      if (!deleteResponse.ok) {
-        setError('Mevcut daireler silinirken bir hata oluştu');
+      const unitsToCreate = [];
+      for (let d = start; d <= end; d++) {
+        if (existingDoorNos.has(String(d))) continue;
+        const floor = Math.max(1, Math.ceil(d / perFloor)).toString();
+        unitsToCreate.push({
+          blockName: targetBlock,
+          doorNo: String(d),
+          floor,
+          ownerName: '',
+          residentPhone: '',
+          defaultDueAmount,
+        });
+      }
+
+      if (unitsToCreate.length === 0) {
+        setError('Bu aralıktaki tüm kapı numaraları zaten mevcut. Eklenecek yeni daire yok.');
         setLoading(false);
         return;
       }
@@ -1248,12 +1119,12 @@ function BatchCreateUnitsModal({
               </div>
             )}
 
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-start gap-2">
-              <svg className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-600 flex items-start gap-2">
+              <svg className="h-4 w-4 text-zinc-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p>
-                Bu işlem <strong>{blockName.trim() || 'A Blok'}</strong> bloğundaki mevcut tüm daireleri siler ve yerine yeni daireleri oluşturur.
+                <strong>{blockName.trim() || 'A Blok'}</strong> bloğunda aralıktaki <strong>eksik</strong> kapı numaraları eklenir. Zaten kayıtlı daireler ve sakin bilgileri korunur.
               </p>
             </div>
 

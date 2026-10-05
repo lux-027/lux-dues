@@ -50,7 +50,6 @@ function getInitialOwnerName(unit: Unit) {
 export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModalProps) {
   const [formData, setFormData] = useState({
     blockName: unit.blockName,
-    doorNo: unit.doorNo,
     floor: unit.floor,
     ownerName: getInitialOwnerName(unit),
     residentPhone: unit.residentPhone,
@@ -62,6 +61,8 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
   const [assigningResident, setAssigningResident] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [showVacantConfirm, setShowVacantConfirm] = useState(false);
+  const [residentIdError, setResidentIdError] = useState(false);
   const [removingResident, setRemovingResident] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
@@ -124,7 +125,10 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
   };
 
   const handleAssignResident = async () => {
-    if (!canAssignResident || !parsedResidentAccountNumber) return;
+    if (!canAssignResident || !parsedResidentAccountNumber) {
+      setResidentIdError(true);
+      return;
+    }
 
     setAssigningResident(true);
     setError('');
@@ -139,6 +143,7 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
 
       if (response.ok) {
         setResidentUserId('');
+        setResidentIdError(false);
         onSuccess();
       } else {
         const data = await response.json();
@@ -159,7 +164,6 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
     try {
       const body: any = {
         blockName: formData.blockName,
-        doorNo: formData.doorNo,
         floor: formData.floor,
         ownerName: isVacant ? (formData.ownerName || 'Boş Daire') : formData.ownerName,
         residentPhone: isVacant ? '' : formData.residentPhone,
@@ -190,9 +194,9 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
       
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-200 flex-shrink-0 bg-zinc-50/50">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5 border-b border-zinc-200 flex-shrink-0 bg-zinc-50/50">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-zinc-900" />
             <h3 className="text-base font-semibold text-zinc-900">Daire Düzenle</h3>
@@ -208,48 +212,50 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} id="editUnitForm" className="px-5 py-3.5 space-y-3 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} id="editUnitForm" className="px-4 sm:px-5 py-3 sm:py-3.5 space-y-2.5 sm:space-y-3 overflow-y-auto flex-1">
           {error && (
             <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 font-medium">
               {error}
             </div>
           )}
 
-          {/* Row 1: Blok & Kapı No */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div>
-              <label className="input-label text-xs">Blok</label>
+          {/* Blok — başlık gibi sol üstte */}
+          <div className="flex items-center gap-2.5 -mt-0.5 pb-0.5 border-b border-zinc-200/80">
+            <span className="h-9 w-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center flex-shrink-0">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 leading-none">Blok</p>
               <input
                 type="text"
-                className="input-field text-xs py-1.5"
+                className="w-full bg-transparent text-sm sm:text-base font-bold text-zinc-900 focus:outline-none py-0.5 placeholder:text-zinc-300"
                 value={formData.blockName}
                 onChange={(e) => setFormData({ ...formData, blockName: e.target.value })}
+                placeholder="Örn: A Blok"
                 required
               />
             </div>
-            <div>
-              <Input
-                label="Kapı No"
-                value={formData.doorNo}
-                onChange={(e) => setFormData({ ...formData, doorNo: e.target.value })}
-                required
-                type="text"
-              />
-            </div>
+            <span className="flex-shrink-0 inline-flex items-center px-2 py-1 rounded-lg text-[11px] font-bold bg-zinc-900 text-white">
+              No: {unit.doorNo}
+            </span>
           </div>
 
-          {/* Row 2: Malik Adı & Telefon */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div>
-              <Input
-                label="Malik / Sakin Adı"
-                value={formData.ownerName}
-                onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                placeholder={isVacant ? 'Boş Daire' : 'Ad Soyad'}
-                required={!isVacant}
-                type="text"
-              />
-            </div>
+          {/* Row 1: Malik Adı */}
+          <div>
+            <Input
+              label="Malik / Sakin Adı"
+              value={formData.ownerName}
+              onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
+              placeholder={isVacant ? 'Boş Daire' : 'Ad Soyad'}
+              required={!isVacant}
+              type="text"
+            />
+          </div>
+
+          {/* Row 2: Telefon & Varsayılan Aidat */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
             <div>
               <PhoneInput
                 label="Telefon (İsteğe Bağlı)"
@@ -257,10 +263,6 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
                 onChange={(value) => setFormData({ ...formData, residentPhone: value })}
               />
             </div>
-          </div>
-
-          {/* Row 3: Varsayılan Aidat & Boş Daire */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-center">
             <div>
               <CurrencyInput
                 label="Varsayılan Aidat (₺)"
@@ -268,23 +270,10 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
                 onChange={(value) => setFormData({ ...formData, defaultDueAmount: value })}
               />
             </div>
-            <div className={`p-2.5 border rounded-xl flex items-center justify-between h-[42px] mt-auto transition-colors ${isVacant ? 'bg-amber-50 border-amber-200' : 'bg-zinc-50 border-zinc-200'}`}>
-              <label htmlFor="isVacantToggle" className="cursor-pointer">
-                <p className={`text-xs font-semibold ${isVacant ? 'text-amber-900' : 'text-zinc-900'}`}>Boş Daire</p>
-                <p className={`text-[10px] ${isVacant ? 'text-amber-700' : 'text-zinc-500'}`}>Aidat hesaplanmaz</p>
-              </label>
-              <input
-                type="checkbox"
-                id="isVacantToggle"
-                checked={isVacant}
-                onChange={(e) => handleToggleVacant(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
-              />
-            </div>
           </div>
 
           {/* Kayıtlı Sakin Alanı */}
-          <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-2.5">
+          <div className="p-2.5 sm:p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-2 sm:space-y-2.5">
             <div className="flex items-center justify-between">
               <h4 className="text-[11px] font-semibold text-zinc-900 uppercase tracking-wider">Kayıtlı Daire Sakini</h4>
               {isVacant ? (
@@ -354,19 +343,22 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
                     type="text"
                     inputMode="numeric"
                     maxLength={11}
-                    className="input-field text-xs py-1.5 flex-1"
+                    className={`input-field text-xs py-1.5 flex-1 transition-colors ${
+                      residentIdError
+                        ? 'border-red-400 ring-2 ring-red-200 focus:border-red-500 focus:ring-red-300'
+                        : ''
+                    }`}
                     value={displayResidentUserId}
                     onChange={(e) => {
                       const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
                       setResidentUserId(digits);
+                      setResidentIdError(false);
                     }}
                     placeholder="Örn: 000 000 001"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        if (canAssignResident) {
-                          handleAssignResident();
-                        }
+                        handleAssignResident();
                       }
                     }}
                   />
@@ -374,7 +366,7 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
                     type="button"
                     size="sm"
                     onClick={handleAssignResident}
-                    disabled={!canAssignResident || assigningResident}
+                    disabled={assigningResident}
                     loading={assigningResident}
                   >
                     Ekle
@@ -389,13 +381,38 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
         </form>
 
         {/* Footer */}
-        <div className="px-5 py-3 bg-zinc-50 border-t border-zinc-200 flex items-center justify-end gap-2.5 flex-shrink-0">
-          <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={loading}>
-            İptal
-          </Button>
-          <Button type="submit" form="editUnitForm" size="sm" loading={loading}>
-            Kaydet
-          </Button>
+        <div className="px-4 sm:px-5 py-2.5 sm:py-3 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between gap-2.5 flex-shrink-0">
+          {isVacant ? (
+            <button
+              type="button"
+              onClick={() => handleToggleVacant(false)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-700 bg-white hover:bg-zinc-50 border border-zinc-200 hover:border-zinc-300 rounded-lg transition-colors"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Boşluğu Kaldır
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowVacantConfirm(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-900 rounded-lg transition-colors shadow-sm"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Boş Daire Yap
+            </button>
+          )}
+          <div className="flex items-center gap-2.5">
+            <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={loading}>
+              İptal
+            </Button>
+            <Button type="submit" form="editUnitForm" size="sm" loading={loading}>
+              Kaydet
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -409,6 +426,20 @@ export default function EditUnitModal({ unit, onClose, onSuccess }: EditUnitModa
         loading={removingResident}
         onConfirm={handleRemoveResident}
         onCancel={() => setShowRemoveConfirm(false)}
+      />
+
+      <ConfirmModal
+        open={showVacantConfirm}
+        title="Daireyi Boş İşaretle"
+        description="Bu daire boş olarak işaretlenecek. Malik adı, telefon ve bağlı sakin bilgileri temizlenecek; daire toplu aidat listesine dahil edilmeyecek. Devam etmek istiyor musunuz?"
+        variant="danger"
+        confirmText="Evet, Boş İşaretle"
+        cancelText="Vazgeç"
+        onConfirm={() => {
+          handleToggleVacant(true);
+          setShowVacantConfirm(false);
+        }}
+        onCancel={() => setShowVacantConfirm(false)}
       />
     </div>
   );

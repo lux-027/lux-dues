@@ -27,6 +27,7 @@ interface Admin {
   blockName?: string | null;
   building?: { id: string; name: string } | null;
   createdAt: string;
+  isCurrentUser?: boolean;
 }
 
 interface FriendUser {
@@ -218,7 +219,7 @@ export default function AdminsPage() {
 
   const filteredAdmins = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return admins;
+    if (!q) return [...admins].sort((a, b) => Number(b.isCurrentUser) - Number(a.isCurrentUser));
     return admins.filter((a) =>
       a.name.toLowerCase().includes(q) ||
       a.email.toLowerCase().includes(q) ||
@@ -569,7 +570,14 @@ function AdminCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-zinc-900 truncate">{admin.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-zinc-900 truncate">{admin.name}</p>
+                  {admin.isCurrentUser && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-zinc-900 text-white flex-shrink-0">
+                      Siz
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-zinc-500 truncate">{admin.email}</p>
               </div>
               <Badge variant={isSuper ? 'info' : 'default'} size="sm">

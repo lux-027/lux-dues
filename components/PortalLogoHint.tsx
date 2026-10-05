@@ -29,8 +29,8 @@ export function PortalLogoHint({ portal }: PortalLogoHintProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-semibold border shadow-sm bg-zinc-900 text-white border-zinc-800 transition-all duration-500 ${
-        show ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 pointer-events-none'
+      className={`fixed bottom-4 right-4 z-50 sm:static sm:z-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-semibold border shadow-lg sm:shadow-sm bg-zinc-900 text-white border-zinc-800 transition-all duration-500 ${
+        show ? 'opacity-100 translate-y-0 sm:translate-x-0' : 'opacity-0 translate-y-2 sm:-translate-x-2 pointer-events-none'
       }`}
       aria-hidden={!show}
     >

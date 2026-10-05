@@ -257,21 +257,8 @@ export default function BuildingDetailPage() {
     <div className="page-container pb-20">
       {/* Header */}
       <div className="section-header">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => router.push('/admin/buildings')}
-            leftIcon={
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            }
-          >
-            Binalara Dön
-          </Button>
-          <div className="h-6 w-px bg-zinc-200" />
-          <h1 className="text-3xl font-light text-zinc-900">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <h1 className="text-xl sm:text-3xl font-light text-zinc-900 truncate">
             {building.name}
           </h1>
           <Badge
@@ -289,12 +276,27 @@ export default function BuildingDetailPage() {
             {getBuildingTypeLabel(building.type)}
           </Badge>
         </div>
+        <p className="text-xs sm:text-sm text-zinc-500 mt-1">
+          {building.name} {building.type === BuildingType.SITE ? 'sitesinin' : 'binasının'} aidat ve takip bilgileri
+        </p>
       </div>
 
       {/* Building Info Card */}
       <Card className="mb-6 order-0">
         <CardHeader className="flex items-center justify-between">
-          <h2 className="text-lg font-medium text-zinc-900">Bina Bilgileri</h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push('/admin/buildings')}
+              title="Binalara Dön"
+              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition-colors flex-shrink-0"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-base sm:text-lg font-medium text-zinc-900">Bina Bilgileri</h2>
+          </div>
           <div className="flex items-center gap-2">
             {isSite && (
               <Button
@@ -324,7 +326,7 @@ export default function BuildingDetailPage() {
         </div>
         </CardHeader>
         <CardBody>
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
             <div className="w-full md:w-48 h-40 rounded-xl overflow-hidden border border-zinc-200 flex-shrink-0 bg-zinc-100">
               <img
                 src={building.image || `https://loremflickr.com/400/400/city,corporate,office,skyscraper,modern,urban,apartment?lock=${building.id}`}
@@ -332,23 +334,23 @@ export default function BuildingDetailPage() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 flex-1">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 flex-1">
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Bina Adı</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Bina Adı</p>
                 <p className="text-base font-medium text-zinc-900">{building.name}</p>
               </div>
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Bina Türü</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Bina Türü</p>
                 <p className="text-base font-medium text-zinc-900">
                   {getBuildingTypeLabel(building.type)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Blok Sayısı</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Blok Sayısı</p>
                 <p className="text-base font-medium text-zinc-900">{building.totalBlocks}</p>
               </div>
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Adres</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Adres</p>
                 <p className="text-base font-medium text-zinc-900">{building.address}</p>
               </div>
             </div>
@@ -357,13 +359,13 @@ export default function BuildingDetailPage() {
       </Card>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 order-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 order-2">
         <Card>
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Toplam Daire</p>
-                <p className="text-2xl font-medium text-zinc-900">{building._count.units}</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Toplam Daire</p>
+                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.units}</p>
               </div>
               <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
                 <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -378,8 +380,8 @@ export default function BuildingDetailPage() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Yönetici Sayısı</p>
-                <p className="text-2xl font-medium text-zinc-900">{building._count.admins}</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Yönetici Sayısı</p>
+                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.admins}</p>
               </div>
               <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
                 <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -394,8 +396,8 @@ export default function BuildingDetailPage() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Aktif Projeler</p>
-                <p className="text-2xl font-medium text-zinc-900">{building._count.specialProjects}</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Aktif Projeler</p>
+                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.specialProjects}</p>
               </div>
               <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
                 <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -410,8 +412,8 @@ export default function BuildingDetailPage() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-zinc-500 mb-1">Şikayetler</p>
-                <p className="text-2xl font-medium text-zinc-900">{building._count.complaints}</p>
+                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Şikayetler</p>
+                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.complaints}</p>
               </div>
               <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
                 <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -424,7 +426,7 @@ export default function BuildingDetailPage() {
       </div>
 
       {/* Navigation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
         {navigationItems.map((item) => (
           <Card
             key={item.href}
@@ -432,22 +434,22 @@ export default function BuildingDetailPage() {
             onClick={() => router.push(item.href)}
           >
             <CardBody>
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
                   <svg className="h-6 w-6 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     {item.icon.props.children}
                   </svg>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-white mb-1">
+                    <h3 className="text-base sm:text-lg font-medium text-white mb-1">
                       {item.title}
                     </h3>
                     {item.count !== null && (
                       <Badge variant="dark">{item.count}</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-zinc-400 mb-3">{item.description}</p>
+                  <p className="text-xs sm:text-sm text-zinc-400 mb-2 sm:mb-3">{item.description}</p>
                   <div className="flex items-center text-sm text-zinc-300">
                     <span>Yönet</span>
                     <svg className="h-4 w-4 ml-1 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -463,16 +465,16 @@ export default function BuildingDetailPage() {
 
       {/* Blocks */}
       {isSite && blockStats.length > 0 && (
-        <div className="mt-8 order-1">
-          <h2 className="text-lg font-medium text-zinc-900 mb-4 flex items-center gap-2">
+        <div className="mt-6 sm:mt-8 order-1">
+          <h2 className="text-base sm:text-lg font-medium text-zinc-900 mb-3 sm:mb-4 flex items-center gap-2">
             <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
             Bloklar
           </h2>
           <Card className="bg-zinc-50 border-zinc-200">
-            <CardBody className="p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CardBody className="p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {blockStats.map((block) => {
                   const storedBlockImage = building?.blockImages?.[block.name];
                   return (
@@ -484,7 +486,7 @@ export default function BuildingDetailPage() {
                       <CardBody className="p-0">
                         <div className="relative">
                           {/* Header with gradient */}
-                          <div className="bg-gradient-to-r from-zinc-900 to-zinc-700 px-4 py-3 relative overflow-hidden">
+                          <div className="bg-gradient-to-r from-zinc-900 to-zinc-700 px-3 sm:px-4 py-2.5 sm:py-3 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                             <div className="flex items-center justify-between relative z-10">
                               <div>
@@ -500,12 +502,12 @@ export default function BuildingDetailPage() {
                           </div>
 
                           {/* Body */}
-                          <div className="p-4 space-y-4">
+                          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                             {/* Stats */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                  <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="h-8 w-8 bg-zinc-900 rounded-lg flex items-center justify-center">
+                                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
                                 </div>
@@ -515,8 +517,8 @@ export default function BuildingDetailPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                                  <svg className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="h-8 w-8 bg-zinc-100 rounded-lg flex items-center justify-center border border-zinc-200">
+                                  <svg className="h-4 w-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                 </div>
@@ -535,7 +537,7 @@ export default function BuildingDetailPage() {
                               </div>
                               <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
                                 <div 
-                                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-500"
+                                  className="h-full bg-zinc-900 rounded-full transition-all duration-500"
                                   style={{ width: `${block.occupancyRate}%` }}
                                 />
                               </div>
@@ -657,21 +659,11 @@ export default function BuildingDetailPage() {
                   />
                 </div>
               )) : (
-                // Fallback to mock data if no activity data
-                [25, 35, 30, 45, 40, 55, 50, 60, 55, 70, 65, 75, 70, 80, 75, 85, 80, 90, 85, 95, 90, 100, 95, 85, 80, 75, 70, 65, 60, 55].map((val, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-0.5 group">
-                    <div
-                      className={`w-full rounded-t-sm transition-all ${
-                        idx >= 25 ? 'bg-zinc-600 group-hover:bg-zinc-500' : 'bg-zinc-800 group-hover:bg-zinc-700'
-                      }`}
-                      style={{ height: `${(val / 100) * 40}px` }}
-                    />
-                  </div>
-                ))
+                <p className="w-full text-center text-[10px] text-zinc-500 self-center">Henüz aktivite verisi yok</p>
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-[10px] text-zinc-400">
+            <div className="hidden sm:flex items-center gap-4 text-[10px] text-zinc-400">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-sm bg-zinc-600" />
                 <span>Bugün</span>
