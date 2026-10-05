@@ -176,21 +176,21 @@ export function NotificationMenu() {
 
       {/* Dropdown Box */}
       {open && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-zinc-200 overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-zinc-950 rounded-2xl shadow-2xl border border-zinc-800 ring-1 ring-white/10 overflow-hidden z-50">
           {/* Header with 2 tabs */}
-          <div className="bg-zinc-50 border-b border-zinc-200 p-2 flex items-center gap-1">
+          <div className="bg-zinc-900/60 border-b border-zinc-800 p-2 flex items-center gap-1">
             <button
               type="button"
               onClick={() => setActiveTab('requests')}
               className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'requests'
-                  ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
-                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+                  ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
               }`}
             >
               <span>İstek Kutusu</span>
               {invitations.length > 0 && (
-                <span className="px-1.5 py-0.2 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">
+                <span className="px-1.5 py-0.2 bg-red-500/20 text-red-400 text-[10px] font-bold rounded-full">
                   {invitations.length}
                 </span>
               )}
@@ -201,8 +201,8 @@ export function NotificationMenu() {
               onClick={() => setActiveTab('notifications')}
               className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'notifications'
-                  ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
-                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+                  ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
               }`}
             >
               <span>Bildirimler</span>
@@ -210,17 +210,17 @@ export function NotificationMenu() {
           </div>
 
           {/* Tab Content */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-zinc-100">
+          <div className="max-h-96 overflow-y-auto divide-y divide-zinc-800/60">
             {activeTab === 'requests' && (
               <div>
                 {invitations.length === 0 ? (
                   <div className="py-8 px-4 text-center">
-                    <div className="h-10 w-10 mx-auto rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 mb-2">
+                    <div className="h-10 w-10 mx-auto rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500 mb-2">
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
                     </div>
-                    <p className="text-xs font-medium text-zinc-800">Gelen İstek Bulunmuyor</p>
+                    <p className="text-xs font-medium text-zinc-200">Gelen İstek Bulunmuyor</p>
                     <p className="text-[11px] text-zinc-400 mt-0.5">
                       Başka bir yönetici Kullanıcı ID'nizi kullanarak sizi yetkilendirdiğinde talepler burada listelenir.
                     </p>
@@ -230,26 +230,26 @@ export function NotificationMenu() {
                     {invitations.map((invite) => (
                       <div
                         key={invite.id}
-                        className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-2.5"
+                        className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2.5"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span className="inline-block px-2 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md mb-1">
+                            <span className="inline-block px-2 py-0.5 text-[10px] font-semibold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-md mb-1">
                               Yöneticilik Talebi
                             </span>
-                            <h5 className="text-xs font-semibold text-zinc-900">
+                            <h5 className="text-xs font-semibold text-zinc-100">
                               {invite.building.name}
                             </h5>
-                            <p className="text-[11px] text-zinc-600 mt-0.5">
+                            <p className="text-[11px] text-zinc-400 mt-0.5">
                               {invite.blockName ? `Yetkili: ${invite.blockName}` : 'Tüm Bloklar (Genel Yönetim)'}
                             </p>
                           </div>
-                          <span className="text-[10px] text-zinc-400">
+                          <span className="text-[10px] text-zinc-500">
                             {new Date(invite.createdAt).toLocaleDateString('tr-TR')}
                           </span>
                         </div>
 
-                        <div className="text-[11px] text-zinc-500 bg-white p-2 rounded-lg border border-zinc-100">
+                        <div className="text-[11px] text-zinc-400 bg-zinc-800/60 p-2 rounded-lg border border-zinc-700/60">
                           <strong>{invite.sender.name}</strong> tarafından talep gönderildi.
                         </div>
 
@@ -258,7 +258,7 @@ export function NotificationMenu() {
                             type="button"
                             disabled={loadingActionId === invite.id}
                             onClick={() => handleRespondInvitation(invite.id, 'REJECT')}
-                            className="px-2.5 py-1 text-xs font-medium text-zinc-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                            className="px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/30"
                           >
                             Reddet
                           </button>
@@ -282,38 +282,38 @@ export function NotificationMenu() {
               <div>
                 {notifications.length === 0 ? (
                   <div className="py-8 px-4 text-center">
-                    <p className="text-xs text-zinc-400">Henüz bir bildiriminiz bulunmuyor.</p>
+                    <p className="text-xs text-zinc-500">Henüz bir bildiriminiz bulunmuyor.</p>
                   </div>
                 ) : (
                   <div>
                     {unreadNotifications > 0 && (
-                      <div className="p-2 bg-zinc-50 border-b border-zinc-100 flex items-center justify-between">
-                        <span className="text-[11px] text-zinc-500 font-medium">{unreadNotifications} okunmamış bildirim</span>
+                      <div className="p-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+                        <span className="text-[11px] text-zinc-400 font-medium">{unreadNotifications} okunmamış bildirim</span>
                         <button
                           type="button"
                           onClick={markAllNotificationsRead}
-                          className="text-[11px] text-zinc-600 hover:text-zinc-900 font-medium underline"
+                          className="text-[11px] text-zinc-300 hover:text-white font-medium underline"
                         >
                           Tümünü Okundu İşaretle
                         </button>
                       </div>
                     )}
-                    <div className="divide-y divide-zinc-100">
+                    <div className="divide-y divide-zinc-800/60">
                       {notifications.map((notif) => (
                         <div
                           key={notif.id}
-                          className={`p-3.5 hover:bg-zinc-50 transition-colors ${!notif.isRead ? 'bg-indigo-50/30' : ''}`}
+                          className={`p-3.5 hover:bg-zinc-800/60 transition-colors ${!notif.isRead ? 'bg-indigo-500/10' : ''}`}
                         >
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <div className="flex items-center gap-1.5">
-                              {!notif.isRead && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 flex-shrink-0" />}
-                              <p className="text-xs font-semibold text-zinc-900">{notif.title}</p>
+                              {!notif.isRead && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />}
+                              <p className="text-xs font-semibold text-zinc-100">{notif.title}</p>
                             </div>
-                            <span className="text-[10px] text-zinc-400 flex-shrink-0">
+                            <span className="text-[10px] text-zinc-500 flex-shrink-0">
                               {new Date(notif.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
                             </span>
                           </div>
-                          <p className="text-xs text-zinc-600 leading-relaxed">{notif.message}</p>
+                          <p className="text-xs text-zinc-400 leading-relaxed">{notif.message}</p>
                         </div>
                       ))}
                     </div>

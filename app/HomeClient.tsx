@@ -109,6 +109,115 @@ function StatCounter({ target, duration = 2000 }: { target: number; duration?: n
   return <span ref={ref}>{count.toLocaleString('tr-TR')}</span>;
 }
 
+function FeatureCard({ feature }: { feature: (typeof FEATURES)[number] }) {
+  return (
+    <div className="card p-4 sm:p-5 lg:p-6 h-full">
+      <div className="h-9 w-9 sm:h-11 sm:w-11 bg-zinc-900 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
+        <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {feature.icon}
+        </svg>
+      </div>
+      <h3 className="text-sm sm:text-base font-medium text-zinc-900 mb-1.5 sm:mb-2">
+        {feature.title}
+      </h3>
+      <p className="text-xs sm:text-sm text-zinc-600 font-light leading-relaxed">
+        {feature.description}
+      </p>
+    </div>
+  );
+}
+
+function FeaturesCarousel() {
+  const [active, setActive] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const total = FEATURES.length;
+
+  const goTo = useCallback((idx: number) => {
+    setActive(((idx % total) + total) % total);
+  }, [total]);
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setActive((prev) => (prev + 1) % total);
+    }, 6000);
+  }, [total]);
+
+  useEffect(() => {
+    resetTimer();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [resetTimer]);
+
+  const dragging = useRef(false);
+
+  const handleDragEnd = (endX: number) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - endX;
+    if (Math.abs(diff) > 40) {
+      goTo(diff > 0 ? active + 1 : active - 1);
+      resetTimer();
+    }
+    touchStartX.current = null;
+    dragging.current = false;
+  };
+
+  return (
+    <>
+      {/* Mobile carousel */}
+      <div className="sm:hidden">
+        <div
+          className="relative cursor-grab active:cursor-grabbing select-none"
+          onPointerDown={(e) => { touchStartX.current = e.clientX; dragging.current = true; }}
+          onPointerUp={(e) => handleDragEnd(e.clientX)}
+          onPointerCancel={() => { touchStartX.current = null; dragging.current = false; }}
+          onPointerLeave={() => { if (dragging.current) { touchStartX.current = null; dragging.current = false; } }}
+        >
+          {/* Stacked background cards */}
+          <div className="absolute inset-x-4 top-3 bottom-0 card p-4 opacity-40 scale-[0.97] pointer-events-none" aria-hidden />
+          <div className="absolute inset-x-8 top-6 bottom-0 card p-4 opacity-20 scale-[0.94] pointer-events-none" aria-hidden />
+
+          <div className="relative overflow-hidden">
+            <div
+              className="flex transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${active * 100}%)` }}
+            >
+              {FEATURES.map((feature) => (
+                <div key={feature.title} className="w-full shrink-0 px-1">
+                  <FeatureCard feature={feature} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Dots */}
+        <div className="flex justify-center gap-1.5 mt-5">
+          {FEATURES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => { goTo(i); resetTimer(); }}
+              aria-label={`Kart ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === active ? 'w-5 bg-zinc-900' : 'w-1.5 bg-zinc-300'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Tablet/desktop grid */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {FEATURES.map((feature) => (
+          <FeatureCard key={feature.title} feature={feature} />
+        ))}
+      </div>
+    </>
+  );
+}
+
 interface SessionSummary {
   name: string;
   role: string;
@@ -462,7 +571,7 @@ export default function HomeClient({
               {session ? (
                 <button
                   onClick={handleStart}
-                  className="btn-primary text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-3"
+                  className="btn-primary"
                 >
                   Hemen Başla
                 </button>
@@ -470,13 +579,13 @@ export default function HomeClient({
                 <>
                   <button
                     onClick={() => openAuth('resident', 'register', true, true)}
-                    className="btn-primary text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-3"
+                    className="btn-primary"
                   >
                     Ücretsiz Hesap Oluştur
                   </button>
                   <button
                     onClick={() => openAuth('admin', 'login', true, false)}
-                    className="btn-secondary text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-3"
+                    className="btn-secondary"
                   >
                     Hemen Giriş Yap
                   </button>
@@ -537,23 +646,7 @@ export default function HomeClient({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {FEATURES.map((feature) => (
-              <div key={feature.title} className="card p-4 sm:p-5 lg:p-6">
-                <div className="h-9 w-9 sm:h-11 sm:w-11 bg-zinc-900 rounded-xl flex items-center justify-center mb-3 sm:mb-4">
-                  <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    {feature.icon}
-                  </svg>
-                </div>
-                <h3 className="text-sm sm:text-base font-medium text-zinc-900 mb-1.5 sm:mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-600 font-light leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
+          <FeaturesCarousel />
         </div>
       </section>
 
@@ -615,20 +708,15 @@ export default function HomeClient({
                 Hemen Başlıyalım
               </a>
             ) : (
-              <>
-                <button
-                onClick={() => openAuth('resident', 'register', true, true)}
+              <button
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  openAuth('resident', 'register', true, true);
+                }}
                 className="bg-white text-zinc-900 px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 font-medium text-xs sm:text-sm w-full sm:w-auto"
               >
                 Ücretsiz Başlayın
               </button>
-              <button
-                onClick={() => openAuth('admin', 'login')}
-                className="border border-zinc-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-zinc-800 transition-colors duration-200 font-medium text-xs sm:text-sm w-full sm:w-auto"
-              >
-                Yönetici Girişi
-              </button>
-              </>
             )}
           </div>
         </div>

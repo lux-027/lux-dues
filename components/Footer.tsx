@@ -58,15 +58,15 @@ export function Footer() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-12 lg:pt-16 pb-8 sm:pb-10 lg:pb-12 relative z-10">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-8 pb-8 sm:pb-10 lg:pb-12 border-b border-zinc-800/60">
+        <div className="grid grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-8 lg:gap-8 pb-8 sm:pb-10 lg:pb-12 border-b border-zinc-800/60">
           {/* Brand & Description (2 cols on lg) */}
-          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+          <div className="col-span-3 lg:col-span-2 space-y-3 sm:space-y-4">
             <Link href="/" className="inline-block group">
               <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11">
                 <Logo size={36} variant="dark" className="w-full h-full" />
               </div>
             </Link>
-            <p className="text-[10px] sm:text-xs lg:text-sm text-zinc-400 font-light leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-xs lg:text-sm text-zinc-400 font-light leading-relaxed max-w-sm">
               LuxDues, modern site ve apartman yönetimlerini tek ekranda toplayan, şeffaf aidat ve finans takip altyapısı sunan yeni nesil yönetim platformudur.
             </p>
 
@@ -89,8 +89,8 @@ export function Footer() {
 
           {/* Column 2: Platform */}
           <div className="space-y-2 sm:space-y-3">
-            <h4 className="text-[10px] sm:text-xs font-semibold text-white tracking-wider uppercase">Platform</h4>
-            <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs lg:text-sm text-zinc-400">
+            <h4 className="text-[11px] sm:text-xs font-semibold text-white tracking-wider uppercase">Platform</h4>
+            <ul className="space-y-1.5 sm:space-y-2 text-[11px] sm:text-xs lg:text-sm text-zinc-400">
               <li>
                 <Link
                   href="/admin"
@@ -129,8 +129,8 @@ export function Footer() {
 
           {/* Column 3: Yasal & Hukuki */}
           <div className="space-y-2 sm:space-y-3">
-            <h4 className="text-[10px] sm:text-xs font-semibold text-white tracking-wider uppercase">Yasal & Gizlilik</h4>
-            <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs lg:text-sm text-zinc-400">
+            <h4 className="text-[11px] sm:text-xs font-semibold text-white tracking-wider uppercase">Yasal & Gizlilik</h4>
+            <ul className="space-y-1.5 sm:space-y-2 text-[11px] sm:text-xs lg:text-sm text-zinc-400">
               <li>
                 <Link href="/legal/terms" className="hover:text-white transition-colors">
                   Kullanıcı Sözleşmesi
@@ -156,11 +156,11 @@ export function Footer() {
 
           {/* Column 4: İletişim */}
           <div className="space-y-2 sm:space-y-3">
-            <h4 className="text-[10px] sm:text-xs font-semibold text-white tracking-wider uppercase">İletişim & Destek</h4>
-            <ul className="space-y-2 sm:space-y-2.5 text-[10px] sm:text-xs lg:text-sm text-zinc-400">
+            <h4 className="text-[11px] sm:text-xs font-semibold text-white tracking-wider uppercase">İletişim & Destek</h4>
+            <ul className="space-y-2 sm:space-y-2.5 text-[11px] sm:text-xs lg:text-sm text-zinc-400">
               <li>
-                <a href="mailto:lux.studio.tr@gmail.com" className="hover:text-white transition-colors flex items-center gap-1.5 sm:gap-2">
-                  <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <a href="mailto:lux.studio.tr@gmail.com" className="hover:text-white transition-colors flex items-center gap-1.5 sm:gap-2 break-all">
+                  <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <span>lux.studio.tr@gmail.com</span>

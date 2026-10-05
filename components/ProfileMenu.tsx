@@ -283,7 +283,7 @@ export function ProfileMenu() {
 
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 pl-1 pr-2.5 sm:pr-3 py-1 rounded-full bg-white border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 shadow-sm transition-all"
+        className="flex items-center gap-2 sm:pl-1 sm:pr-3 sm:py-1 rounded-full sm:bg-white sm:border sm:border-zinc-200 sm:hover:border-zinc-300 sm:hover:bg-zinc-50 sm:shadow-sm transition-all"
         title="Profil menüsünü aç"
       >
         {user.avatarUrl ? (
@@ -301,16 +301,13 @@ export function ProfileMenu() {
             {roleLabels[user.role] || user.role}
           </span>
         </div>
-        <span className="sm:hidden text-xs font-semibold text-zinc-900 max-w-[80px] truncate">
-          {user.name}
-        </span>
         <svg className="h-3.5 w-3.5 text-zinc-400 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {mounted && open && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => {
@@ -319,15 +316,15 @@ export function ProfileMenu() {
             }}
           />
 
-          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 border border-zinc-200/80">
+          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 border border-zinc-200/80 max-h-[calc(100vh-2rem)] flex flex-col">
             {/* Header with Ambient Glow & Profile Info */}
-            <div className="relative px-6 pt-6 pb-5 bg-gradient-to-b from-zinc-50 via-white to-white border-b border-zinc-100">
+            <div className="relative px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-5 bg-gradient-to-b from-zinc-50 via-white to-white border-b border-zinc-100 shrink-0">
               <div className="absolute top-0 right-0 w-40 h-40 bg-zinc-200/50 rounded-full blur-3xl pointer-events-none -mr-12 -mt-12" />
               
-              <div className="flex items-start justify-between relative z-10 mb-4">
+              <div className="flex items-start justify-between relative z-10 mb-3 sm:mb-4">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-zinc-900" />
-                  <h3 className="text-sm font-semibold text-zinc-900 uppercase tracking-wider">Profil Hesabım</h3>
+                  <h3 className="text-xs sm:text-sm font-semibold text-zinc-900 uppercase tracking-wider">Profil Hesabım</h3>
                 </div>
 
                 <button
@@ -341,13 +338,13 @@ export function ProfileMenu() {
               </div>
 
               {/* Avatar & User Details Hero */}
-              <div className="flex items-center gap-4 relative z-10">
+              <div className="flex items-center gap-3 sm:gap-4 relative z-10">
                 <div className="relative flex-shrink-0">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md border-2 border-white ring-1 ring-zinc-200 bg-zinc-100 flex items-center justify-center">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl overflow-hidden shadow-md border-2 border-white ring-1 ring-zinc-200 bg-zinc-100 flex items-center justify-center">
                     {user.avatarUrl ? (
                       <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="w-full h-full bg-zinc-900 text-white text-xl font-semibold flex items-center justify-center">
+                      <span className="w-full h-full bg-zinc-900 text-white text-base sm:text-xl font-semibold flex items-center justify-center">
                         {initials}
                       </span>
                     )}
@@ -413,10 +410,10 @@ export function ProfileMenu() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-lg font-semibold text-zinc-900 truncate tracking-tight">{user.name}</h4>
-                  <p className="text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-900 text-white shadow-2xs">
+                  <h4 className="text-base sm:text-lg font-semibold text-zinc-900 truncate tracking-tight">{user.name}</h4>
+                  <p className="text-[11px] sm:text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
+                  <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5">
+                    <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-zinc-900 text-white shadow-2xs">
                       {roleLabels[user.role] || user.role}
                     </span>
                   </div>
@@ -425,7 +422,7 @@ export function ProfileMenu() {
             </div>
 
             {/* Content Details */}
-            <div className="p-5 sm:p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium">
                   {error}
@@ -438,7 +435,7 @@ export function ProfileMenu() {
               )}
 
               {/* Kullanıcı ID Kartı */}
-              <div className="p-3.5 bg-gradient-to-br from-zinc-50 to-zinc-100/70 border border-zinc-200/90 rounded-2xl space-y-2">
+              <div className="p-3 sm:p-3.5 bg-gradient-to-br from-zinc-50 to-zinc-100/70 border border-zinc-200/90 rounded-xl sm:rounded-2xl space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400">
@@ -507,7 +504,7 @@ export function ProfileMenu() {
               </div>
 
               {/* Form / Detail Fields */}
-              <div className="space-y-3 bg-white p-4 border border-zinc-200/80 rounded-2xl shadow-2xs">
+              <div className="space-y-2.5 sm:space-y-3 bg-white p-3.5 sm:p-4 border border-zinc-200/80 rounded-xl sm:rounded-2xl shadow-2xs">
                 <div>
                   <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">
                     Ad Soyad
@@ -586,7 +583,7 @@ export function ProfileMenu() {
             </div>
 
             {/* Action Buttons Footer */}
-            <div className="p-4 bg-zinc-50 border-t border-zinc-200 flex items-center gap-2.5">
+            <div className="p-3 sm:p-4 bg-zinc-50 border-t border-zinc-200 flex items-center gap-2 sm:gap-2.5 shrink-0">
               {editing ? (
                 <>
                   <button

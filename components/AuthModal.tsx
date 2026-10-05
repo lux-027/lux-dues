@@ -51,6 +51,8 @@ export function AuthModal({
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
+  const isBusy = loading || googleLoading || phoneLoading;
+
   const [loginData, setLoginData] = useState({ email: '', phone: '', password: '' });
   const [registerData, setRegisterData] = useState({
     name: '',
@@ -75,6 +77,7 @@ export function AuthModal({
   const canRegister = showRoleSelector;
 
   const switchTab = (newTab: 'login' | 'register') => {
+    if (isBusy) return;
     setTab(newTab);
     setShowPhoneForm(false);
     setError('');
@@ -251,11 +254,11 @@ export function AuthModal({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-zinc-900/60 transition-opacity" onClick={onClose} />
+      <div className="flex min-h-screen items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 bg-zinc-900/60 transition-opacity" onClick={() => { if (!isBusy) onClose(); }} />
 
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm transform transition-all">
-          <div className="flex items-center justify-between px-6 pt-5">
+        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm transform transition-all max-h-[calc(100vh-2rem)] overflow-y-auto">
+          <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5">
             <div className="flex items-center gap-2">
               {step === 'auth' && showRoleSelector && (
                 <button
@@ -270,7 +273,7 @@ export function AuthModal({
                 </button>
               )}
               <div>
-                <h3 className="text-lg font-medium text-zinc-900">
+                <h3 className="text-base sm:text-lg font-medium text-zinc-900">
                   {step === 'role'
                     ? 'Hesap Türü Seçin'
                     : activeContext === 'admin'
@@ -281,12 +284,16 @@ export function AuthModal({
                         ? 'Site Sakini Kaydı'
                         : 'Site Sakini'}
                 </h3>
-                <p className="text-sm text-zinc-500 mt-0.5">
+                <p className="text-xs sm:text-sm text-zinc-500 mt-0.5">
                   {step === 'role' ? 'Devam etmek için hesap türünüzü seçin' : 'LuxDues hesabınıza erişin'}
                 </p>
               </div>
             </div>
-            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+            <button
+              onClick={onClose}
+              disabled={isBusy}
+              className="text-zinc-400 hover:text-zinc-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -294,17 +301,17 @@ export function AuthModal({
           </div>
 
           {step === 'role' ? (
-            <div className="px-6 py-10 flex flex-col gap-4">
+            <div className="px-4 sm:px-6 py-3 sm:py-6 flex flex-col gap-2.5 sm:gap-4">
               <button
                 type="button"
                 onClick={() => selectRole('resident')}
-                className="text-left p-6 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all group"
+                className="text-left p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all group"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 group-hover:text-zinc-900 transition-colors">
+                <div className="flex items-center justify-between mb-1 sm:mb-3">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 group-hover:text-zinc-900 transition-colors">
                       <svg
-                        className="h-6 w-6"
+                        className="h-5 w-5 sm:h-6 sm:w-6"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -317,12 +324,12 @@ export function AuthModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-base font-semibold text-zinc-900 group-hover:text-zinc-900">
+                    <span className="text-sm sm:text-base font-semibold text-zinc-900 group-hover:text-zinc-900">
                       Site Sakini
                     </span>
                   </div>
                   <svg
-                    className="h-5 w-5 text-zinc-300 group-hover:text-zinc-900 transition-colors"
+                    className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-300 group-hover:text-zinc-900 transition-colors"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -335,19 +342,19 @@ export function AuthModal({
                     />
                   </svg>
                 </div>
-                <p className="text-sm text-zinc-500">Daire sakinleri için {tab === 'register' ? 'kayıt' : 'giriş'}</p>
+                <p className="text-xs sm:text-sm text-zinc-500">Daire sakinleri için {tab === 'register' ? 'kayıt' : 'giriş'}</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => selectRole('admin')}
-                className="text-left p-6 rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all group"
+                className="text-left p-3 sm:p-6 rounded-xl sm:rounded-2xl border border-zinc-200 hover:border-zinc-900 hover:bg-zinc-50 transition-all group"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 group-hover:text-zinc-900 transition-colors">
+                <div className="flex items-center justify-between mb-1 sm:mb-3">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 group-hover:text-zinc-900 transition-colors">
                       <svg
-                        className="h-6 w-6"
+                        className="h-5 w-5 sm:h-6 sm:w-6"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -360,12 +367,12 @@ export function AuthModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-base font-semibold text-zinc-900 group-hover:text-zinc-900">
+                    <span className="text-sm sm:text-base font-semibold text-zinc-900 group-hover:text-zinc-900">
                       Yönetici
                     </span>
                   </div>
                   <svg
-                    className="h-5 w-5 text-zinc-300 group-hover:text-zinc-900 transition-colors"
+                    className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-300 group-hover:text-zinc-900 transition-colors"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -378,17 +385,18 @@ export function AuthModal({
                     />
                   </svg>
                 </div>
-                <p className="text-sm text-zinc-500">Blok/site yöneticisi için {tab === 'register' ? 'kayıt' : 'giriş'}</p>
+                <p className="text-xs sm:text-sm text-zinc-500">Blok/site yöneticisi için {tab === 'register' ? 'kayıt' : 'giriş'}</p>
               </button>
             </div>
           ) : (
             <>
               {/* Tabs */}
               {!registerOnly && (
-                <div className="flex gap-1 px-6 mt-3 border-b border-zinc-200">
+                <div className="flex gap-1 px-4 sm:px-6 mt-2 sm:mt-3 border-b border-zinc-200">
                   <button
                     onClick={() => switchTab('login')}
-                    className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                    disabled={isBusy}
+                    className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors border-b-2 -mb-px disabled:opacity-40 disabled:cursor-not-allowed ${
                       tab === 'login'
                         ? 'border-zinc-900 text-zinc-900'
                         : 'border-transparent text-zinc-400 hover:text-zinc-600'
@@ -399,7 +407,8 @@ export function AuthModal({
                   {canRegister && (
                     <button
                       onClick={() => switchTab('register')}
-                      className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                      disabled={isBusy}
+                      className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-colors border-b-2 -mb-px disabled:opacity-40 disabled:cursor-not-allowed ${
                         tab === 'register'
                           ? 'border-zinc-900 text-zinc-900'
                           : 'border-transparent text-zinc-400 hover:text-zinc-600'
@@ -411,7 +420,7 @@ export function AuthModal({
                 </div>
               )}
 
-              <div className="px-6 py-5">
+              <div className="px-4 sm:px-6 py-4 sm:py-5">
                 {error && (
                   <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                     {error}
@@ -425,8 +434,9 @@ export function AuthModal({
 
                 {(loading || googleLoading || phoneLoading) ? (
                   <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-12 h-12 mb-4">
-                      <Logo size={48} />
+                    <div className="flex flex-col items-center mb-4">
+                      <Logo size={48} showWordmark={false} />
+                      <span className="text-base font-semibold text-zinc-900 mt-2">LuxDues</span>
                     </div>
                     <div className="w-32 h-1 bg-zinc-100 rounded-full overflow-hidden">
                       <div className="h-full bg-zinc-900 rounded-full animate-loading" />
@@ -474,7 +484,7 @@ export function AuthModal({
                         Giriş Yap
                       </Button>
                       {!registerOnly && canRegister && (
-                        <p className="text-center text-sm text-zinc-500 mt-4">
+                        <p className="text-center text-xs sm:text-sm text-zinc-500 mt-3 sm:mt-4">
                           Hesabın yok mu?{' '}
                           <button
                             type="button"
@@ -510,7 +520,7 @@ export function AuthModal({
                         Giriş Yap
                       </Button>
                       {!registerOnly && canRegister && (
-                        <p className="text-center text-sm text-zinc-500 mt-4">
+                        <p className="text-center text-xs sm:text-sm text-zinc-500 mt-3 sm:mt-4">
                           Hesabın yok mu?{' '}
                           <button
                             type="button"
@@ -566,7 +576,7 @@ export function AuthModal({
                       Kayıt Ol
                     </Button>
                     {!registerOnly && (
-                      <p className="text-center text-sm text-zinc-500 mt-4">
+                      <p className="text-center text-xs sm:text-sm text-zinc-500 mt-3 sm:mt-4">
                         Hesabın var mı?{' '}
                         <button
                           type="button"
@@ -650,7 +660,7 @@ export function AuthModal({
                       Vazgeç
                     </Button>
                     {!registerOnly && !otpSent && (
-                      <p className="text-center text-sm text-zinc-500 mt-4">
+                      <p className="text-center text-xs sm:text-sm text-zinc-500 mt-3 sm:mt-4">
                         Hesabın var mı?{' '}
                         <button
                           type="button"
@@ -666,7 +676,7 @@ export function AuthModal({
 
                 {(activeContext === 'resident' || activeContext === 'admin') && !loading && !googleLoading && !phoneLoading && (
                   <>
-                    <div className="relative my-4">
+                    <div className="relative my-3 sm:my-4">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-zinc-200" />
                       </div>
@@ -679,7 +689,7 @@ export function AuthModal({
                       type="button"
                       onClick={handleGoogleSignIn}
                       disabled={googleLoading}
-                      className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                      className="w-full flex items-center justify-center gap-2.5 sm:gap-3 border border-zinc-200 rounded-lg sm:rounded-xl py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-2.5 sm:mb-3"
                     >
                       {googleLoading ? (
                         <span className="h-4 w-4 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
@@ -699,7 +709,7 @@ export function AuthModal({
                       onClick={() => {
                         setShowPhoneForm((prev) => !prev);
                       }}
-                      className="w-full flex items-center justify-center gap-3 border border-zinc-200 rounded-xl py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors mb-3"
+                      className="w-full flex items-center justify-center gap-2.5 sm:gap-3 border border-zinc-200 rounded-lg sm:rounded-xl py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors mb-2.5 sm:mb-3"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         {showPhoneForm ? (

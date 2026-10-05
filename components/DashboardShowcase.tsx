@@ -167,7 +167,7 @@ export function DashboardShowcase() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-[9px] sm:text-[10px] font-bold text-zinc-900">158.5K ₺</span>
+                          <span className="text-[8px] sm:text-[10px] font-bold text-zinc-900 whitespace-nowrap">158.5K ₺</span>
                           <span className="text-[7px] sm:text-[8px] text-zinc-400">Toplam</span>
                         </div>
                       </div>
@@ -234,7 +234,7 @@ export function DashboardShowcase() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-[9px] sm:text-[10px] font-bold text-zinc-900">87.4K ₺</span>
+                          <span className="text-[8px] sm:text-[10px] font-bold text-zinc-900 whitespace-nowrap">87.4K ₺</span>
                           <span className="text-[7px] sm:text-[8px] text-zinc-400">Gider</span>
                         </div>
                       </div>
@@ -288,18 +288,18 @@ export function DashboardShowcase() {
                   </div>
 
                   {/* Bank Accounts Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-0.5 text-center">
-                    <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
-                      <p className="text-[7px] sm:text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 1</p>
-                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5">21.8K ₺</p>
+                  <div className="grid grid-cols-3 gap-1 sm:gap-1.5 pt-0.5 text-center">
+                    <div className="p-1 sm:p-1.5 bg-zinc-50 rounded-md sm:rounded-lg border border-zinc-200/60">
+                      <p className="text-[6px] sm:text-[8px] text-zinc-400 uppercase font-semibold leading-tight">Banka Hesabı 1</p>
+                      <p className="text-[8px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5 whitespace-nowrap">21.8K ₺</p>
                     </div>
-                    <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
-                      <p className="text-[7px] sm:text-[8px] text-zinc-400 uppercase font-semibold">Banka Hesabı 2</p>
-                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5">14.6K ₺</p>
+                    <div className="p-1 sm:p-1.5 bg-zinc-50 rounded-md sm:rounded-lg border border-zinc-200/60">
+                      <p className="text-[6px] sm:text-[8px] text-zinc-400 uppercase font-semibold leading-tight">Banka Hesabı 2</p>
+                      <p className="text-[8px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5 whitespace-nowrap">14.6K ₺</p>
                     </div>
-                    <div className="p-1.5 bg-zinc-50 rounded-lg border border-zinc-200/60">
-                      <p className="text-[7px] sm:text-[8px] text-zinc-400 uppercase font-semibold">Nakit Kasa</p>
-                      <p className="text-[9px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5">5.7K ₺</p>
+                    <div className="p-1 sm:p-1.5 bg-zinc-50 rounded-md sm:rounded-lg border border-zinc-200/60">
+                      <p className="text-[6px] sm:text-[8px] text-zinc-400 uppercase font-semibold leading-tight">Nakit Kasa</p>
+                      <p className="text-[8px] sm:text-[10px] font-bold text-zinc-900 font-mono mt-0.5 whitespace-nowrap">5.7K ₺</p>
                     </div>
                   </div>
                 </div>

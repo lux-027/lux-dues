@@ -93,7 +93,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
   };
 
   const modalContent = open && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -101,18 +101,18 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
       />
 
       {/* Modal Dialog */}
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 border border-zinc-200/80">
+      <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-lg overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 border border-zinc-200/80 max-h-[calc(100vh-2rem)] flex flex-col">
         {/* Header with Subtle Ambient Glow */}
-        <div className="relative px-6 py-5 border-b border-zinc-200 bg-gradient-to-r from-zinc-50 via-white to-zinc-50 overflow-hidden">
+        <div className="relative px-4 sm:px-6 py-3.5 sm:py-5 border-b border-zinc-200 bg-gradient-to-r from-zinc-50 via-white to-zinc-50 overflow-hidden shrink-0">
           <div className="absolute top-0 right-0 w-36 h-36 bg-zinc-200/50 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10" />
           
           <div className="flex items-start justify-between relative z-10">
             <div>
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-zinc-900" />
-                <h3 className="text-lg font-semibold text-zinc-900 tracking-tight">Panel & Yetki Değiştir</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-zinc-900 tracking-tight">Panel & Yetki Değiştir</h3>
               </div>
-              <p className="text-xs text-zinc-500 mt-1 flex items-center gap-1.5 flex-wrap">
+              <p className="text-[11px] sm:text-xs text-zinc-500 mt-1 flex items-center gap-1.5 flex-wrap">
                 {portalInfo?.email ? (
                   <>
                     <span className="font-medium text-zinc-800">{portalInfo.email}</span>
@@ -134,7 +134,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 transition-colors"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -144,14 +144,14 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
         </div>
 
         {/* Content Body */}
-        <div className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div className="p-3.5 sm:p-6 space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
           {loading && !portalInfo ? (
             <div className="py-14 flex flex-col items-center justify-center gap-3">
               <div className="w-7 h-7 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
               <p className="text-xs text-zinc-500 font-medium">Panel yetkileri doğrulanıyor...</p>
             </div>
           ) : (
-            <div className="space-y-3.5">
+            <div className="space-y-3">
               {/* Option 1: Admin Portal Card */}
               {(() => {
                 const isAdmin = portalInfo?.hasAdminRole ?? current === 'admin';
@@ -159,7 +159,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
 
                 return (
                   <div
-                    className={`relative rounded-2xl border p-4 sm:p-5 transition-all overflow-hidden ${
+                    className={`relative rounded-xl sm:rounded-2xl border p-3.5 sm:p-5 transition-all overflow-hidden ${
                       isCurrentAdmin
                         ? 'bg-zinc-950 text-white border-zinc-900 shadow-xl ring-1 ring-zinc-800'
                         : isAdmin
@@ -176,9 +176,9 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                     </div>
 
                     <div className="flex items-start justify-between gap-3 relative z-10">
-                      <div className="flex items-start gap-3.5">
+                      <div className="flex items-start gap-2.5 sm:gap-3.5">
                         <div
-                          className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform ${
+                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform ${
                             isCurrentAdmin
                               ? 'bg-zinc-800/90 border border-zinc-700/80'
                               : 'bg-gradient-to-br from-zinc-100 to-zinc-200 border border-zinc-200 group-hover:scale-105'
@@ -252,7 +252,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                     </div>
 
                     {!isAdmin && (
-                      <div className="mt-3.5 pt-3.5 border-t border-zinc-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 relative z-10">
+                      <div className="mt-3 pt-3 sm:mt-3.5 sm:pt-3.5 border-t border-zinc-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 relative z-10">
                         <p className="text-[11px] text-zinc-500 leading-snug">
                           Aynı e-posta ile bina/site yöneticisi paneline kaydolun.
                         </p>
@@ -281,7 +281,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
 
                 return (
                   <div
-                    className={`relative rounded-2xl border p-4 sm:p-5 transition-all overflow-hidden ${
+                    className={`relative rounded-xl sm:rounded-2xl border p-3.5 sm:p-5 transition-all overflow-hidden ${
                       isCurrentResident
                         ? 'bg-zinc-950 text-white border-zinc-900 shadow-xl ring-1 ring-zinc-800'
                         : isResident
@@ -300,15 +300,15 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                     </div>
 
                     <div className="flex items-start justify-between gap-3 relative z-10">
-                      <div className="flex items-start gap-3.5">
+                      <div className="flex items-start gap-2.5 sm:gap-3.5">
                         <div
-                          className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform ${
+                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform ${
                             isCurrentResident
                               ? 'bg-zinc-800/90 border border-zinc-700/80 text-white'
                               : 'bg-gradient-to-br from-zinc-100 to-zinc-200 border border-zinc-200 text-zinc-900 group-hover:scale-105'
                           }`}
                         >
-                          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                          <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                           </svg>
                         </div>
@@ -378,7 +378,7 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
                     </div>
 
                     {!isResident && (
-                      <div className="mt-3.5 pt-3.5 border-t border-zinc-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 relative z-10">
+                      <div className="mt-3 pt-3 sm:mt-3.5 sm:pt-3.5 border-t border-zinc-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 relative z-10">
                         <p className="text-[11px] text-zinc-500 leading-snug">
                           Aynı e-posta ile sakin paneline erişim oluşturun.
                         </p>
@@ -403,9 +403,9 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between text-xs text-zinc-500">
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-zinc-50 border-t shrink-0 border-zinc-200 flex items-center justify-between gap-2 text-[11px] sm:text-xs text-zinc-500">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <svg className="h-4 w-4 shrink-0 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>Tek oturumla tüm yetkilerinize geçiş yapabilirsiniz</span>
@@ -426,6 +426,33 @@ export function PortalSwitcher({ current }: PortalSwitcherProps) {
   return (
     <>
       {/* Clickable Navbar Pill */}
+      {/* Mobile: horizontal pill with portal icon + swap icon */}
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="sm:hidden relative h-8 pl-0.5 pr-2 rounded-full bg-zinc-900 text-white shadow-sm border border-zinc-800 hover:bg-zinc-800 flex items-center gap-1.5 transition-all active:scale-95 focus:outline-none group"
+        title="Panel ve Yetki Değiştir"
+      >
+        <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <Isometric3DBuilding size={20} />
+        </div>
+        <div className="flex flex-col text-left leading-none">
+          <span className="text-[10px] font-semibold text-white leading-tight">
+            {current === 'admin' ? 'Yönetici Portalı' : 'Sakin Portalı'}
+          </span>
+        </div>
+        <svg
+          className="h-3 w-3 text-zinc-400 group-hover:text-white transition-colors"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Desktop: full pill */}
       <button
         type="button"
         onClick={handleOpen}
