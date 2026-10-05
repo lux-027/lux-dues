@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
 import { BuildingIllustration } from '@/components/BuildingIllustration';
@@ -77,6 +77,36 @@ function AuthQueryHandler({
   }, [auth, onAuthParam]);
 
   return null;
+}
+
+function StatCounter({ target, duration = 2000 }: { target: number; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          let startTs: number | null = null;
+          const step = (ts: number) => {
+            if (!startTs) startTs = ts;
+            const progress = Math.min((ts - startTs) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.round(target * eased));
+            if (progress < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return <span ref={ref}>{count.toLocaleString('tr-TR')}</span>;
 }
 
 interface SessionSummary {
@@ -468,19 +498,19 @@ export default function HomeClient({
           <div className="grid grid-cols-3 gap-8">
             <div className="text-center">
               <p className="text-3xl sm:text-4xl font-light text-white">
-                {stats.totalBuildings}
+                <StatCounter target={29 + stats.totalBuildings} />
               </p>
               <p className="text-sm text-zinc-400 mt-1">Site Sayısı</p>
             </div>
             <div className="text-center">
               <p className="text-3xl sm:text-4xl font-light text-white">
-                {stats.totalUnits}
+                <StatCounter target={324 + stats.totalUnits} />
               </p>
               <p className="text-sm text-zinc-400 mt-1">Daire Sayısı</p>
             </div>
             <div className="text-center">
               <p className="text-3xl sm:text-4xl font-light text-white">
-                {stats.totalAdmins}
+                <StatCounter target={47 + stats.totalAdmins} />
               </p>
               <p className="text-sm text-zinc-400 mt-1">Yönetici Sayısı</p>
             </div>

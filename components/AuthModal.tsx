@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button, Input, PhoneInput } from '@/components/ui';
+import { Logo } from './Logo';
 import { normalizePhoneNumber } from '@/lib/phone';
 import {
   signInWithGoogle,
@@ -422,7 +423,31 @@ export function AuthModal({
                   </div>
                 )}
 
-                {tab === 'login' ? (
+                {(loading || googleLoading || phoneLoading) ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="w-12 h-12 mb-4">
+                      <Logo size={48} />
+                    </div>
+                    <div className="w-32 h-1 bg-zinc-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-zinc-900 rounded-full animate-loading" />
+                    </div>
+                    <p className="text-sm text-zinc-500 mt-3">
+                      {tab === 'register' ? 'Hesap oluşturuluyor...' : 'Giriş yapılıyor...'}
+                    </p>
+                    <style>{`
+                      @keyframes loading {
+                        0% { width: 0%; transform: translateX(-100%); }
+                        50% { width: 100%; transform: translateX(0%); }
+                        100% { width: 0%; transform: translateX(100%); }
+                      }
+                      .animate-loading {
+                        animation: loading 1.5s ease-in-out infinite;
+                      }
+                    `}</style>
+                  </div>
+                ) : (
+                  <>
+                    {tab === 'login' ? (
                   !showPhoneForm ? (
                     <form onSubmit={handleLogin}>
                       <div className="form-group mb-3">
@@ -639,7 +664,7 @@ export function AuthModal({
                   </form>
                 )}
 
-                {(activeContext === 'resident' || activeContext === 'admin') && (
+                {(activeContext === 'resident' || activeContext === 'admin') && !loading && !googleLoading && !phoneLoading && (
                   <>
                     <div className="relative my-4">
                       <div className="absolute inset-0 flex items-center">
@@ -703,6 +728,8 @@ export function AuthModal({
                     </button>
                     {/* Invisible reCAPTCHA container required by Firebase phone auth */}
                     <div id="recaptcha-container" />
+                  </>
+                )}
                   </>
                 )}
               </div>
