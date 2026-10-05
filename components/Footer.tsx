@@ -3,13 +3,18 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const [isHomePage, setIsHomePage] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsHomePage(window.location.pathname === '/');
+    const token = document.cookie.includes('auth-token');
+    setIsLoggedIn(!!token);
   }, []);
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, targetId: string) => {
@@ -35,6 +40,14 @@ export function Footer() {
 
         window.requestAnimationFrame(step);
       }
+    }
+  };
+
+  const handlePortalClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, path: string) => {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      router.push('/?auth=login');
     }
   };
 
@@ -79,12 +92,20 @@ export function Footer() {
             <h4 className="text-[10px] sm:text-xs font-semibold text-white tracking-wider uppercase">Platform</h4>
             <ul className="space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs lg:text-sm text-zinc-400">
               <li>
-                <Link href="/admin" className="hover:text-white transition-colors">
+                <Link
+                  href="/admin"
+                  className="hover:text-white transition-colors"
+                  onClick={(e) => handlePortalClick(e, '/admin')}
+                >
                   Yönetici Portalı
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-white transition-colors">
+                <Link
+                  href="/dashboard"
+                  className="hover:text-white transition-colors"
+                  onClick={(e) => handlePortalClick(e, '/dashboard')}
+                >
                   Sakin Portalı
                 </Link>
               </li>
