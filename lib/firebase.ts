@@ -5,6 +5,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendEmailVerification,
@@ -61,8 +63,39 @@ function getFirebaseAuth(): Auth {
 export async function signInWithGoogle(): Promise<string> {
   const auth = getFirebaseAuth();
   const googleProvider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user.getIdToken();
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user.getIdToken();
+  } catch (err: any) {
+    // Popups are blocked or unsupported on many mobile browsers and in-app
+    // webviews — fall back to the full-page redirect flow in that case.
+    const code = err?.code || '';
+    if (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/cancelled-popup-request' ||
+      code === 'auth/operation-not-supported-in-this-environment' ||
+      code === 'auth/web-storage-unsupported'
+    ) {
+      await signInWithRedirect(auth, googleProvider);
+      return new Promise(() => {}); // page is navigating away
+    }
+    throw err;
+  }
+}
+
+/**
+ * Completes the Google redirect sign-in flow after the page reloads.
+ * Returns the ID token if a redirect sign-in just finished, else null.
+ */
+export async function getGoogleRedirectResult(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const auth = getFirebaseAuth();
+    const result = await getRedirectResult(auth);
+    return result ? result.user.getIdToken() : null;
+  } catch {
+    return null;
+  }
 }
 
 let recaptchaVerifier: RecaptchaVerifier | null = null;

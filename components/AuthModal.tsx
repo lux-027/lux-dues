@@ -6,6 +6,7 @@ import { Logo } from './Logo';
 import { normalizePhoneNumber } from '@/lib/phone';
 import {
   signInWithGoogle,
+  getGoogleRedirectResult,
   signInWithEmail,
   signUpWithEmail,
   sendPhoneOtp,
@@ -72,6 +73,34 @@ export function AuthModal({
     setSuccess('');
   }, [isOpen, initialTab, context, showRoleSelector, registerOnly]);
 
+  // Mobile Google sign-in uses a full-page redirect; when the app reloads we
+  // complete the exchange here and finish logging the user in automatically.
+  useEffect(() => {
+    const finishRedirectSignIn = async () => {
+      try {
+        const idToken = await getGoogleRedirectResult();
+        if (!idToken) return;
+
+        const role = window.sessionStorage.getItem('googleLoginRole') || 'resident';
+        window.sessionStorage.removeItem('googleLoginRole');
+
+        const response = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, role }),
+        });
+
+        if (response.ok) {
+          onSuccess?.();
+        }
+      } catch {
+        // ignore — user can retry sign-in manually
+      }
+    };
+    finishRedirectSignIn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!isOpen) return null;
 
   const canRegister = showRoleSelector;
@@ -134,6 +163,7 @@ export function AuthModal({
     setError('');
 
     try {
+      window.sessionStorage.setItem('googleLoginRole', activeContext);
       const idToken = await signInWithGoogle();
 
       const response = await fetch('/api/auth/google', {
