@@ -81,8 +81,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Geçersiz Kullanıcı ID' }, { status: 400 });
     }
 
-    const addressee = await prisma.user.findUnique({
-      where: { accountNumber: parsed },
+    const addressee = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { accountNumber: parsed },
+          { adminAccountNumber: parsed },
+          { residentAccountNumber: parsed },
+        ],
+      },
     });
 
     if (!addressee) {

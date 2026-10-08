@@ -30,7 +30,7 @@ export default function AdminLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between min-h-16 py-2 sm:h-16 sm:py-0 sm:flex-nowrap">
             {/* Left: Brand, 3D Visual Portal Title & Navigation */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 sm:flex-nowrap">
+            <div className="flex flex-1 min-w-0 flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 sm:flex-nowrap">
               <Link href="/" className="flex items-center group">
                 <Logo size={40} />
               </Link>
@@ -75,7 +75,7 @@ export default function AdminLayout({
             </div>
 
             {/* Right: Actions — stays pinned to the top row on mobile */}
-            <div className="flex items-center gap-2.5 sm:gap-3 self-start sm:self-center pt-1 sm:pt-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 self-start sm:self-center pt-1 sm:pt-0 flex-shrink-0">
               <NotificationMenu />
               <ProfileMenu />
               
