@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 
-function canAccessBuilding(
+async function canAccessBuilding(
   session: { id: string; role: string; buildingId?: string | null; units: { buildingId: string }[] },
   building: { id: string; ownerId: string | null }
 ) {
   if (building.ownerId === session.id) return true;
   if (session.buildingId === building.id) return true;
   if (session.units.some((u) => u.buildingId === building.id)) return true;
-  return false;
+  const assignment = await prisma.buildingAdminAssignment.findFirst({
+    where: { userId: session.id, buildingId: building.id },
+    select: { id: true },
+  });
+  return Boolean(assignment);
 }
 
 // GET /api/buildings/[id] - Get a single building
@@ -53,7 +57,7 @@ export async function GET(
       );
     }
 
-    if (!canAccessBuilding(session, building)) {
+    if (!(await canAccessBuilding(session, building))) {
       return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
     }
 
@@ -86,7 +90,7 @@ export async function PUT(
     if (!existing) {
       return NextResponse.json({ error: 'Building not found' }, { status: 404 });
     }
-    if (!canAccessBuilding(session, existing)) {
+    if (!(await canAccessBuilding(session, existing))) {
       return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
     }
 

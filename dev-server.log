@@ -1,0 +1,547 @@
+
+> luxdues@1.0.0 dev
+> next dev -H 0.0.0.0
+
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+- Environments: .env
+✓ Ready in 1807ms
+✓ Running next.config.ts took 50ms
+
+○ Compiling / ...
+[browser] SSE error: [object Event] 
+    at NotificationMenu.useEffect (components/NotificationMenu.tsx:73:17)
+  71 |
+  72 |       eventSource.onerror = (error) => {
+> 73 |         console.error('SSE error:', error);
+     |                 ^
+  74 |         eventSource?.close();
+  75 |       };
+  76 |     } catch (error) { (components/NotificationMenu.tsx:73:17)
+ GET /admin/buildings 200 in 6.4s (next.js: 5.7s, proxy.ts: 5ms, application-code: 653ms)
+ GET /admin/buildings 200 in 6.4s (next.js: 5.8s, proxy.ts: 8ms, application-code: 634ms)
+ GET /manifest.webmanifest 200 in 94ms (next.js: 63ms, proxy.ts: 8ms, application-code: 24ms)
+ GET / 200 in 8.0s (next.js: 5.9s, proxy.ts: 218ms, application-code: 1832ms)
+ GET /api/notifications 200 in 750ms (next.js: 92ms, proxy.ts: 21ms, application-code: 638ms)
+ GET /api/buildings 200 in 967ms (next.js: 142ms, proxy.ts: 18ms, application-code: 807ms)
+ GET /api/notifications 200 in 376ms (next.js: 4ms, proxy.ts: 4ms, application-code: 368ms)
+ GET /api/auth/me 200 in 1148ms (next.js: 190ms, proxy.ts: 20ms, application-code: 937ms)
+ GET /api/invitations 200 in 1399ms (next.js: 45ms, proxy.ts: 21ms, application-code: 1333ms)
+ GET /api/auth/me 200 in 312ms (next.js: 5ms, proxy.ts: 3ms, application-code: 304ms)
+ GET /api/buildings 200 in 617ms (next.js: 4ms, proxy.ts: 4ms, application-code: 610ms)
+ GET /api/auth/me 200 in 286ms (next.js: 4ms, proxy.ts: 3ms, application-code: 279ms)
+ GET /api/invitations 200 in 645ms (next.js: 4ms, proxy.ts: 3ms, application-code: 638ms)
+ GET /api/auth/me 200 in 307ms (next.js: 4ms, proxy.ts: 3ms, application-code: 300ms)
+ GET / 200 in 767ms (next.js: 16ms, proxy.ts: 4ms, application-code: 746ms)
+ GET /api/auth/me 200 in 1039ms (next.js: 46ms, proxy.ts: 12ms, application-code: 981ms)
+ GET /api/notifications 200 in 1246ms (next.js: 22ms, proxy.ts: 15ms, application-code: 1209ms)
+ GET /api/buildings 200 in 1360ms (next.js: 37ms, proxy.ts: 12ms, application-code: 1311ms)
+ GET /api/auth/me 200 in 344ms (next.js: 5ms, proxy.ts: 4ms, application-code: 336ms)
+ GET /api/invitations 200 in 1397ms (next.js: 12ms, proxy.ts: 15ms, application-code: 1369ms)
+ GET /api/notifications 200 in 424ms (next.js: 3ms, proxy.ts: 3ms, application-code: 419ms)
+ GET /api/auth/me 200 in 319ms (next.js: 5ms, proxy.ts: 5ms, application-code: 309ms)
+ GET /api/buildings 200 in 630ms (next.js: 3ms, proxy.ts: 3ms, application-code: 623ms)
+ GET /api/auth/me 200 in 312ms (next.js: 4ms, proxy.ts: 3ms, application-code: 305ms)
+ GET /api/invitations 200 in 772ms (next.js: 11ms, proxy.ts: 4ms, application-code: 757ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 531ms (next.js: 503ms, proxy.ts: 4ms, application-code: 24ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior
+Error fetching building activity: Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count()` invocation in
+C:\Users\PC\Desktop\Website\LuxDues\.next\dev\server\chunks\[root-of-the-server]__0r02yz0._.js:99:145
+
+  96     }
+  97 }),
+  98 // Complaints in the last 30 days
+→ 99 __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count({
+       select: {
+         _count: {
+           select: {
+             _all: true
+           }
+         }
+       },
+       where: {
+         unit: {
+         ~~~~
+           buildingId: "cmuzynvao0000lkvbky981519"
+         },
+         createdAt: {
+           gte: new Date("2026-09-08T20:07:35.189Z")
+         },
+     ?   AND?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   OR?: ComplaintWhereInput[],
+     ?   NOT?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   id?: StringFilter | String,
+     ?   buildingId?: StringFilter | String,
+     ?   userId?: StringNullableFilter | String | Null,
+     ?   subject?: StringFilter | String,
+     ?   description?: StringFilter | String,
+     ?   status?: EnumComplaintStatusFilter | ComplaintStatus,
+     ?   updatedAt?: DateTimeFilter | DateTime,
+     ?   building?: BuildingScalarRelationFilter | BuildingWhereInput,
+     ?   user?: UserNullableScalarRelationFilter | UserWhereInput | Null
+       }
+     })
+
+Unknown argument `unit`. Did you mean `id`? Available options are marked with ?.
+    at <unknown> (app\api\buildings\[id]\activity\route.ts:31:24)
+    at async GET (app\api\buildings\[id]\activity\route.ts:18:57)
+  29 |       }),
+  30 |       // Complaints in the last 30 days
+> 31 |       prisma.complaint.count({
+     |                        ^
+  32 |         where: {
+  33 |           unit: {
+  34 |             buildingId: id, {
+  clientVersion: '7.9.1'
+}
+ GET /api/buildings/cmuzynvao0000lkvbky981519/activity 500 in 1097ms (next.js: 862ms, proxy.ts: 15ms, application-code: 220ms)
+Error fetching building activity: Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count()` invocation in
+C:\Users\PC\Desktop\Website\LuxDues\.next\dev\server\chunks\[root-of-the-server]__0r02yz0._.js:99:145
+
+  96     }
+  97 }),
+  98 // Complaints in the last 30 days
+→ 99 __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count({
+       select: {
+         _count: {
+           select: {
+             _all: true
+           }
+         }
+       },
+       where: {
+         unit: {
+         ~~~~
+           buildingId: "cmuzynvao0000lkvbky981519"
+         },
+         createdAt: {
+           gte: new Date("2026-09-08T20:07:35.421Z")
+         },
+     ?   AND?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   OR?: ComplaintWhereInput[],
+     ?   NOT?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   id?: StringFilter | String,
+     ?   buildingId?: StringFilter | String,
+     ?   userId?: StringNullableFilter | String | Null,
+     ?   subject?: StringFilter | String,
+     ?   description?: StringFilter | String,
+     ?   status?: EnumComplaintStatusFilter | ComplaintStatus,
+     ?   updatedAt?: DateTimeFilter | DateTime,
+     ?   building?: BuildingScalarRelationFilter | BuildingWhereInput,
+     ?   user?: UserNullableScalarRelationFilter | UserWhereInput | Null
+       }
+     })
+
+Unknown argument `unit`. Did you mean `id`? Available options are marked with ?.
+    at <unknown> (app\api\buildings\[id]\activity\route.ts:31:24)
+    at async GET (app\api\buildings\[id]\activity\route.ts:18:57)
+  29 |       }),
+  30 |       // Complaints in the last 30 days
+> 31 |       prisma.complaint.count({
+     |                        ^
+  32 |         where: {
+  33 |           unit: {
+  34 |             buildingId: id, {
+  clientVersion: '7.9.1'
+}
+ GET /api/buildings/cmuzynvao0000lkvbky981519/activity 500 in 25ms (next.js: 11ms, proxy.ts: 3ms, application-code: 11ms)
+ GET /api/buildings/cmuzynvao0000lkvbky981519 200 in 2.2s (next.js: 836ms, proxy.ts: 15ms, application-code: 1377ms)
+ GET /api/buildings/cmuzynvao0000lkvbky981519 200 in 637ms (next.js: 12ms, proxy.ts: 4ms, application-code: 620ms)
+ GET /admin/buildings 200 in 49ms (next.js: 8ms, proxy.ts: 5ms, application-code: 35ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 59ms (next.js: 20ms, proxy.ts: 6ms, application-code: 33ms)
+ GET /admin/buildings 200 in 41ms (next.js: 11ms, proxy.ts: 7ms, application-code: 23ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 97ms (next.js: 59ms, proxy.ts: 8ms, application-code: 30ms)
+ GET /admin/buildings 200 in 97ms (next.js: 12ms, proxy.ts: 49ms, application-code: 36ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 111ms (next.js: 22ms, proxy.ts: 49ms, application-code: 40ms)
+ GET /admin/buildings 200 in 62ms (next.js: 14ms, proxy.ts: 8ms, application-code: 39ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 124ms (next.js: 83ms, proxy.ts: 7ms, application-code: 34ms)
+ GET /admin/buildings 200 in 41ms (next.js: 7ms, proxy.ts: 6ms, application-code: 28ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 97ms (next.js: 49ms, proxy.ts: 6ms, application-code: 41ms)
+ GET /admin/buildings 200 in 42ms (next.js: 7ms, proxy.ts: 4ms, application-code: 30ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 101ms (next.js: 58ms, proxy.ts: 4ms, application-code: 39ms)
+ GET /admin/buildings 200 in 37ms (next.js: 7ms, proxy.ts: 4ms, application-code: 25ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 76ms (next.js: 47ms, proxy.ts: 4ms, application-code: 25ms)
+ GET /admin/buildings 200 in 73ms (next.js: 9ms, proxy.ts: 39ms, application-code: 25ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 79ms (next.js: 11ms, proxy.ts: 35ms, application-code: 34ms)
+ GET /admin/buildings 200 in 37ms (next.js: 11ms, proxy.ts: 4ms, application-code: 21ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 78ms (next.js: 49ms, proxy.ts: 4ms, application-code: 25ms)
+ GET /admin/buildings 200 in 54ms (next.js: 12ms, proxy.ts: 10ms, application-code: 32ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 115ms (next.js: 71ms, proxy.ts: 8ms, application-code: 37ms)
+ GET /admin/buildings 200 in 41ms (next.js: 7ms, proxy.ts: 4ms, application-code: 30ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 87ms (next.js: 51ms, proxy.ts: 5ms, application-code: 32ms)
+ GET /admin/buildings 200 in 47ms (next.js: 11ms, proxy.ts: 6ms, application-code: 30ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 101ms (next.js: 59ms, proxy.ts: 7ms, application-code: 36ms)
+✓ Compiled in 96ms
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 95ms (next.js: 31ms, proxy.ts: 4ms, application-code: 60ms)
+ GET /admin/buildings 200 in 127ms (next.js: 86ms, proxy.ts: 5ms, application-code: 36ms)
+✓ Compiled in 216ms
+ GET /admin/buildings 200 in 67ms (next.js: 23ms, proxy.ts: 17ms, application-code: 28ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 151ms (next.js: 87ms, proxy.ts: 19ms, application-code: 46ms)
+✓ Compiled in 188ms
+[browser] ./app/admin/buildings/page.tsx:559:8
+Error: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  557 |           })}
+  558 |         </div>
+> 559 |       )}
+      |        ^
+  560 |
+  561 |       {/* Info & Feature Highlights Section — separated like a new section */}
+  562 |       <div className="relative -mx-4 sm:-mx-6 mt-8 sm:mt-10 bg-white border-y border-zinc...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/admin/buildings/page.tsx [Client Component Browser]
+    ./app/admin/buildings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/admin/buildings/page.tsx [Client Component SSR]
+    ./app/admin/buildings/page.tsx [Server Component] 
+[browser] ./app/admin/buildings/page.tsx:559:8
+Error: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  557 |           })}
+  558 |         </div>
+> 559 |       )}
+      |        ^
+  560 |
+  561 |       {/* Info & Feature Highlights Section — separated like a new section */}
+  562 |       <div className="relative -mx-4 sm:-mx-6 mt-8 sm:mt-10 bg-white border-y border-zinc...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/admin/buildings/page.tsx [Client Component Browser]
+    ./app/admin/buildings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/admin/buildings/page.tsx [Client Component SSR]
+    ./app/admin/buildings/page.tsx [Server Component] 
+✓ Compiled in 176ms
+ GET /admin/buildings 200 in 82ms (next.js: 33ms, proxy.ts: 11ms, application-code: 38ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 181ms (next.js: 117ms, proxy.ts: 9ms, application-code: 55ms)
+ GET /api/auth/me 200 in 1733ms (next.js: 10ms, proxy.ts: 28ms, application-code: 1695ms)
+ GET /api/buildings 200 in 2.1s (next.js: 18ms, proxy.ts: 64ms, application-code: 2.0s)
+ GET /api/auth/me 200 in 330ms (next.js: 4ms, proxy.ts: 3ms, application-code: 324ms)
+ GET /api/buildings 200 in 608ms (next.js: 4ms, proxy.ts: 4ms, application-code: 601ms)
+[browser] ./app/admin/buildings/page.tsx:559:8
+Error: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  557 |           })}
+  558 |         </div>
+> 559 |       )}
+      |        ^
+  560 |
+  561 |       {/* Info & Feature Highlights Section — separated like a new section */}
+  562 |       <div className="relative -mx-4 sm:-mx-6 mt-8 sm:mt-10 bg-white border-y border-zinc...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/admin/buildings/page.tsx [Client Component Browser]
+    ./app/admin/buildings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/admin/buildings/page.tsx [Client Component SSR]
+    ./app/admin/buildings/page.tsx [Server Component] 
+[browser] ./app/admin/buildings/page.tsx:559:8
+Error: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+  557 |           })}
+  558 |         </div>
+> 559 |       )}
+      |        ^
+  560 |
+  561 |       {/* Info & Feature Highlights Section — separated like a new section */}
+  562 |       <div className="relative -mx-4 sm:-mx-6 mt-8 sm:mt-10 bg-white border-y border-zinc...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/admin/buildings/page.tsx [Client Component Browser]
+    ./app/admin/buildings/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/admin/buildings/page.tsx [Client Component SSR]
+    ./app/admin/buildings/page.tsx [Server Component] 
+ GET /admin/buildings 200 in 93ms (next.js: 9ms, proxy.ts: 4ms, application-code: 80ms)
+ GET /api/notifications/stream 200 in 9.5min (next.js: 231ms, proxy.ts: 16ms, application-code: 9.5min)
+ GET /manifest.webmanifest 200 in 25ms (next.js: 9ms, proxy.ts: 8ms, application-code: 8ms)
+ GET /api/auth/me 200 in 1000ms (next.js: 27ms, proxy.ts: 9ms, application-code: 964ms)
+ GET /api/notifications 200 in 1134ms (next.js: 10ms, proxy.ts: 9ms, application-code: 1115ms)
+ GET /api/auth/me 200 in 344ms (next.js: 4ms, proxy.ts: 4ms, application-code: 336ms)
+ GET /api/invitations 200 in 1401ms (next.js: 20ms, proxy.ts: 9ms, application-code: 1372ms)
+ GET /api/buildings 200 in 1440ms (next.js: 32ms, proxy.ts: 9ms, application-code: 1399ms)
+ GET /api/notifications 200 in 401ms (next.js: 4ms, proxy.ts: 4ms, application-code: 393ms)
+ GET /api/auth/me 200 in 295ms (next.js: 3ms, proxy.ts: 3ms, application-code: 289ms)
+ GET /api/auth/me 200 in 283ms (next.js: 3ms, proxy.ts: 3ms, application-code: 277ms)
+ GET /api/buildings 200 in 555ms (next.js: 4ms, proxy.ts: 3ms, application-code: 548ms)
+ GET /api/invitations 200 in 725ms (next.js: 3ms, proxy.ts: 2ms, application-code: 719ms)
+✓ Compiled in 135ms
+✓ Compiled in 140ms
+ GET /admin/buildings 200 in 41ms (next.js: 12ms, proxy.ts: 4ms, application-code: 25ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 94ms (next.js: 60ms, proxy.ts: 5ms, application-code: 29ms)
+ GET /admin/buildings 200 in 122ms (next.js: 38ms, proxy.ts: 55ms, application-code: 29ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 152ms (next.js: 99ms, proxy.ts: 15ms, application-code: 37ms)
+ GET /api/auth/me 200 in 1570ms (next.js: 17ms, proxy.ts: 53ms, application-code: 1500ms)
+ GET /api/auth/me 200 in 307ms (next.js: 4ms, proxy.ts: 3ms, application-code: 300ms)
+ GET /api/buildings 200 in 1880ms (next.js: 28ms, proxy.ts: 54ms, application-code: 1799ms)
+ GET /api/buildings 200 in 580ms (next.js: 2ms, proxy.ts: 3ms, application-code: 575ms)
+✓ Compiled in 114ms
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 87ms (next.js: 46ms, proxy.ts: 3ms, application-code: 38ms)
+ GET /admin/buildings 200 in 95ms (next.js: 34ms, proxy.ts: 6ms, application-code: 55ms)
+ GET /admin/buildings 200 in 50ms (next.js: 14ms, proxy.ts: 7ms, application-code: 30ms)
+✓ Compiled in 123ms
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 109ms (next.js: 66ms, proxy.ts: 7ms, application-code: 36ms)
+ GET /admin/buildings 200 in 54ms (next.js: 12ms, proxy.ts: 6ms, application-code: 35ms)
+✓ Compiled in 120ms
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 100ms (next.js: 62ms, proxy.ts: 6ms, application-code: 32ms)
+✓ Compiled in 62ms
+ GET /admin/buildings 200 in 103ms (next.js: 12ms, proxy.ts: 60ms, application-code: 31ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 149ms (next.js: 55ms, proxy.ts: 63ms, application-code: 31ms)
+ GET /admin/buildings 200 in 36ms (next.js: 9ms, proxy.ts: 5ms, application-code: 22ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 78ms (next.js: 45ms, proxy.ts: 5ms, application-code: 28ms)
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+- Environments: .env
+✓ Ready in 547ms
+✓ Running next.config.ts took 50ms
+
+[browser] SSE error: [object Event] 
+    at NotificationMenu.useEffect (components/NotificationMenu.tsx:73:17)
+  71 |
+  72 |       eventSource.onerror = (error) => {
+> 73 |         console.error('SSE error:', error);
+     |                 ^
+  74 |         eventSource?.close();
+  75 |       };
+  76 |     } catch (error) { (components/NotificationMenu.tsx:73:17)
+ GET /admin/buildings 200 in 589ms (next.js: 109ms, proxy.ts: 202ms, application-code: 277ms)
+ GET /manifest.webmanifest 200 in 93ms (next.js: 65ms, proxy.ts: 6ms, application-code: 21ms)
+ GET /admin/buildings/cmuzynvao0000lkvbky981519 200 in 804ms (next.js: 644ms, proxy.ts: 19ms, application-code: 141ms)
+ GET /manifest.webmanifest 200 in 14ms (next.js: 3ms, proxy.ts: 5ms, application-code: 6ms)
+ GET /api/invitations 401 in 268ms (next.js: 78ms, proxy.ts: 38ms, application-code: 151ms)
+ GET /api/notifications 401 in 269ms (next.js: 163ms, proxy.ts: 40ms, application-code: 66ms)
+ GET /api/auth/me 401 in 335ms (next.js: 212ms, proxy.ts: 41ms, application-code: 82ms)
+ GET /api/buildings 401 in 334ms (next.js: 268ms, proxy.ts: 42ms, application-code: 24ms)
+ GET /api/notifications/stream 401 in 388ms (next.js: 347ms, proxy.ts: 24ms, application-code: 17ms)
+[browser] SSE error: [object Event] 
+    at NotificationMenu.useEffect (components/NotificationMenu.tsx:73:17)
+  71 |
+  72 |       eventSource.onerror = (error) => {
+> 73 |         console.error('SSE error:', error);
+     |                 ^
+  74 |         eventSource?.close();
+  75 |       };
+  76 |     } catch (error) { (components/NotificationMenu.tsx:73:17)
+ GET /api/invitations 401 in 59ms (next.js: 15ms, proxy.ts: 26ms, application-code: 19ms)
+ GET /api/notifications 401 in 60ms (next.js: 21ms, proxy.ts: 27ms, application-code: 12ms)
+ GET /api/auth/me 401 in 74ms (next.js: 35ms, proxy.ts: 19ms, application-code: 19ms)
+ GET /api/buildings 401 in 77ms (next.js: 43ms, proxy.ts: 22ms, application-code: 11ms)
+ GET /api/auth/me 401 in 23ms (next.js: 7ms, proxy.ts: 6ms, application-code: 10ms)
+ GET /api/auth/me 401 in 28ms (next.js: 5ms, proxy.ts: 5ms, application-code: 18ms)
+ GET /api/invitations 401 in 71ms (next.js: 23ms, proxy.ts: 25ms, application-code: 23ms)
+ GET /api/notifications 401 in 77ms (next.js: 27ms, proxy.ts: 28ms, application-code: 22ms)
+ GET /api/auth/me 401 in 77ms (next.js: 39ms, proxy.ts: 26ms, application-code: 12ms)
+ GET /api/notifications/stream 401 in 76ms (next.js: 40ms, proxy.ts: 27ms, application-code: 9ms)
+[browser] SSE error: [object Event] 
+    at NotificationMenu.useEffect (components/NotificationMenu.tsx:73:17)
+  71 |
+  72 |       eventSource.onerror = (error) => {
+> 73 |         console.error('SSE error:', error);
+     |                 ^
+  74 |         eventSource?.close();
+  75 |       };
+  76 |     } catch (error) { (components/NotificationMenu.tsx:73:17)
+ GET /api/invitations 401 in 134ms (next.js: 61ms, proxy.ts: 65ms, application-code: 7ms)
+ GET /api/notifications 401 in 143ms (next.js: 23ms, proxy.ts: 104ms, application-code: 16ms)
+ GET /api/auth/me 401 in 142ms (next.js: 27ms, proxy.ts: 104ms, application-code: 11ms)
+ GET /api/buildings/cmuzynvao0000lkvbky981519 401 in 966ms (next.js: 929ms, proxy.ts: 25ms, application-code: 12ms)
+Error fetching building activity: Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count()` invocation in
+C:\Users\PC\Desktop\Website\LuxDues\.next\dev\server\chunks\[root-of-the-server]__0r02yz0._.js:99:145
+
+  96     }
+  97 }),
+  98 // Complaints in the last 30 days
+→ 99 __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count({
+       select: {
+         _count: {
+           select: {
+             _all: true
+           }
+         }
+       },
+       where: {
+         unit: {
+         ~~~~
+           buildingId: "cmuzynvao0000lkvbky981519"
+         },
+         createdAt: {
+           gte: new Date("2026-09-08T20:32:43.944Z")
+         },
+     ?   AND?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   OR?: ComplaintWhereInput[],
+     ?   NOT?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   id?: StringFilter | String,
+     ?   buildingId?: StringFilter | String,
+     ?   userId?: StringNullableFilter | String | Null,
+     ?   subject?: StringFilter | String,
+     ?   description?: StringFilter | String,
+     ?   status?: EnumComplaintStatusFilter | ComplaintStatus,
+     ?   updatedAt?: DateTimeFilter | DateTime,
+     ?   building?: BuildingScalarRelationFilter | BuildingWhereInput,
+     ?   user?: UserNullableScalarRelationFilter | UserWhereInput | Null
+       }
+     })
+
+Unknown argument `unit`. Did you mean `id`? Available options are marked with ?.
+    at <unknown> (app\api\buildings\[id]\activity\route.ts:31:24)
+    at async GET (app\api\buildings\[id]\activity\route.ts:18:57)
+  29 |       }),
+  30 |       // Complaints in the last 30 days
+> 31 |       prisma.complaint.count({
+     |                        ^
+  32 |         where: {
+  33 |           unit: {
+  34 |             buildingId: id, {
+  clientVersion: '7.9.1'
+}
+ GET /api/buildings/cmuzynvao0000lkvbky981519/activity 500 in 1319ms (next.js: 947ms, proxy.ts: 23ms, application-code: 350ms)
+ GET /api/buildings/cmuzynvao0000lkvbky981519 401 in 415ms (next.js: 380ms, proxy.ts: 4ms, application-code: 31ms)
+Error fetching building activity: Error [PrismaClientValidationError]: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count()` invocation in
+C:\Users\PC\Desktop\Website\LuxDues\.next\dev\server\chunks\[root-of-the-server]__0r02yz0._.js:99:145
+
+  96     }
+  97 }),
+  98 // Complaints in the last 30 days
+→ 99 __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].complaint.count({
+       select: {
+         _count: {
+           select: {
+             _all: true
+           }
+         }
+       },
+       where: {
+         unit: {
+         ~~~~
+           buildingId: "cmuzynvao0000lkvbky981519"
+         },
+         createdAt: {
+           gte: new Date("2026-09-08T20:32:44.364Z")
+         },
+     ?   AND?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   OR?: ComplaintWhereInput[],
+     ?   NOT?: ComplaintWhereInput | ComplaintWhereInput[],
+     ?   id?: StringFilter | String,
+     ?   buildingId?: StringFilter | String,
+     ?   userId?: StringNullableFilter | String | Null,
+     ?   subject?: StringFilter | String,
+     ?   description?: StringFilter | String,
+     ?   status?: EnumComplaintStatusFilter | ComplaintStatus,
+     ?   updatedAt?: DateTimeFilter | DateTime,
+     ?   building?: BuildingScalarRelationFilter | BuildingWhereInput,
+     ?   user?: UserNullableScalarRelationFilter | UserWhereInput | Null
+       }
+     })
+
+Unknown argument `unit`. Did you mean `id`? Available options are marked with ?.
+    at <unknown> (app\api\buildings\[id]\activity\route.ts:31:24)
+    at async GET (app\api\buildings\[id]\activity\route.ts:18:57)
+  29 |       }),
+  30 |       // Complaints in the last 30 days
+> 31 |       prisma.complaint.count({
+     |                        ^
+  32 |         where: {
+  33 |           unit: {
+  34 |             buildingId: id, {
+  clientVersion: '7.9.1'
+}
+ GET /api/buildings/cmuzynvao0000lkvbky981519/activity 500 in 87ms (next.js: 58ms, proxy.ts: 9ms, application-code: 20ms)
+ GET /admin/buildings 200 in 78ms (next.js: 33ms, proxy.ts: 8ms, application-code: 37ms)
+✓ Compiled in 1722ms
+ GET /admin/buildings 200 in 57ms (next.js: 26ms, proxy.ts: 4ms, application-code: 27ms)
+ GET /api/invitations 401 in 60ms (next.js: 19ms, proxy.ts: 19ms, application-code: 23ms)
+ GET /api/notifications 401 in 60ms (next.js: 27ms, proxy.ts: 18ms, application-code: 15ms)
+ GET /api/auth/me 401 in 69ms (next.js: 30ms, proxy.ts: 20ms, application-code: 19ms)
+ GET /api/buildings 401 in 69ms (next.js: 39ms, proxy.ts: 21ms, application-code: 9ms)
+ GET /api/notifications/stream 401 in 74ms (next.js: 47ms, proxy.ts: 19ms, application-code: 8ms)
+[browser] SSE error: [object Event] 
+    at NotificationMenu.useEffect (components/NotificationMenu.tsx:73:17)
+  71 |
+  72 |       eventSource.onerror = (error) => {
+> 73 |         console.error('SSE error:', error);
+     |                 ^
+  74 |         eventSource?.close();
+  75 |       };
+  76 |     } catch (error) { (components/NotificationMenu.tsx:73:17)
+ GET /api/invitations 401 in 50ms (next.js: 13ms, proxy.ts: 25ms, application-code: 12ms)
+ GET /api/notifications 401 in 62ms (next.js: 18ms, proxy.ts: 26ms, application-code: 18ms)
+ GET /api/auth/me 401 in 55ms (next.js: 24ms, proxy.ts: 21ms, application-code: 10ms)
+ GET /api/buildings 401 in 67ms (next.js: 37ms, proxy.ts: 20ms, application-code: 10ms)
+ GET /api/auth/me 401 in 31ms (next.js: 4ms, proxy.ts: 5ms, application-code: 21ms)
+ GET /api/auth/me 401 in 20ms (next.js: 3ms, proxy.ts: 4ms, application-code: 14ms)
+  Reload env: .env
+⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+✓ Compiled in 401ms
+ GET /admin/buildings 200 in 219ms (next.js: 79ms, proxy.ts: 77ms, application-code: 63ms)
+ GET /admin/buildings 200 in 275ms (next.js: 238ms, proxy.ts: 15ms, application-code: 23ms)
+ GET /admin/buildings 200 in 437ms (next.js: 25ms, proxy.ts: 154ms, application-code: 258ms)
+ GET /manifest.webmanifest 200 in 72ms (next.js: 47ms, proxy.ts: 7ms, application-code: 19ms)
+ GET /api/invitations 401 in 76ms (next.js: 34ms, proxy.ts: 11ms, application-code: 31ms)
+ GET /api/notifications 401 in 116ms (next.js: 57ms, proxy.ts: 11ms, application-code: 47ms)
+ GET /api/auth/me 401 in 116ms (next.js: 79ms, proxy.ts: 12ms, application-code: 25ms)
+ GET /api/buildings 401 in 116ms (next.js: 93ms, proxy.ts: 15ms, application-code: 8ms)
+ GET /api/notifications/stream 401 in 136ms (next.js: 116ms, proxy.ts: 14ms, application-code: 7ms)
+[browser] SSE error: [object Event] 
+    at NotificationMenu.useEffect (components/NotificationMenu.tsx:73:17)
+  71 |
+  72 |       eventSource.onerror = (error) => {
+> 73 |         console.error('SSE error:', error);
+     |                 ^
+  74 |         eventSource?.close();
+  75 |       };
+  76 |     } catch (error) { (components/NotificationMenu.tsx:73:17)
+ GET /api/notifications 401 in 51ms (next.js: 9ms, proxy.ts: 35ms, application-code: 7ms)
+ GET /api/invitations 401 in 71ms (next.js: 16ms, proxy.ts: 39ms, application-code: 17ms)
+ GET /api/auth/me 401 in 69ms (next.js: 21ms, proxy.ts: 37ms, application-code: 12ms)
+ GET /api/buildings 401 in 59ms (next.js: 25ms, proxy.ts: 27ms, application-code: 7ms)
+ GET /api/auth/me 401 in 20ms (next.js: 5ms, proxy.ts: 2ms, application-code: 12ms)
+ GET /api/auth/me 401 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /admin/buildings 200 in 58ms (next.js: 5ms, proxy.ts: 5ms, application-code: 49ms)
+ GET /manifest.webmanifest 200 in 18ms (next.js: 5ms, proxy.ts: 4ms, application-code: 8ms)
+ GET /api/invitations 401 in 36ms (next.js: 11ms, proxy.ts: 10ms, application-code: 15ms)
+ GET /api/notifications 401 in 52ms (next.js: 19ms, proxy.ts: 10ms, application-code: 23ms)
+ GET /api/auth/me 401 in 52ms (next.js: 27ms, proxy.ts: 10ms, application-code: 15ms)
+ GET /api/buildings 401 in 52ms (next.js: 34ms, proxy.ts: 9ms, application-code: 9ms)
+ GET /api/notifications/stream 401 in 62ms (next.js: 45ms, proxy.ts: 9ms, application-code: 9ms)
+[browser] SSE error: [object Event] 
+    at NotificationMenu.useEffect (components/NotificationMenu.tsx:73:17)
+  71 |
+  72 |       eventSource.onerror = (error) => {
+> 73 |         console.error('SSE error:', error);
+     |                 ^
+  74 |         eventSource?.close();
+  75 |       };
+  76 |     } catch (error) { (components/NotificationMenu.tsx:73:17)
+ GET /api/invitations 401 in 59ms (next.js: 17ms, proxy.ts: 13ms, application-code: 29ms)
+ GET /api/notifications 401 in 60ms (next.js: 28ms, proxy.ts: 13ms, application-code: 19ms)
+ GET /api/auth/me 401 in 69ms (next.js: 36ms, proxy.ts: 14ms, application-code: 19ms)
+ GET /api/buildings 401 in 72ms (next.js: 47ms, proxy.ts: 15ms, application-code: 11ms)
+ GET /api/auth/me 401 in 22ms (next.js: 4ms, proxy.ts: 5ms, application-code: 13ms)
+ GET /api/auth/me 401 in 18ms (next.js: 3ms, proxy.ts: 4ms, application-code: 11ms)
+  Reload env: .env
+✓ Compiled in 267ms
+ GET /admin/buildings 200 in 164ms (next.js: 57ms, proxy.ts: 63ms, application-code: 45ms)
+ GET /admin/buildings 200 in 50ms (next.js: 9ms, proxy.ts: 9ms, application-code: 31ms)
+ GET /admin/buildings 200 in 130ms (next.js: 47ms, proxy.ts: 54ms, application-code: 29ms)
+✓ Compiled in 102ms
+ GET /admin/buildings 200 in 41ms (next.js: 15ms, proxy.ts: 4ms, application-code: 22ms)

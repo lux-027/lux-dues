@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { ProjectStatus, PaymentStatus } from '@prisma/client';
+import { canAccessBuilding, getAdminBuildingIds, getAdminBlockScope } from '@/lib/buildingAccess';
 
 // GET /api/projects - List special projects
 export async function GET(request: NextRequest) {
@@ -26,10 +27,16 @@ export async function GET(request: NextRequest) {
       where.buildingId = buildingId && residentBuildingIds.includes(buildingId)
         ? buildingId
         : { in: residentBuildingIds };
-    } else if (buildingId) {
-      where.buildingId = buildingId;
-    } else if (session.role === 'BLOCK_ADMIN' && session.buildingId) {
-      where.buildingId = session.buildingId;
+    } else {
+      const allowedIds = await getAdminBuildingIds(session);
+      if (buildingId) {
+        if (!allowedIds.includes(buildingId)) {
+          return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+        }
+        where.buildingId = buildingId;
+      } else {
+        where.buildingId = { in: allowedIds };
+      }
     }
 
     const projects = await prisma.specialProject.findMany({
@@ -73,10 +80,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!(await canAccessBuilding(session, buildingId))) {
+      return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+    }
+
+    // Block-scoped admins can only create projects for their assigned blocks
+    const scope = await getAdminBlockScope(session, buildingId);
+    if (scope && Array.isArray(blockNames) && blockNames.some((b: string) => !scope.includes(b))) {
+      return NextResponse.json({ error: 'Yalnızca size atanmış bloklar için proje oluşturabilirsiniz' }, { status: 403 });
+    }
+
     // Build the unit filter: if specific blocks are selected, include only those.
     const unitWhere: any = { buildingId };
     if (Array.isArray(blockNames) && blockNames.length > 0) {
       unitWhere.blockName = { in: blockNames };
+    } else if (scope) {
+      unitWhere.blockName = { in: scope };
     }
 
     // Get the relevant units for this building to calculate fair distribution

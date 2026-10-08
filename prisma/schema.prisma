@@ -72,6 +72,7 @@ model User {
   sentFriendships     AdminFriendship[] @relation("AdminFriendshipRequester")
   receivedFriendships AdminFriendship[] @relation("AdminFriendshipAddressee")
   notifications       Notification[]    @relation("UserNotifications")
+  adminAssignments    BuildingAdminAssignment[] @relation("UserAdminAssignments")
 
   @@index([email])
   @@index([phone])
@@ -100,6 +101,7 @@ model Building {
   specialProjects SpecialProject[] @relation("BuildingProjects")
   complaints      Complaint[]      @relation("BuildingComplaints")
   invitations     AdminInvitation[] @relation("BuildingInvitations")
+  adminAssignments BuildingAdminAssignment[] @relation("BuildingAdminAssignments")
 
   @@index([type])
   @@index([ownerId])
@@ -270,4 +272,19 @@ model VerificationToken {
   @@index([email])
   @@index([token])
   @@index([expiresAt])
+}
+
+model BuildingAdminAssignment {
+  id         String   @id @default(cuid())
+  userId     String
+  buildingId String
+  blockName  String?
+  createdAt  DateTime @default(now())
+
+  user     User     @relation("UserAdminAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  building Building @relation("BuildingAdminAssignments", fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, buildingId, blockName])
+  @@index([userId])
+  @@index([buildingId])
 }

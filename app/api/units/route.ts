@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession, SessionUser } from '@/lib/session';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
+import { getAdminBlockScope } from '@/lib/buildingAccess';
 
 async function canAccessBuilding(session: SessionUser, buildingId: string) {
   if (session.buildingId === buildingId) return true;
@@ -10,7 +11,12 @@ async function canAccessBuilding(session: SessionUser, buildingId: string) {
     where: { id: buildingId },
     select: { ownerId: true },
   });
-  return building?.ownerId === session.id;
+  if (building?.ownerId === session.id) return true;
+  const assignment = await prisma.buildingAdminAssignment.findFirst({
+    where: { userId: session.id, buildingId },
+    select: { id: true },
+  });
+  return Boolean(assignment);
 }
 
 // GET /api/units?buildingId=... - List units for a building
@@ -32,8 +38,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
     }
 
+    // Block-scoped admins only see their own blocks
+    const scope = await getAdminBlockScope(session, buildingId);
     const units = await prisma.unit.findMany({
-      where: { buildingId },
+      where: { buildingId, ...(scope ? { blockName: { in: scope } } : {}) },
       include: {
         residents: {
           select: {
@@ -87,6 +95,11 @@ export async function POST(request: NextRequest) {
 
       if (!(await canAccessBuilding(session, buildingId))) {
         return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor.' }, { status: 403 });
+      }
+
+      const scope = await getAdminBlockScope(session, buildingId);
+      if (scope && units.some((u: any) => u.blockName && !scope.includes(u.blockName))) {
+        return NextResponse.json({ error: 'Yalnızca size atanmış bloklara daire ekleyebilirsiniz.' }, { status: 403 });
       }
 
       const createdUnits = [];
@@ -147,6 +160,11 @@ export async function POST(request: NextRequest) {
 
     if (!(await canAccessBuilding(session, buildingId))) {
       return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor.' }, { status: 403 });
+    }
+
+    const scope = await getAdminBlockScope(session, buildingId);
+    if (scope && !scope.includes(blockName)) {
+      return NextResponse.json({ error: 'Yalnızca size atanmış bloklara daire ekleyebilirsiniz.' }, { status: 403 });
     }
 
     const existing = await prisma.unit.findUnique({

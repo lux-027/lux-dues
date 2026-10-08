@@ -5,6 +5,7 @@ import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 import { generateUniqueAccountNumber } from '@/lib/accountNumber';
+import { rateLimit } from '@/lib/rateLimit';
 
 // GET /api/auth/register-admin - Check whether bootstrap admin registration is
 // still available (i.e. no SUPER_ADMIN exists yet).
@@ -24,6 +25,12 @@ export async function GET() {
 // POST /api/auth/register-admin - Bootstrap registration for the very first admin.
 export async function POST(request: NextRequest) {
   try {
+    if (rateLimit(request, 'register-admin', 5, 60_000)) {
+      return NextResponse.json(
+        { error: 'Çok fazla kayıt denemesi. Lütfen bir dakika sonra tekrar deneyin.' },
+        { status: 429 }
+      );
+    }
     const body = await request.json();
     const { idToken, name, phone } = body;
 

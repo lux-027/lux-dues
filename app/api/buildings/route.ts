@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         OR: [
           { ownerId: session.id },
           { admins: { some: { id: session.id } } },
+          { adminAssignments: { some: { userId: session.id } } },
         ],
       },
       include: {

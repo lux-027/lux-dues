@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { ComplaintStatus } from '@prisma/client';
+import { getAdminBuildingIds } from '@/lib/buildingAccess';
 
 // GET /api/complaints - List complaints
 export async function GET(request: NextRequest) {
@@ -18,10 +19,16 @@ export async function GET(request: NextRequest) {
 
     if (session.role === 'RESIDENT') {
       where.userId = session.id;
-    } else if (buildingId) {
-      where.buildingId = buildingId;
-    } else if (session.role === 'BLOCK_ADMIN' && session.buildingId) {
-      where.buildingId = session.buildingId;
+    } else {
+      const allowedIds = await getAdminBuildingIds(session);
+      if (buildingId) {
+        if (!allowedIds.includes(buildingId)) {
+          return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+        }
+        where.buildingId = buildingId;
+      } else {
+        where.buildingId = { in: allowedIds };
+      }
     }
 
     const complaints = await prisma.complaint.findMany({

@@ -17,7 +17,7 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'LuxDues <onboarding@resend.dev>',
+      from: process.env.EMAIL_FROM || 'LuxDues <onboarding@resend.dev>',
       to,
       subject,
       html,

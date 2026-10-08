@@ -10,7 +10,7 @@ import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'BLOCK_ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'BLOCK_ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
     if (!building) {
       return NextResponse.json({ error: 'Bina bulunamadı' }, { status: 404 });
     }
+    if (building.ownerId !== session.id) {
+      return NextResponse.json({ error: 'Yalnızca kendi binalarınıza yönetici ekleyebilirsiniz' }, { status: 403 });
+    }
 
     const hashedPassword = await hashPassword(password);
 
@@ -117,6 +120,15 @@ export async function POST(request: NextRequest) {
         createdAt: true,
       },
     });
+
+    const existingAssignment = await prisma.buildingAdminAssignment.findFirst({
+      where: { userId: admin.id, buildingId, blockName: blockName || null },
+    });
+    if (!existingAssignment) {
+      await prisma.buildingAdminAssignment.create({
+        data: { userId: admin.id, buildingId, blockName: blockName || null },
+      });
+    }
 
     return NextResponse.json(admin, { status: 201 });
   } catch (error) {

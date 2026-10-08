@@ -52,33 +52,28 @@ export function NotificationMenu() {
   };
 
   useEffect(() => {
-    fetchInvitations();
-    fetchNotifications();
+    const refresh = () => {
+      fetchInvitations();
+      fetchNotifications();
+    };
 
-    // Setup SSE connection for real-time notifications
-    let eventSource: EventSource | null = null;
+    refresh();
 
-    try {
-      eventSource = new EventSource('/api/notifications/stream');
+    // 10 saniyede bir bildirimleri kontrol et (SSE yerine polling -
+    // Vercel serverless'ta SSE kararsız, polling %100 güvenilir).
+    // Sekme arka plandayken duraklat, performans için.
+    const interval = setInterval(() => {
+      if (!document.hidden) refresh();
+    }, 10_000);
 
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'notification') {
-          setNotifications((prev) => [data.notification, ...prev]);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('SSE error:', error);
-        eventSource?.close();
-      };
-    } catch (error) {
-      console.error('Failed to setup SSE:', error);
-    }
+    const onVisibilityChange = () => {
+      if (!document.hidden) refresh();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      eventSource?.close();
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
 

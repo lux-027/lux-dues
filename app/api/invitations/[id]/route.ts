@@ -77,6 +77,26 @@ export async function PATCH(
           },
         });
 
+        // A manager can hold admin assignments in any number of buildings —
+        // each accepted invitation adds a row here instead of overwriting the
+        // previous one.
+        const existingAssignment = await tx.buildingAdminAssignment.findFirst({
+          where: {
+            userId: session.id,
+            buildingId: invitation.buildingId,
+            blockName: invitation.blockName || null,
+          },
+        });
+        if (!existingAssignment) {
+          await tx.buildingAdminAssignment.create({
+            data: {
+              userId: session.id,
+              buildingId: invitation.buildingId,
+              blockName: invitation.blockName || null,
+            },
+          });
+        }
+
         const existingFriendship = await tx.adminFriendship.findFirst({
           where: {
             OR: [

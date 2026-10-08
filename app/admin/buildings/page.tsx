@@ -25,6 +25,7 @@ interface Building {
   totalBlocks: number;
   address: string;
   image: string | null;
+  ownerId: string | null;
   createdAt: string;
   _count: {
     units: number;
@@ -40,7 +41,8 @@ export default function BuildingsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'SITE' | 'APARTMENT'>('ALL');
-  const [session, setSession] = useState<{ name: string; role: string } | null>(null);
+  const [categories, setCategories] = useState({ mine: true, invited: true });
+  const [session, setSession] = useState<{ id: string; name: string; role: string } | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createInitialType, setCreateInitialType] = useState<BuildingType | undefined>(undefined);
   const [confirmModal, setConfirmModal] = useState<{
@@ -95,6 +97,15 @@ export default function BuildingsPage() {
       return matchesSearch && matchesType;
     });
   }, [buildings, searchQuery, typeFilter]);
+
+  const myBuildings = useMemo(
+    () => filteredBuildings.filter((b) => !session?.id || b.ownerId === session.id),
+    [filteredBuildings, session]
+  );
+  const invitedBuildings = useMemo(
+    () => filteredBuildings.filter((b) => session?.id && b.ownerId !== session.id),
+    [filteredBuildings, session]
+  );
 
   const stats = useMemo(() => {
     const totalBuildings = buildings.length;
@@ -305,6 +316,42 @@ export default function BuildingsPage() {
         </div>
       </div>
 
+      {/* Category Toggles */}
+      <div className="flex items-center gap-2 overflow-x-auto">
+        <button
+          onClick={() => setCategories((c) => ({ ...c, mine: !c.mine }))}
+          className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl border transition-all whitespace-nowrap ${
+            categories.mine
+              ? 'bg-zinc-900 text-white border-zinc-900 shadow-md'
+              : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+          }`}
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span>Binalarım</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${categories.mine ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+            {myBuildings.length}
+          </span>
+        </button>
+        <button
+          onClick={() => setCategories((c) => ({ ...c, invited: !c.invited }))}
+          className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl border transition-all whitespace-nowrap ${
+            categories.invited
+              ? 'bg-zinc-900 text-white border-zinc-900 shadow-md'
+              : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+          }`}
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <span>Davetli Olduklarım</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${categories.invited ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600'}`}>
+            {invitedBuildings.length}
+          </span>
+        </button>
+      </div>
+
       {/* Filter & Search Bar */}
       <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 p-3 sm:p-5 rounded-xl sm:rounded-2xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         {/* Search Input */}
@@ -365,7 +412,7 @@ export default function BuildingsPage() {
       </div>
 
       {/* Building Grid */}
-      {filteredBuildings.length === 0 ? (
+      {((categories.mine ? myBuildings.length : 0) + (categories.invited ? invitedBuildings.length : 0)) === 0 ? (
         <Card>
           <CardBody>
             <div className="empty-state py-12 text-center">
@@ -383,7 +430,9 @@ export default function BuildingsPage() {
                 />
               </svg>
               <h3 className="mt-3 text-base font-medium text-zinc-900">
-                {searchQuery || typeFilter !== 'ALL' ? 'Aramaya uygun bina bulunamadı' : 'Henüz bina eklenmedi'}
+                {!categories.mine && !categories.invited
+                  ? 'Kategori seçilmedi'
+                  : searchQuery || typeFilter !== 'ALL' ? 'Aramaya uygun bina bulunamadı' : 'Henüz bina eklenmedi'}
               </h3>
               <p className="mt-1 text-[10px] sm:text-xs text-zinc-500 max-w-sm mx-auto">
                 {searchQuery || typeFilter !== 'ALL'
@@ -394,8 +443,23 @@ export default function BuildingsPage() {
           </CardBody>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredBuildings.map((building, index) => {
+        <div className="space-y-8">
+          {[
+            { title: 'Binalarım', items: categories.mine ? myBuildings : [] },
+            { title: 'Davetli Yöneticisi Olduğum Binalar', items: categories.invited ? invitedBuildings : [] },
+          ]
+            .filter((s) => s.items.length > 0)
+            .map((section) => (
+              <div key={section.title}>
+                <div className="flex items-center gap-3 mb-3">
+                  <h2 className="text-sm font-semibold text-zinc-900">{section.title}</h2>
+                  <span className="text-[11px] font-medium text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-full px-2 py-0.5">
+                    {section.items.length}
+                  </span>
+                  <div className="flex-1 h-px bg-zinc-200" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {section.items.map((building, index) => {
             const buildingUnits = building.units || [];
             const bTotalUnits = building._count.units || 0;
             const bRegisteredResidents = buildingUnits.filter((u) => u.residents && u.residents.length > 0).length;
@@ -530,6 +594,9 @@ export default function BuildingsPage() {
               </div>
             );
           })}
+                </div>
+              </div>
+            ))}
         </div>
       )}
 

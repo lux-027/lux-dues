@@ -11,13 +11,29 @@ export async function PUT(
 ) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'BLOCK_ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { id } = await params;
     const body = await request.json();
     const { buildingId, blockName, name, phone } = body;
+
+    // Managers can only reassign admins inside buildings they own
+    if (buildingId !== undefined && buildingId !== null) {
+      const building = await prisma.building.findUnique({ where: { id: buildingId }, select: { ownerId: true } });
+      if (!building || building.ownerId !== session.id) {
+        return NextResponse.json({ error: 'Yalnızca kendi binalarınıza atama yapabilirsiniz' }, { status: 403 });
+      }
+    }
+
+    const targetUser = await prisma.user.findUnique({ where: { id }, select: { buildingId: true } });
+    if (targetUser?.buildingId) {
+      const currentBuilding = await prisma.building.findUnique({ where: { id: targetUser.buildingId }, select: { ownerId: true } });
+      if (currentBuilding && currentBuilding.ownerId !== session.id) {
+        return NextResponse.json({ error: 'Bu yönetici üzerinde işlem yapamazsınız' }, { status: 403 });
+      }
+    }
 
     const updateData: any = {
       ...(buildingId !== undefined && { buildingId }),
@@ -50,6 +66,34 @@ export async function PUT(
       },
     });
 
+    // Keep the multi-building assignment table in sync with the reassignment
+    if (buildingId !== undefined) {
+      if (targetUser?.buildingId && targetUser.buildingId !== buildingId) {
+        await prisma.buildingAdminAssignment.deleteMany({
+          where: { userId: id, buildingId: targetUser.buildingId },
+        });
+      }
+      if (buildingId) {
+        const existing = await prisma.buildingAdminAssignment.findFirst({
+          where: { userId: id, buildingId, blockName: blockName ?? null },
+        });
+        if (!existing) {
+          await prisma.buildingAdminAssignment.create({
+            data: { userId: id, buildingId, blockName: blockName ?? null },
+          });
+        }
+      }
+    } else if (blockName !== undefined && targetUser?.buildingId) {
+      const existing = await prisma.buildingAdminAssignment.findFirst({
+        where: { userId: id, buildingId: targetUser.buildingId, blockName: blockName ?? null },
+      });
+      if (!existing) {
+        await prisma.buildingAdminAssignment.create({
+          data: { userId: id, buildingId: targetUser.buildingId, blockName: blockName ?? null },
+        });
+      }
+    }
+
     return NextResponse.json(admin);
   } catch (error) {
     console.error('Error updating admin:', error);
@@ -67,7 +111,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSession();
-    if (!session || session.role !== 'SUPER_ADMIN') {
+    if (!session || (session.role !== 'SUPER_ADMIN' && session.role !== 'BLOCK_ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -79,10 +123,30 @@ export async function DELETE(
       return NextResponse.json({ error: 'Bu kullanıcı üzerinde işlem yapılamaz' }, { status: 400 });
     }
 
+    // Managers can only remove admins from buildings they own
+    if (target.buildingId) {
+      const building = await prisma.building.findUnique({ where: { id: target.buildingId }, select: { ownerId: true } });
+      if (!building || building.ownerId !== session.id) {
+        return NextResponse.json({ error: 'Bu yönetici üzerinde işlem yapamazsınız' }, { status: 403 });
+      }
+    }
+
+    // Remove the assignment in this building; the user keeps any other
+    // assignments they may hold in other managers' buildings.
+    if (target.buildingId) {
+      await prisma.buildingAdminAssignment.deleteMany({
+        where: { userId: id, buildingId: target.buildingId },
+      });
+    }
+
+    const remainingAssignments = await prisma.buildingAdminAssignment.count({
+      where: { userId: id },
+    });
+
     const admin = await prisma.user.update({
       where: { id },
       data: {
-        role: UserRole.RESIDENT,
+        role: remainingAssignments > 0 ? UserRole.BLOCK_ADMIN : UserRole.RESIDENT,
         buildingId: null,
         blockName: null,
       },

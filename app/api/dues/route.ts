@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { canAccessBuilding, getAdminBuildingIds, getAdminBlockScope } from '@/lib/buildingAccess';
 import { PaymentStatus } from '@prisma/client';
 
 // GET /api/dues - List dues (filtered by unitId for residents, or buildingId for admins)
@@ -27,11 +28,21 @@ export async function GET(request: NextRequest) {
       }
       where.unitId = unitId && residentUnitIds.includes(unitId) ? unitId : { in: residentUnitIds };
     } else {
-      // Admins can filter by unitId or buildingId
+      // Admins can filter by unitId or buildingId (only on buildings they manage)
       if (unitId) {
+        const unit = await prisma.unit.findUnique({ where: { id: unitId }, select: { buildingId: true } });
+        if (!unit || !(await canAccessBuilding(session, unit.buildingId))) {
+          return NextResponse.json({ error: 'Bu daire için yetkiniz bulunmuyor' }, { status: 403 });
+        }
         where.unitId = unitId;
       } else if (buildingId) {
+        if (!(await canAccessBuilding(session, buildingId))) {
+          return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+        }
         where.unit = { buildingId };
+      } else {
+        const allowedIds = await getAdminBuildingIds(session);
+        where.unit = { buildingId: { in: allowedIds } };
       }
     }
 
@@ -83,6 +94,10 @@ export async function POST(request: NextRequest) {
     if (body.bulk && body.buildingId) {
       const { buildingId, blockName, amount, month, year, dueDate } = body;
 
+      if (!(await canAccessBuilding(session, buildingId))) {
+        return NextResponse.json({ error: 'Bu bina için yetkiniz bulunmuyor' }, { status: 403 });
+      }
+
       if (!amount || !month || !year || !dueDate) {
         return NextResponse.json(
           { error: 'Tutar, ay, yıl ve son ödeme tarihi zorunludur' },
@@ -90,8 +105,15 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Block-scoped admins can only assign dues to their own blocks
+      const scope = await getAdminBlockScope(session, buildingId);
       const whereUnit: any = { buildingId, isVacant: false };
-      if (blockName && blockName !== 'ALL') {
+      if (scope) {
+        if (blockName && blockName !== 'ALL' && !scope.includes(blockName)) {
+          return NextResponse.json({ error: 'Bu blok size atanmış değil' }, { status: 403 });
+        }
+        whereUnit.blockName = blockName && blockName !== 'ALL' ? blockName : { in: scope };
+      } else if (blockName && blockName !== 'ALL') {
         whereUnit.blockName = blockName;
       }
 
@@ -149,6 +171,15 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    const unit = await prisma.unit.findUnique({ where: { id: unitId }, select: { buildingId: true, blockName: true } });
+    if (!unit || !(await canAccessBuilding(session, unit.buildingId))) {
+      return NextResponse.json({ error: 'Bu daire için yetkiniz bulunmuyor' }, { status: 403 });
+    }
+    const scope = await getAdminBlockScope(session, unit.buildingId);
+    if (scope && !scope.includes(unit.blockName)) {
+      return NextResponse.json({ error: 'Bu daire size atanmış bir blokta değil' }, { status: 403 });
     }
 
     const dues = await prisma.dues.upsert({

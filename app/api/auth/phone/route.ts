@@ -4,6 +4,7 @@ import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { UserRole } from '@prisma/client';
+import { rateLimit } from '@/lib/rateLimit';
 
 // POST /api/auth/phone - Exchange a verified Firebase phone-auth ID token for
 // our own session cookie. If no account exists yet for the phone number, a
@@ -11,6 +12,12 @@ import { UserRole } from '@prisma/client';
 // later). Admin roles can never be obtained through this endpoint.
 export async function POST(request: NextRequest) {
   try {
+    if (rateLimit(request, 'phone-auth', 10, 60_000)) {
+      return NextResponse.json(
+        { error: 'Çok fazla deneme. Lütfen bir dakika sonra tekrar deneyin.' },
+        { status: 429 }
+      );
+    }
     const { idToken } = await request.json();
 
     if (!idToken || typeof idToken !== 'string') {

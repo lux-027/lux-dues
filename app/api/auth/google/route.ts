@@ -4,12 +4,19 @@ import { generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { UserRole } from '@prisma/client';
+import { rateLimit } from '@/lib/rateLimit';
 
 // POST /api/auth/google - Exchange a verified Firebase (Google) ID token for
 // our own session cookie. If no account exists yet for the Google email, a
 // new account is auto-provisioned with the specified role (admin or resident).
 export async function POST(request: NextRequest) {
   try {
+    if (rateLimit(request, 'google-auth', 10, 60_000)) {
+      return NextResponse.json(
+        { error: 'Çok fazla deneme. Lütfen bir dakika sonra tekrar deneyin.' },
+        { status: 429 }
+      );
+    }
     const { idToken, role } = await request.json();
 
     if (!idToken || typeof idToken !== 'string') {
@@ -49,7 +56,7 @@ export async function POST(request: NextRequest) {
       // First time signing in with this Google account — auto-provision an
       // account with the selected role (admin or resident). The phone placeholder
       // is never used/exposed; the account can only be accessed via Google sign-in going forward.
-      const userRole = role === 'admin' ? UserRole.BLOCK_ADMIN : UserRole.RESIDENT;
+      const userRole = role === 'admin' ? UserRole.SUPER_ADMIN : UserRole.RESIDENT;
       user = await prisma.user.create({
         data: {
           accountNumber: await generateUniqueAccountNumber(),

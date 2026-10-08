@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
+import { getAdminBlockScope } from '@/lib/buildingAccess';
 
 // PUT /api/units/[id] - Update a unit (admin only)
 export async function PUT(
@@ -31,7 +32,18 @@ export async function PUT(
     }
 
     if (existingUnit.building.ownerId !== session.id && session.buildingId !== existingUnit.building.id) {
-      return NextResponse.json({ error: 'Bu daire için yetkiniz bulunmuyor' }, { status: 403 });
+      const assignment = await prisma.buildingAdminAssignment.findFirst({
+        where: { userId: session.id, buildingId: existingUnit.building.id },
+        select: { id: true },
+      });
+      if (!assignment) {
+        return NextResponse.json({ error: 'Bu daire için yetkiniz bulunmuyor' }, { status: 403 });
+      }
+    }
+
+    const scope = await getAdminBlockScope(session, existingUnit.building.id);
+    if (scope && !scope.includes(existingUnit.blockName)) {
+      return NextResponse.json({ error: 'Bu daire size atanmış bir blokta değil' }, { status: 403 });
     }
 
     const updateData: any = {

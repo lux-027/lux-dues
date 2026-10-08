@@ -5,9 +5,16 @@ import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
 import { generateUniqueAccountNumber } from '@/lib/accountNumber';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { UserRole } from '@prisma/client';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
+    if (rateLimit(request, 'register-phone', 5, 60_000)) {
+      return NextResponse.json(
+        { error: 'Çok fazla kayıt denemesi. Lütfen bir dakika sonra tekrar deneyin.' },
+        { status: 429 }
+      );
+    }
     const body = await request.json();
     const { idToken, name, password } = body;
 
@@ -18,9 +25,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: 'Şifre en az 6 karakter olmalıdır' },
+        { error: 'Şifre en az 8 karakter olmalıdır' },
         { status: 400 }
       );
     }

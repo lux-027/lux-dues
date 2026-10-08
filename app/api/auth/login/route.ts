@@ -3,9 +3,17 @@ import { prisma } from '@/lib/prisma';
 import { verifyPassword, generateToken } from '@/lib/auth';
 import { verifyFirebaseIdToken } from '@/lib/verifyFirebaseToken';
 import { isValidTurkishPhone, normalizePhoneNumber } from '@/lib/phone';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
+    if (rateLimit(request, 'login', 10, 60_000)) {
+      return NextResponse.json(
+        { error: 'Çok fazla deneme. Lütfen bir dakika sonra tekrar deneyin.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { idToken, email, phone, password } = body;
 

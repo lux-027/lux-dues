@@ -41,9 +41,9 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    // If user is SUPER_ADMIN, also fetch sent invitations
+    // Admins also see the invitations they sent
     let sent: any[] = [];
-    if (session.role === UserRole.SUPER_ADMIN) {
+    if (session.role === UserRole.SUPER_ADMIN || session.role === UserRole.BLOCK_ADMIN) {
       sent = await prisma.adminInvitation.findMany({
         where: {
           senderId: session.id,
@@ -81,7 +81,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || session.role !== UserRole.SUPER_ADMIN) {
+    if (!session || (session.role !== UserRole.SUPER_ADMIN && session.role !== UserRole.BLOCK_ADMIN)) {
       return NextResponse.json({ error: 'Yetkisiz işlem' }, { status: 403 });
     }
 
@@ -115,12 +115,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Kendinize davet gönderemezsiniz' }, { status: 400 });
     }
 
-    // Check if building exists
+    // Check if building exists and belongs to the sender — every manager can
+    // only invite others into buildings they own.
     const building = await prisma.building.findUnique({
       where: { id: buildingId },
     });
     if (!building) {
       return NextResponse.json({ error: 'Bina bulunamadı' }, { status: 404 });
+    }
+    if (building.ownerId !== session.id) {
+      return NextResponse.json({ error: 'Yalnızca kendi binalarınıza yönetici davet edebilirsiniz' }, { status: 403 });
     }
 
     // Prevent inviting a user who is already an active admin of this building/block.

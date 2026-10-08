@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { getAdminBlockScope } from '@/lib/buildingAccess';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,16 +31,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Building not found' }, { status: 404 });
     }
 
-    // Check if user has access to this building
-    if (session.role === 'BLOCK_ADMIN' && session.buildingId !== buildingId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    // Check if user has access to this building (owner or assigned admin)
+    const isOwner = building.ownerId === session.id;
+    if (!isOwner) {
+      const assignment = await prisma.buildingAdminAssignment.findFirst({
+        where: { userId: session.id, buildingId },
+        select: { id: true },
+      });
+      if (!assignment && session.buildingId !== buildingId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      }
+
+      // Block-scoped admins can only report on their assigned blocks
+      var scope: string[] | null = await getAdminBlockScope(session, buildingId);
+      if (scope && block && !scope.includes(decodeURIComponent(block))) {
+        return NextResponse.json({ error: 'Bu blok size atanmış değil' }, { status: 403 });
+      }
+    } else {
+      var scope: string[] | null = null;
     }
 
     const dues = await prisma.dues.findMany({
       where: {
         unit: {
           buildingId,
-          ...(block ? { blockName: decodeURIComponent(block) } : {}),
+          ...(block ? { blockName: decodeURIComponent(block) } : scope ? { blockName: { in: scope } } : {}),
         },
         year: parseInt(year),
         month: parseInt(month),

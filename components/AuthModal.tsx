@@ -204,8 +204,8 @@ export function AuthModal({
       return;
     }
 
-    if (registerData.password.length < 6) {
-      setError('Şifre en az 6 karakter olmalıdır');
+    if (registerData.password.length < 8) {
+      setError('Şifre en az 8 karakter olmalıdır');
       setLoading(false);
       return;
     }
@@ -596,7 +596,7 @@ export function AuthModal({
                       <Input
                         type="password"
                         label="Şifre"
-                        placeholder="En az 6 karakter"
+                        placeholder="En az 8 karakter"
                         value={registerData.password}
                         onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                         required
@@ -648,7 +648,7 @@ export function AuthModal({
                       <Input
                         type="password"
                         label="Şifre"
-                        placeholder="En az 6 karakter"
+                        placeholder="En az 8 karakter"
                         value={registerData.password}
                         onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                         required

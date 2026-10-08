@@ -2,9 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateVerificationToken, generateVerificationTokenExpiry } from '@/lib/verification';
 import { sendEmail, generateVerificationEmail } from '@/lib/email';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
+    if (rateLimit(request, 'send-verification', 3, 60_000)) {
+      return NextResponse.json(
+        { error: 'Çok fazla istek. Lütfen bir dakika sonra tekrar deneyin.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { email, name } = body;
 
