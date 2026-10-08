@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let user = await prisma.user.findUnique({ where: { phone: firebaseUser.phone_number } });
+    let user = await prisma.user.findFirst({ where: { phone: firebaseUser.phone_number } });
 
     if (!user) {
       // First time signing in with this phone number — auto-provision a

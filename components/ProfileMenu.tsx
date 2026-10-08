@@ -253,12 +253,7 @@ export function ProfileMenu() {
 
   if (!user) return null;
 
-  const initials = user.name
-    .split(' ')
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials = user.name.trim().charAt(0).toUpperCase();
 
   return (
     <>
@@ -316,12 +311,12 @@ export function ProfileMenu() {
             }}
           />
 
-          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 border border-zinc-200/80 max-h-[calc(100vh-2rem)] flex flex-col">
+          <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-xs sm:max-w-md overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 border border-zinc-200/80 max-h-[calc(100vh-2rem)] flex flex-col">
             {/* Header with Ambient Glow & Profile Info */}
-            <div className="relative px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-5 bg-gradient-to-b from-zinc-50 via-white to-white border-b border-zinc-100 shrink-0">
+            <div className="relative px-3.5 sm:px-6 pt-3 sm:pt-6 pb-2.5 sm:pb-5 bg-gradient-to-b from-zinc-50 via-white to-white border-b border-zinc-100 shrink-0">
               <div className="absolute top-0 right-0 w-40 h-40 bg-zinc-200/50 rounded-full blur-3xl pointer-events-none -mr-12 -mt-12" />
               
-              <div className="flex items-start justify-between relative z-10 mb-3 sm:mb-4">
+              <div className="flex items-start justify-between relative z-10 mb-2 sm:mb-4">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-zinc-900" />
                   <h3 className="text-xs sm:text-sm font-semibold text-zinc-900 uppercase tracking-wider">Profil Hesabım</h3>
@@ -338,9 +333,9 @@ export function ProfileMenu() {
               </div>
 
               {/* Avatar & User Details Hero */}
-              <div className="flex items-center gap-3 sm:gap-4 relative z-10">
+              <div className="flex items-center gap-2.5 sm:gap-4 relative z-10">
                 <div className="relative flex-shrink-0">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl overflow-hidden shadow-md border-2 border-white ring-1 ring-zinc-200 bg-zinc-100 flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-lg sm:rounded-2xl overflow-hidden shadow-md border-2 border-white ring-1 ring-zinc-200 bg-zinc-100 flex items-center justify-center">
                     {user.avatarUrl ? (
                       <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                     ) : (
@@ -410,9 +405,9 @@ export function ProfileMenu() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-zinc-900 truncate tracking-tight">{user.name}</h4>
-                  <p className="text-[11px] sm:text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
-                  <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5">
+                  <h4 className="text-sm sm:text-lg font-semibold text-zinc-900 truncate tracking-tight">{user.name}</h4>
+                  <p className="text-[10px] sm:text-xs text-zinc-500 truncate mt-0.5">{user.email}</p>
+                  <div className="mt-1 sm:mt-2 flex items-center gap-1.5">
                     <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold bg-zinc-900 text-white shadow-2xs">
                       {roleLabels[user.role] || user.role}
                     </span>
@@ -422,7 +417,7 @@ export function ProfileMenu() {
             </div>
 
             {/* Content Details */}
-            <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
+            <div className="p-3 sm:p-6 space-y-2.5 sm:space-y-4 flex-1 overflow-y-auto">
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium">
                   {error}
@@ -435,7 +430,7 @@ export function ProfileMenu() {
               )}
 
               {/* Kullanıcı ID Kartı */}
-              <div className="p-3 sm:p-3.5 bg-gradient-to-br from-zinc-50 to-zinc-100/70 border border-zinc-200/90 rounded-xl sm:rounded-2xl space-y-1.5 sm:space-y-2">
+              <div className="p-2.5 sm:p-3.5 bg-gradient-to-br from-zinc-50 to-zinc-100/70 border border-zinc-200/90 rounded-xl sm:rounded-2xl space-y-1.5 sm:space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400">
@@ -464,7 +459,7 @@ export function ProfileMenu() {
                       setCopiedId(true);
                       setTimeout(() => setCopiedId(false), 2000);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:text-zinc-900 bg-white hover:bg-zinc-50 rounded-xl border border-zinc-200 shadow-2xs transition-all active:scale-95"
+                    className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-zinc-700 hover:text-zinc-900 bg-white hover:bg-zinc-50 rounded-lg sm:rounded-xl border border-zinc-200 shadow-2xs transition-all active:scale-95"
                     title="Kullanıcı ID'sini kopyala"
                   >
                     {copiedId ? (
@@ -504,7 +499,7 @@ export function ProfileMenu() {
               </div>
 
               {/* Form / Detail Fields */}
-              <div className="space-y-2.5 sm:space-y-3 bg-white p-3.5 sm:p-4 border border-zinc-200/80 rounded-xl sm:rounded-2xl shadow-2xs">
+              <div className="space-y-2 sm:space-y-3 bg-white p-3 sm:p-4 border border-zinc-200/80 rounded-xl sm:rounded-2xl shadow-2xs">
                 <div>
                   <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">
                     Ad Soyad
@@ -583,20 +578,20 @@ export function ProfileMenu() {
             </div>
 
             {/* Action Buttons Footer */}
-            <div className="p-3 sm:p-4 bg-zinc-50 border-t border-zinc-200 flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <div className="p-2.5 sm:p-4 bg-zinc-50 border-t border-zinc-200 flex items-center gap-2 sm:gap-2.5 shrink-0">
               {editing ? (
                 <>
                   <button
                     onClick={() => setEditing(false)}
                     disabled={saving}
-                    className="flex-1 inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-xl transition-colors disabled:opacity-50 shadow-2xs"
+                    className="flex-1 inline-flex items-center justify-center px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 shadow-2xs"
                   >
                     Vazgeç
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex-1 inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50 shadow-sm"
+                    className="flex-1 inline-flex items-center justify-center px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 shadow-sm"
                   >
                     {saving ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>
@@ -605,7 +600,7 @@ export function ProfileMenu() {
                 <>
                   <button
                     onClick={() => setEditing(true)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-zinc-800 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-xl transition-colors shadow-2xs"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-zinc-800 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg sm:rounded-xl transition-colors shadow-2xs"
                   >
                     <svg className="h-3.5 w-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -614,7 +609,7 @@ export function ProfileMenu() {
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100/80 border border-red-200/80 rounded-xl transition-colors shadow-2xs"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100/80 border border-red-200/80 rounded-lg sm:rounded-xl transition-colors shadow-2xs"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

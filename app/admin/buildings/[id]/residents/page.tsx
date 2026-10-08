@@ -3,13 +3,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardBody } from '@/components/ui';
-import { Button, Input, Badge, CurrencyInput } from '@/components/ui';
+import { Button, Input, Badge, CurrencyInput, DatePicker } from '@/components/ui';
 import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
 import { BLOCK_ARCHIVE_IMAGES } from '@/lib/buildingImages';
 import { UserAvatar } from '@/components/UserAvatar';
 import EditUnitModal from './EditUnitModal';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 const MONTH_NAMES = [
   'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
@@ -63,6 +64,7 @@ interface BuildingInfo {
   totalBlocks: number;
   blockImages: Record<string, string> | null;
   image?: string | null;
+  defaultDueAmount?: number | string | null;
   admins?: AdminUser[];
 }
 
@@ -84,6 +86,8 @@ export default function ResidentsPage() {
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
 
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [showAddUnitModal, setShowAddUnitModal] = useState(false);
+  const [showBulkDueModal, setShowBulkDueModal] = useState(false);
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
@@ -238,45 +242,7 @@ export default function ResidentsPage() {
   };
 
   const handleAddUnit = () => {
-    const targetBlock = selectedBlock && selectedBlock !== 'ALL' ? selectedBlock : allBlockNames[0] || 'A Blok';
-    const blockUnits = units.filter((u) => u.blockName === targetBlock);
-    const nextDoorNo = blockUnits.reduce((max, u) => {
-      const n = parseInt(String(u.doorNo), 10);
-      return isNaN(n) ? max : Math.max(max, n);
-    }, 0) + 1;
-
-    setConfirmModal({
-      open: true,
-      title: 'Yeni Daire Eklenecek',
-      description: `"${targetBlock}" bloğuna Daire ${nextDoorNo} eklenecek. Onaylıyor musunuz?`,
-      action: async () => {
-        setConfirmModal((prev) => ({ ...prev, loading: true }));
-        try {
-          const response = await fetch('/api/units', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              buildingId,
-              blockName: targetBlock,
-              doorNo: String(nextDoorNo),
-              ownerName: '',
-            }),
-          });
-          setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
-          if (response.ok) {
-            fetchData();
-          } else {
-            const data = await response.json();
-            alert(data.error || 'Daire eklenirken bir hata oluştu');
-          }
-        } catch (error) {
-          console.error('Error creating unit:', error);
-          alert('Daire eklenirken bir hata oluştu');
-          setConfirmModal((prev) => ({ ...prev, open: false, loading: false }));
-        }
-      },
-      loading: false,
-    });
+    setShowAddUnitModal(true);
   };
 
   const handleDeleteBlock = async () => {
@@ -311,13 +277,7 @@ export default function ResidentsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen label="Daireler yükleniyor" />;
   }
 
   // -------------------------------------------------------------
@@ -367,7 +327,7 @@ export default function ResidentsPage() {
                           type="button"
                           title="Blok adını düzenle"
                           onClick={() => setShowEditBlockModal(true)}
-                          className="p-1.5 rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-all"
+                          className="ml-auto p-1.5 rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-all"
                         >
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -393,60 +353,88 @@ export default function ResidentsPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col items-start lg:items-end gap-2">
+              <div className="flex flex-col items-stretch lg:items-end gap-2 w-full lg:w-auto">
                 {selectedBlock && selectedBlock !== 'ALL' && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setShowAssignAdminModal(true)}
-                    leftIcon={
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    }
-                  >
-                    {assignedAdminForSelected ? assignedAdminForSelected.name : 'Bina Yöneticisi'}
-                  </Button>
-                )}
-                <div className="flex flex-col items-start lg:items-end gap-2 mt-auto">
-                  <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-                    {(building?.type === 'APARTMENT' || (selectedBlock && selectedBlock !== 'ALL')) && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={handleOpenBatchModal}
-                        leftIcon={
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5 a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                          </svg>
-                        }
+                  assignedAdminForSelected ? (
+                    <div className="w-full lg:w-auto flex items-center gap-2 pl-1.5 pr-1.5 py-1.5 bg-zinc-900 text-white rounded-lg shadow-sm">
+                      <UserAvatar
+                        name={assignedAdminForSelected.name}
+                        avatarUrl={(assignedAdminForSelected as any).avatarUrl}
+                        size={28}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] uppercase tracking-wider text-zinc-400 leading-none">{selectedBlock} Yöneticisi</p>
+                        <p className="text-xs font-semibold truncate mt-0.5">{assignedAdminForSelected.name}</p>
+                      </div>
+                      <button
+                        type="button"
+                        title="Yöneticiyi düzenle / kaldır"
+                        onClick={() => setShowAssignAdminModal(true)}
+                        className="flex-shrink-0 p-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors"
                       >
-                        Toplu Daire Ekle
-                      </Button>
-                    )}
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
                     <Button
+                      variant="primary"
                       size="sm"
-                      onClick={handleAddUnit}
+                      className="w-full lg:w-auto"
+                      onClick={() => setShowAssignAdminModal(true)}
                       leftIcon={
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      }
+                    >
+                      {selectedBlock} Yöneticisi
+                    </Button>
+                  )
+                )}
+                <div className="flex flex-col items-stretch lg:items-end gap-2 mt-auto w-full lg:w-auto">
+                  <div className="grid grid-cols-3 lg:flex lg:items-center gap-1.5 sm:gap-2.5 w-full lg:w-auto">
+                    <Button
+                      size="sm"
+                      className="!px-2 lg:!px-4 !py-1.5 lg:!py-2 !text-[10px] lg:!text-xs w-full lg:w-auto"
+                      onClick={handleAddUnit}
+                      leftIcon={
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                       }
                     >
-                      Yeni Daire Ekle
+                      Yeni Daire
                     </Button>
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => router.push(`/admin/buildings/${buildingId}/dues`)}
+                      className="!px-2 lg:!px-4 !py-1.5 lg:!py-2 !text-[10px] lg:!text-xs w-full lg:w-auto col-start-auto"
+                      onClick={() => setShowBulkDueModal(true)}
                       leftIcon={
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       }
                     >
-                      Toplu Aidat Belirle
+                      Aidat Belirle
                     </Button>
+                    {(building?.type === 'APARTMENT' || (selectedBlock && selectedBlock !== 'ALL')) && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="!px-2 lg:!px-4 !py-1.5 lg:!py-2 !text-[10px] lg:!text-xs w-full lg:w-auto"
+                        onClick={handleOpenBatchModal}
+                        leftIcon={
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5 a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
+                        }
+                      >
+                        Toplu Daire
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -454,30 +442,6 @@ export default function ResidentsPage() {
           </CardBody>
         </Card>
       </div>
-
-      {/* Block Dues Management Card (only shown when a specific block is selected) */}
-      {selectedBlock && selectedBlock !== 'ALL' && (
-        <div className="mb-8">
-          <button
-            type="button"
-            onClick={() => router.push(`/admin/buildings/${buildingId}/dues`)}
-            className="w-full flex items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 hover:shadow-md rounded-2xl transition-all text-left"
-          >
-            <div>
-              <h3 className="text-base font-semibold text-zinc-900">{selectedBlock} Aidat Durumu</h3>
-              <p className="text-xs text-zinc-600 mt-1">
-                {MONTH_NAMES[duesMonth - 1]} {duesYear} dönemi aidat detaylarını görüntülemek ve yönetmek için tıklayın.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-zinc-900 text-sm font-semibold">
-              <span>Detaylı Aidat Sayfası</span>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </div>
-          </button>
-        </div>
-      )}
 
       {/* Units Table */}
       {filteredUnits.length === 0 ? (
@@ -554,11 +518,17 @@ export default function ResidentsPage() {
                             Boş Daire (Aidatsız)
                           </span>
                         ) : unit.residents.length > 0 ? (
-                          <Badge variant="success">
-                            {unit.residents[0].name} {unit.residents.length > 1 ? `(+${unit.residents.length - 1})` : ''}
+                          <Badge variant="success" leftIcon={<span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}>
+                            Kullanıcı Aktif
+                          </Badge>
+                        ) : unit.residentPhone ? (
+                          <Badge variant="warning" leftIcon={<span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}>
+                            Kullanıcı Bekleniyor
                           </Badge>
                         ) : (
-                          <Badge variant="default">Kullanıcı Bekleniyor</Badge>
+                          <Badge variant="danger" leftIcon={<span className="h-1.5 w-1.5 rounded-full bg-red-500" />}>
+                            Kullanıcı Aktif Değil
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -580,57 +550,73 @@ export default function ResidentsPage() {
             </div>
 
             {/* Mobile Card View */}
-            <div className="sm:hidden space-y-2.5 p-3">
+            <div className="sm:hidden space-y-2 p-3 bg-zinc-100">
               {filteredUnits.map((unit) => (
-                <div key={unit.id} className="bg-white border border-zinc-200 rounded-xl p-3 space-y-2.5">
-                  <div className="flex items-start gap-2.5">
+                <div
+                  key={unit.id}
+                  className="bg-white rounded-2xl border border-zinc-200/70 shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden"
+                >
+                  {/* Card top: identity */}
+                  <div className="flex items-center gap-3 px-3.5 pt-3 pb-2.5">
                     <UserAvatar
                       name={unit.residents[0]?.name || unit.ownerName || (unit.isVacant ? 'Boş Daire' : 'Bilinmeyen')}
                       avatarUrl={unit.residents[0]?.avatarUrl}
-                      size={36}
+                      size={40}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="font-medium text-zinc-900 px-1.5 py-0.5 bg-zinc-100 rounded text-[10px]">
-                          {unit.blockName}
-                        </span>
+                      <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-zinc-900 text-sm">
                           Daire {unit.doorNo}
                         </span>
+                        <span className="font-medium text-zinc-600 px-1.5 py-0.5 bg-zinc-100 rounded-md text-[10px] leading-none">
+                          {unit.blockName}
+                        </span>
                       </div>
-                      <p className="text-xs font-medium text-zinc-800 truncate">{unit.ownerName}</p>
+                      <p className="text-xs text-zinc-500 truncate mt-0.5">{unit.ownerName || 'İsim girilmedi'}</p>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-xs">
-                    <svg className="h-4 w-4 text-zinc-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <span className="font-mono text-zinc-600">{formatPhoneNumber(unit.residentPhone)}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    {unit.isVacant ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                        Boş Daire (Aidatsız)
-                      </span>
-                    ) : unit.residents.length > 0 ? (
-                      <Badge variant="success">
-                        {unit.residents[0].name} {unit.residents.length > 1 ? `(+${unit.residents.length - 1})` : ''}
-                      </Badge>
-                    ) : (
-                      <Badge variant="default">Kullanıcı Bekleniyor</Badge>
-                    )}
-                    <Button
-                      variant="primary"
-                      size="sm"
+                    <button
+                      type="button"
+                      title="Daireyi düzenle"
                       onClick={() => {
                         setEditingUnit(unit);
                         setShowEditModal(true);
                       }}
+                      className="flex-shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors"
                     >
-                      Düzenle
-                    </Button>
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Card bottom: status + phone */}
+                  <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-zinc-50/80 border-t border-zinc-100">
+                    {unit.isVacant ? (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-amber-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        Boş Daire
+                      </span>
+                    ) : unit.residents.length > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Kullanıcı Aktif
+                      </span>
+                    ) : unit.residentPhone ? (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-amber-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        Kullanıcı Bekleniyor
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-red-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                        Kullanıcı Aktif Değil
+                      </span>
+                    )}
+                    {unit.residentPhone ? (
+                      <span className="font-mono text-[10px] text-zinc-500 truncate">{formatPhoneNumber(unit.residentPhone)}</span>
+                    ) : (
+                      <span className="text-[10px] text-zinc-400">Telefon yok</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -640,6 +626,36 @@ export default function ResidentsPage() {
       )}
 
       {/* Modals */}
+      {showBulkDueModal && (
+        <BulkCreateDuesModal
+          buildingId={buildingId}
+          building={building}
+          units={units}
+          availableBlocks={allBlockNames}
+          defaultYear={duesYear}
+          defaultMonth={duesMonth}
+          onClose={() => setShowBulkDueModal(false)}
+          onSuccess={() => {
+            setShowBulkDueModal(false);
+            fetchDuesOnly();
+          }}
+        />
+      )}
+
+      {showAddUnitModal && (
+        <AddUnitModal
+          buildingId={buildingId}
+          existingBlocks={allBlockNames}
+          defaultBlock={selectedBlock && selectedBlock !== 'ALL' ? selectedBlock : allBlockNames[0] || 'A Blok'}
+          units={units}
+          onClose={() => setShowAddUnitModal(false)}
+          onSuccess={() => {
+            setShowAddUnitModal(false);
+            fetchData();
+          }}
+        />
+      )}
+
       {showBatchModal && (
         <BatchCreateUnitsModal
           buildingId={buildingId}
@@ -1094,33 +1110,33 @@ function BatchCreateUnitsModal({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center p-3 sm:p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
 
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg transform transition-all">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <h3 className="text-lg font-medium text-zinc-900">Toplu Daire Oluştur</h3>
+        <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-xs sm:max-w-lg transform transition-all max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-4 border-b border-zinc-200 shrink-0">
+            <h3 className="text-sm sm:text-lg font-medium text-zinc-900">Toplu Daire Oluştur</h3>
             <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+          <form onSubmit={handleSubmit} className="px-3.5 sm:px-6 py-3 sm:py-4 space-y-2.5 sm:space-y-4 overflow-y-auto">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              <div className="p-2.5 sm:p-3 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-600">
                 <p>{error}</p>
                 {(error.includes('yetki') || error.includes('Oturum') || error.includes('bina için yetki')) && (
-                  <p className="mt-1 text-xs text-red-500">
+                  <p className="mt-1 text-[10px] sm:text-xs text-red-500">
                     Bu işlem için SUPER_ADMIN veya bu binaya atanmış BLOCK_ADMIN olmalısınız.
                   </p>
                 )}
               </div>
             )}
 
-            <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-600 flex items-start gap-2">
-              <svg className="h-4 w-4 text-zinc-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="p-2.5 sm:p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-[11px] sm:text-xs text-zinc-600 flex items-start gap-2">
+              <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p>
@@ -1145,7 +1161,7 @@ function BatchCreateUnitsModal({
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
               <div className="form-group">
                 <Input
                   label="Başlangıç Kapı No"
@@ -1180,17 +1196,17 @@ function BatchCreateUnitsModal({
               />
             </div>
 
-            <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl text-xs text-zinc-600">
+            <div className="p-2.5 sm:p-3 bg-zinc-50 border border-zinc-200 rounded-lg sm:rounded-xl text-[11px] sm:text-xs text-zinc-600">
               {blockName || 'Blok'} için <strong>No: {startNo}</strong> ile <strong>No: {endNo}</strong> arası (toplam {Math.max(0, (parseInt(endNo) || 0) - (parseInt(startNo) || 0) + 1)} adet) daire taslağı oluşturulacaktır.
               <br />
               Her daire için varsayılan aidat tutarı: <strong>{Number(defaultDueAmount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</strong>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200">
-              <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+            <div className="flex items-center justify-end gap-2 sm:gap-3 pt-2.5 sm:pt-4 border-t border-zinc-200">
+              <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={loading}>
                 İptal
               </Button>
-              <Button type="submit" loading={loading}>
+              <Button type="submit" size="sm" loading={loading}>
                 Daireleri Oluştur
               </Button>
             </div>
@@ -1470,6 +1486,365 @@ function AssignAdminModal({ buildingId, blocks, initialBlock, currentAdmins, onC
           <Button type="button" variant="secondary" onClick={onClose}>
             Kapat
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// MODAL: ADD A SINGLE UNIT TO A SELECTED BLOCK
+// -------------------------------------------------------------
+interface AddUnitModalProps {
+  buildingId: string;
+  existingBlocks: string[];
+  defaultBlock: string;
+  units: Unit[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function AddUnitModal({
+  buildingId,
+  existingBlocks,
+  defaultBlock,
+  units,
+  onClose,
+  onSuccess,
+}: AddUnitModalProps) {
+  const [blockName, setBlockName] = useState(defaultBlock);
+  const [count, setCount] = useState('1');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const allBlocks = blockName === 'ALL';
+  const targetBlocks = allBlocks ? existingBlocks : [blockName];
+  const nextDoorNoFor = (block: string) =>
+    units
+      .filter((u) => u.blockName === block)
+      .reduce((max, u) => {
+        const n = parseInt(String(u.doorNo), 10);
+        return isNaN(n) ? max : Math.max(max, n);
+      }, 0) + 1;
+  const existingCount = units.filter((u) => targetBlocks.includes(u.blockName)).length;
+  const nextDoorNo = nextDoorNoFor(blockName);
+  const addCount = Math.min(100, Math.max(1, parseInt(count) || 1));
+  const totalNew = addCount * targetBlocks.length;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blockName) {
+      setError('Lütfen bir blok seçin');
+      return;
+    }
+    setLoading(true);
+    setError('');
+
+    try {
+      const unitsToCreate = targetBlocks.flatMap((block) => {
+        const start = nextDoorNoFor(block);
+        return Array.from({ length: addCount }, (_, i) => ({
+          blockName: block,
+          doorNo: String(start + i),
+          ownerName: '',
+          residentPhone: '',
+        }));
+      });
+
+      const response = await fetch('/api/units', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          buildingId,
+          units: unitsToCreate,
+        }),
+      });
+
+      if (response.ok) {
+        onSuccess();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Daire eklenirken bir hata oluştu');
+      }
+    } catch {
+      setError('Daire eklenirken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
+
+        <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-xs sm:max-w-md transform transition-all max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-4 border-b border-zinc-200 shrink-0">
+            <h3 className="text-sm sm:text-lg font-medium text-zinc-900">Yeni Daire Ekle</h3>
+            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+              <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-3.5 sm:px-6 py-3 sm:py-4 space-y-2.5 sm:space-y-4 overflow-y-auto">
+            {error && (
+              <div className="p-2.5 sm:p-3 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-600">
+                <p>{error}</p>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label className="input-label">Blok</label>
+              <select
+                className="input-field"
+                value={blockName}
+                onChange={(e) => setBlockName(e.target.value)}
+                required
+              >
+                {existingBlocks.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+                {existingBlocks.length > 1 && <option value="ALL">Tüm Bloklar</option>}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="input-label">Eklenecek Daire Sayısı</label>
+              <input
+                type="number"
+                className="input-field"
+                min="1"
+                max="100"
+                value={count}
+                onChange={(e) => setCount(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="p-2.5 sm:p-3 bg-zinc-50 border border-zinc-200 rounded-lg sm:rounded-xl text-[11px] sm:text-xs text-zinc-600 space-y-1">
+              {allBlocks ? (
+                <p>
+                  <strong>Her bloğa</strong> {addCount} daire eklenecek — toplam{' '}
+                  <strong>{totalNew} daire</strong> ({targetBlocks.length} blok × {addCount}).
+                </p>
+              ) : (
+                <p>
+                  <strong>{blockName || '—'}</strong> bloğuna{' '}
+                  <strong>
+                    Daire {nextDoorNo}
+                    {addCount > 1 ? ` – ${nextDoorNo + addCount - 1}` : ''}
+                  </strong>{' '}
+                  ({addCount} daire) eklenecek.
+                </p>
+              )}
+              <p className="text-zinc-500">
+                Mevcut: {existingCount} daire → İşlem sonrası toplam:{' '}
+                <strong className="text-zinc-800">{existingCount + totalNew} daire</strong>
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 sm:gap-3 pt-2.5 sm:pt-4 border-t border-zinc-200">
+              <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={loading}>
+                İptal
+              </Button>
+              <Button type="submit" size="sm" loading={loading}>
+                {totalNew > 1 ? 'Daireleri Oluştur' : 'Daireyi Oluştur'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// COMPONENT: BULK CREATE DUES MODAL
+// -------------------------------------------------------------
+interface BulkCreateDuesModalProps {
+  buildingId: string;
+  building: BuildingInfo | null;
+  units: Unit[];
+  availableBlocks: string[];
+  defaultYear: number;
+  defaultMonth: number;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function BulkCreateDuesModal({
+  buildingId,
+  building,
+  units,
+  availableBlocks,
+  defaultYear,
+  defaultMonth,
+  onClose,
+  onSuccess,
+}: BulkCreateDuesModalProps) {
+  const [year, setYear] = useState(defaultYear);
+  const [date, setDate] = useState(`${defaultYear}-${String(defaultMonth).padStart(2, '0')}-05`);
+  const [blockName, setBlockName] = useState('ALL');
+  const [amount, setAmount] = useState(
+    building?.defaultDueAmount ? String(building.defaultDueAmount) : '1500'
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const affectedCount = useMemo(() => {
+    if (blockName === 'ALL') return units.length;
+    return units.filter((u) => u.blockName === blockName).length;
+  }, [units, blockName]);
+
+  useEffect(() => {
+    const blockUnits = blockName === 'ALL' ? units : units.filter((u) => u.blockName === blockName);
+    const dueAmounts = blockUnits.map((u) => u.defaultDueAmount).filter(Boolean) as (string | number)[];
+    if (dueAmounts.length > 0) {
+      const first = dueAmounts[0];
+      const allSame = dueAmounts.every((v) => v === first);
+      if (allSame) {
+        setAmount(String(first));
+        return;
+      }
+    }
+    setAmount(building?.defaultDueAmount ? String(building.defaultDueAmount) : '1500');
+  }, [blockName, units, building]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const [dateYear, dateMonth] = date.split('-').map(Number);
+      const res = await fetch('/api/dues', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bulk: true,
+          buildingId,
+          blockName,
+          amount: parseFloat(amount),
+          month: dateMonth,
+          year: dateYear,
+          dueDate: new Date(date).toISOString(),
+        }),
+      });
+
+      if (res.ok) {
+        onSuccess();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Toplu aidat oluşturulurken bir hata oluştu');
+      }
+    } catch (err) {
+      setError('Bağlantı hatası');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
+
+        <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-xs sm:max-w-lg transform transition-all max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-4 border-b border-zinc-200 shrink-0">
+            <h3 className="text-sm sm:text-lg font-medium text-zinc-900">Toplu Aidat Tanımla</h3>
+            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+              <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-3.5 sm:px-6 py-3 sm:py-4 space-y-2.5 sm:space-y-4 overflow-y-auto">
+            {error && (
+              <div className="p-2.5 sm:p-3 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+              <div className="form-group">
+                <label className="input-label">Yıl</label>
+                <input
+                  type="number"
+                  className="input-field"
+                  value={year}
+                  onChange={(e) => {
+                    const y = parseInt(e.target.value) || defaultYear;
+                    setYear(y);
+                    const [_, m, d] = date.split('-');
+                    setDate(`${y}-${m}-${d}`);
+                  }}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <DatePicker
+                  label="Tarih (GG.AA.YYYY)"
+                  value={date}
+                  onChange={(v) => {
+                    if (v) {
+                      const [y] = v.split('-');
+                      setYear(parseInt(y));
+                      setDate(v);
+                    }
+                  }}
+                  placeholder="GG.AA.YYYY"
+                  required
+                />
+              </div>
+            </div>
+
+            {availableBlocks.length > 1 && (
+              <div className="form-group">
+                <label className="input-label">Hangi Bloklara Uygulansın?</label>
+                <select
+                  className="input-field"
+                  value={blockName}
+                  onChange={(e) => setBlockName(e.target.value)}
+                >
+                  <option value="ALL">Tüm Bloklar (Tüm Daireler)</option>
+                  {availableBlocks.map((b) => (
+                    <option key={b} value={b}>
+                      Sadece {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="form-group">
+              <CurrencyInput
+                label="Aidat Tutarı (₺)"
+                placeholder="Örn: 1.500"
+                value={amount}
+                onChange={(value) => setAmount(value)}
+                required
+              />
+            </div>
+
+            <div className="p-2.5 sm:p-3 bg-zinc-50 border border-zinc-200 rounded-lg sm:rounded-xl text-[11px] sm:text-xs text-zinc-600">
+              Seçilen kriterlere göre <strong>{affectedCount} daireye</strong>, <strong>{amount} ₺</strong> tutarında aidat kaydı açılacaktır.
+            </div>
+
+            <div className="flex items-center justify-end gap-2 sm:gap-3 pt-2.5 sm:pt-4 border-t border-zinc-200">
+              <Button type="button" variant="secondary" size="sm" onClick={onClose} disabled={loading}>
+                İptal
+              </Button>
+              <Button type="submit" size="sm" loading={loading}>
+                Aidatları Ata
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

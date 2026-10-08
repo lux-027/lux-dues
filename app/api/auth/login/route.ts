@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      user = await prisma.user.findUnique({
+      user = await prisma.user.findFirst({
         where: { phone: normalizedPhone },
         include: { building: true },
       });

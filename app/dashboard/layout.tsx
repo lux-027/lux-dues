@@ -20,9 +20,9 @@ export default function DashboardLayout({
       {/* Navigation Header */}
       <nav className="sticky top-0 z-40 bg-white border-b border-zinc-200 shadow-xs transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-wrap items-center justify-between min-h-16 py-2 sm:h-16 sm:py-0 sm:flex-nowrap">
             {/* Left: Brand & Portal Switcher */}
-            <div className="flex items-center gap-3.5 sm:gap-4">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 sm:gap-4 sm:flex-nowrap">
               <Link href="/" className="flex items-center group">
                 <Logo size={40} />
               </Link>
@@ -30,12 +30,14 @@ export default function DashboardLayout({
 
               <div className="h-5 w-px bg-zinc-200 hidden sm:block" />
 
-              {/* Portal Switcher */}
-              <PortalSwitcher current="resident" />
+              {/* Portal Switcher — on mobile drops to a full-width row under the logo */}
+              <div className="w-full sm:w-auto order-last sm:order-none">
+                <PortalSwitcher current="resident" />
+              </div>
             </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Right: Actions — stays pinned to the top row on mobile */}
+            <div className="flex items-center gap-2.5 sm:gap-3 self-start sm:self-center pt-1 sm:pt-0">
               <NotificationMenu />
               <ProfileMenu />
             </div>

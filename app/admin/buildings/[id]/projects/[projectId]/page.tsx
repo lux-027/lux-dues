@@ -6,6 +6,7 @@ import { Card, CardHeader, CardBody } from '@/components/ui';
 import { Button, Badge } from '@/components/ui';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 interface Payment {
   id: string;
@@ -87,13 +88,7 @@ export default function ProjectDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen label="Proje yükleniyor" />;
   }
 
   if (!project) {

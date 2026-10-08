@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardBody } from '@/components/ui';
 import { Button, Badge, Input, Textarea, ConfirmModal } from '@/components/ui';
 import { PhonePromptModal } from '@/components/PhonePromptModal';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 interface Due {
   id: string;
@@ -276,13 +277,7 @@ export default function ResidentDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen label="Panel yükleniyor" />;
   }
 
   // No home linked to this account yet.
@@ -423,9 +418,7 @@ export default function ResidentDashboard() {
       </Card>
 
       {dataLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="loading-spinner"></div>
-        </div>
+        <LoadingScreen label="Aidatlar yükleniyor" />
       ) : (
         <>
           {/* Summary Card */}

@@ -7,11 +7,44 @@ import { Button } from '@/components/ui';
 import { Badge } from '@/components/ui';
 import { ConfirmModal } from '@/components/ui';
 import { BUILDING_ARCHIVE_IMAGES } from '@/lib/buildingImages';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { BuildingType } from '@prisma/client';
-import { Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+
+// --- PDF helpers: Turkish-capable font + logo (loaded once, cached) ---
+let pdfAssetsPromise: Promise<{ reg: string; bold: string; logo: string }> | null = null;
+
+async function loadPdfAssets() {
+  if (!pdfAssetsPromise) {
+    pdfAssetsPromise = (async () => {
+      const toB64 = (buf: ArrayBuffer) => {
+        let bin = '';
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+          bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        }
+        return btoa(bin);
+      };
+      const toDataUrl = async (url: string) => {
+        const blob = await (await fetch(url)).blob();
+        return await new Promise<string>((res) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result as string);
+          r.readAsDataURL(blob);
+        });
+      };
+      const [regBuf, boldBuf, logo] = await Promise.all([
+        fetch('https://cdn.jsdelivr.net/npm/@expo-google-fonts/roboto@0.4.3/400Regular/Roboto_400Regular.ttf').then((r) => r.arrayBuffer()),
+        fetch('https://cdn.jsdelivr.net/npm/@expo-google-fonts/roboto@0.4.3/700Bold/Roboto_700Bold.ttf').then((r) => r.arrayBuffer()),
+        toDataUrl('/logo-white.png'),
+      ]);
+      return { reg: toB64(regBuf), bold: toB64(boldBuf), logo };
+    })();
+  }
+  return pdfAssetsPromise;
+}
 
 interface Building {
   id: string;
@@ -39,6 +72,7 @@ export default function BuildingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddBlockModal, setShowAddBlockModal] = useState(false);
+  const [reportPreview, setReportPreview] = useState<{ url: string; fileName: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [reportLoading, setReportLoading] = useState<string | null>(null);
   const [activityData, setActivityData] = useState<number[]>([]);
@@ -103,7 +137,7 @@ export default function BuildingDetailPage() {
     }));
   }, [building, isSite]);
 
-  const exportBlockReport = async (blockName: string, format: 'pdf' | 'excel') => {
+  const exportBlockReport = async (blockName: string) => {
     if (!building) return;
     setReportLoading(blockName);
 
@@ -117,20 +151,55 @@ export default function BuildingDetailPage() {
       
       if (res.ok) {
         const data = await res.json();
-        
-        if (format === 'pdf') {
+
+        {
+          const assets = await loadPdfAssets();
           const doc = new jsPDF();
-          doc.setFontSize(18);
-          doc.text(`${blockName} Aidat Raporu`, 14, 22);
-          doc.setFontSize(11);
-          doc.text(`Bina: ${building.name}`, 14, 32);
-          doc.text(`Dönem: ${currentMonth}/${currentYear}`, 14, 40);
-          
+
+          // Register Turkish-capable Roboto font
+          doc.addFileToVFS('Roboto-Regular.ttf', assets.reg);
+          doc.addFileToVFS('Roboto-Bold.ttf', assets.bold);
+          doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+          doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+
+          const pageW = doc.internal.pageSize.getWidth();
+
+          // Header band (black)
+          doc.setFillColor(24, 24, 27);
+          doc.rect(0, 0, pageW, 34, 'F');
+          try { doc.addImage(assets.logo, 'PNG', 14, 9, 16, 16); } catch { /* logo optional */ }
+          doc.setFont('Roboto', 'bold');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(15);
+          doc.text('LuxDues', 34, 17);
+          doc.setFont('Roboto', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(212, 212, 216);
+          doc.text(`${building.name} — ${blockName} Aidat Raporu`, 34, 24);
+          doc.setFontSize(8);
+          doc.text(new Date().toLocaleDateString('tr-TR'), pageW - 14, 16, { align: 'right' });
+
+          // Meta info
+          doc.setTextColor(39, 39, 42);
+          doc.setFont('Roboto', 'normal');
+          doc.setFontSize(10);
+          doc.text(`Bina: ${building.name}`, 14, 46);
+          doc.text(`Dönem: ${String(currentMonth).padStart(2, '0')}/${currentYear}`, 14, 53);
+
+          // Summary
+          const paid = data.filter((i: any) => i.status === 'PAID');
+          const total = data.reduce((s: number, i: any) => s + i.amount, 0);
+          const collected = paid.reduce((s: number, i: any) => s + i.amount, 0);
+          doc.setFont('Roboto', 'bold');
+          doc.setFontSize(10);
+          doc.text(`${data.length} daire`, pageW - 14, 46, { align: 'right' });
+          doc.text(`Tahsilat: ₺${collected.toLocaleString('tr-TR')} / ₺${total.toLocaleString('tr-TR')}`, pageW - 14, 53, { align: 'right' });
+
           const tableData = data.map((item: any) => [
             item.blockName,
             item.doorNo,
             item.ownerName,
-            `₺${item.amount.toFixed(2)}`,
+            `₺${item.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`,
             item.status === 'PAID' ? 'Ödendi' : 'Ödenmedi',
             new Date(item.dueDate).toLocaleDateString('tr-TR'),
           ]);
@@ -138,33 +207,29 @@ export default function BuildingDetailPage() {
           autoTable(doc, {
             head: [['Blok', 'Daire', 'Sahibi', 'Tutar', 'Durum', 'Son Ödeme']],
             body: tableData,
-            startY: 50,
-            styles: { fontSize: 8, cellPadding: 2 },
-            headStyles: { fillColor: [24, 24, 27] },
+            startY: 60,
+            styles: { font: 'Roboto', fontSize: 8.5, cellPadding: 2.5, textColor: [63, 63, 70] },
+            headStyles: { font: 'Roboto', fontStyle: 'bold', fillColor: [24, 24, 27], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [250, 250, 250] },
+            didParseCell: (c: any) => {
+              if (c.section === 'body' && c.column.index === 4) {
+                c.cell.styles.textColor = c.cell.raw === 'Ödendi' ? [4, 120, 87] : [185, 28, 28];
+                c.cell.styles.fontStyle = 'bold';
+              }
+            },
           });
 
-          doc.save(`${blockName}-aidat-raporu-${currentYear}-${currentMonth}.pdf`);
-        } else {
-          const worksheetData = [
-            [`${blockName} Aidat Raporu`],
-            [`Bina: ${building.name}`],
-            [`Dönem: ${currentMonth}/${currentYear}`],
-            [],
-            ['Blok', 'Daire', 'Sahibi', 'Tutar', 'Durum', 'Son Ödeme'],
-            ...data.map((item: any) => [
-              item.blockName,
-              item.doorNo,
-              item.ownerName,
-              item.amount,
-              item.status === 'PAID' ? 'Ödendi' : 'Ödenmedi',
-              new Date(item.dueDate).toLocaleDateString('tr-TR'),
-            ]),
-          ];
+          // Footer
+          const pageH = doc.internal.pageSize.getHeight();
+          doc.setFont('Roboto', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(161, 161, 170);
+          doc.text('LuxDues — Apartman & Site Aidat Yönetimi', 14, pageH - 8);
+          doc.text(`Sayfa 1`, pageW - 14, pageH - 8, { align: 'right' });
 
-          const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-          const workbook = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(workbook, worksheet, 'Rapor');
-          XLSX.writeFile(workbook, `${blockName}-aidat-raporu-${currentYear}-${currentMonth}.xlsx`);
+          const fileName = `${blockName}-aidat-raporu-${currentYear}-${currentMonth}.pdf`;
+          const url = URL.createObjectURL(doc.output('blob'));
+          setReportPreview({ url, fileName });
         }
       }
     } catch (error) {
@@ -176,11 +241,7 @@ export default function BuildingDetailPage() {
 
   if (loading) {
     return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
+      <LoadingScreen label="Bina bilgileri yükleniyor" />
     );
   }
 
@@ -219,17 +280,6 @@ export default function BuildingDetailPage() {
       count: building._count.units,
     },
     {
-      title: 'Aidat Yönetimi',
-      description: 'Aylık aidatları tanımlayın ve ödemeleri takip edin',
-      icon: (
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      href: `/admin/buildings/${building.id}/dues`,
-      count: null,
-    },
-    {
       title: 'Ortak Projeler',
       description: 'Garaj kapısı gibi ortak masrafları yönetin',
       icon: (
@@ -257,54 +307,105 @@ export default function BuildingDetailPage() {
     <div className="page-container pb-20">
       {/* Header */}
       <div className="section-header">
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <h1 className="text-xl sm:text-3xl font-light text-zinc-900 truncate">
-            {building.name}
-          </h1>
-          <Badge
-            variant="default"
-            leftIcon={
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                {building.type === BuildingType.APARTMENT ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h5V10H3v11zm7 0h5V6h-5v15zm7 0h5V10h-5v11z" />
-                )}
+        <div className="flex items-center justify-between gap-2 sm:gap-3 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
+            <h1 className="text-xl sm:text-3xl font-light text-zinc-900 truncate">
+              {building.name}
+            </h1>
+            <Badge
+              variant="default"
+              leftIcon={
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  {building.type === BuildingType.APARTMENT ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h5V10H3v11zm7 0h5V6h-5v15zm7 0h5V10h-5v11z" />
+                  )}
+                </svg>
+              }
+            >
+              {getBuildingTypeLabel(building.type)}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => router.push('/admin/buildings')}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-md sm:rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] sm:text-xs font-medium transition-colors"
+            >
+              <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            }
-          >
-            {getBuildingTypeLabel(building.type)}
-          </Badge>
+              Binalara Dön
+            </button>
+          </div>
         </div>
         <p className="text-xs sm:text-sm text-zinc-500 mt-1">
           {building.name} {building.type === BuildingType.SITE ? 'sitesinin' : 'binasının'} aidat ve takip bilgileri
         </p>
+
+        {/* Graphical Stat Cards — pinned to the header */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-3 sm:mt-4">
+          {[
+            {
+              label: 'Toplam Daire',
+              value: building._count.units,
+              icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+            },
+            {
+              label: 'Yönetici Sayısı',
+              value: building._count.admins,
+              icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+            },
+            {
+              label: 'Aktif Projeler',
+              value: building._count.specialProjects,
+              icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+            },
+            {
+              label: 'Şikayetler',
+              value: building._count.complaints,
+              icon: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z',
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="flex items-center gap-3 rounded-xl sm:rounded-2xl bg-white border border-zinc-200 px-3 py-2.5 sm:px-4 sm:py-3.5 shadow-sm"
+            >
+              <span className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={stat.icon} />
+                </svg>
+              </span>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-semibold leading-none text-zinc-900">{stat.value}</p>
+                <p className="mt-1 text-[10px] sm:text-xs text-zinc-500 truncate">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Building Info Card */}
       <Card className="mb-6 order-0">
         <CardHeader className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => router.push('/admin/buildings')}
-              title="Binalara Dön"
-              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition-colors flex-shrink-0"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <span className="h-6 w-6 sm:h-7 sm:w-7 rounded-md sm:rounded-lg bg-zinc-900 text-white flex items-center justify-center flex-shrink-0">
+              <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-            </button>
-            <h2 className="text-base sm:text-lg font-medium text-zinc-900">Bina Bilgileri</h2>
+            </span>
+            <h2 className="text-sm sm:text-lg font-medium text-zinc-900">Bina Bilgileri</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {isSite && (
               <Button
                 size="sm"
                 variant="secondary"
+                className="!px-2.5 !py-1.5 !text-[10px] sm:!px-4 sm:!py-2 sm:!text-xs"
                 onClick={() => setShowAddBlockModal(true)}
                 leftIcon={
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
                 }
@@ -314,9 +415,10 @@ export default function BuildingDetailPage() {
             )}
             <Button
               size="sm"
+              className="!px-2.5 !py-1.5 !text-[10px] sm:!px-4 sm:!py-2 sm:!text-xs"
               onClick={() => setShowEditModal(true)}
               leftIcon={
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             }
@@ -327,103 +429,36 @@ export default function BuildingDetailPage() {
         </CardHeader>
         <CardBody>
           <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
-            <div className="w-full md:w-48 h-40 rounded-xl overflow-hidden border border-zinc-200 flex-shrink-0 bg-zinc-100">
+            <div className="w-full md:w-48 h-28 sm:h-40 rounded-xl overflow-hidden border border-zinc-200 flex-shrink-0 bg-zinc-100">
               <img
                 src={building.image || `https://loremflickr.com/400/400/city,corporate,office,skyscraper,modern,urban,apartment?lock=${building.id}`}
                 alt={building.name}
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 flex-1">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6 flex-1">
               <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Bina Adı</p>
-                <p className="text-base font-medium text-zinc-900">{building.name}</p>
+                <p className="text-[10px] sm:text-sm text-zinc-500 mb-0.5 sm:mb-1">Bina Adı</p>
+                <p className="text-sm sm:text-base font-medium text-zinc-900">{building.name}</p>
               </div>
               <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Bina Türü</p>
-                <p className="text-base font-medium text-zinc-900">
+                <p className="text-[10px] sm:text-sm text-zinc-500 mb-0.5 sm:mb-1">Bina Türü</p>
+                <p className="text-sm sm:text-base font-medium text-zinc-900">
                   {getBuildingTypeLabel(building.type)}
                 </p>
               </div>
               <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Blok Sayısı</p>
-                <p className="text-base font-medium text-zinc-900">{building.totalBlocks}</p>
+                <p className="text-[10px] sm:text-sm text-zinc-500 mb-0.5 sm:mb-1">Blok Sayısı</p>
+                <p className="text-sm sm:text-base font-medium text-zinc-900">{building.totalBlocks}</p>
               </div>
               <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Adres</p>
-                <p className="text-base font-medium text-zinc-900">{building.address}</p>
+                <p className="text-[10px] sm:text-sm text-zinc-500 mb-0.5 sm:mb-1">Adres</p>
+                <p className="text-sm sm:text-base font-medium text-zinc-900 break-words">{building.address}</p>
               </div>
             </div>
           </div>
         </CardBody>
       </Card>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 order-2">
-        <Card>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Toplam Daire</p>
-                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.units}</p>
-              </div>
-              <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
-                <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Yönetici Sayısı</p>
-                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.admins}</p>
-              </div>
-              <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
-                <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Aktif Projeler</p>
-                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.specialProjects}</p>
-              </div>
-              <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
-                <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-zinc-500 mb-1">Şikayetler</p>
-                <p className="text-xl sm:text-2xl font-medium text-zinc-900">{building._count.complaints}</p>
-              </div>
-              <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center">
-                <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
 
       {/* Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
@@ -486,15 +521,15 @@ export default function BuildingDetailPage() {
                       <CardBody className="p-0">
                         <div className="relative">
                           {/* Header with gradient */}
-                          <div className="bg-gradient-to-r from-zinc-900 to-zinc-700 px-3 sm:px-4 py-2.5 sm:py-3 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                          <div className="bg-gradient-to-r from-zinc-900 to-zinc-700 px-2.5 sm:px-4 py-2 sm:py-3 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-16 h-16 sm:w-20 sm:h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
                             <div className="flex items-center justify-between relative z-10">
                               <div>
-                                <h3 className="text-lg font-bold text-white">{block.name}</h3>
-                                <p className="text-xs text-zinc-300 mt-0.5">{block.count} daire</p>
+                                <h3 className="text-base sm:text-lg font-bold text-white">{block.name}</h3>
+                                <p className="text-[10px] sm:text-xs text-zinc-300 mt-0.5">{block.count} daire</p>
                               </div>
-                              <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <div className="h-8 w-8 sm:h-10 sm:w-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                 </svg>
                               </div>
@@ -502,29 +537,29 @@ export default function BuildingDetailPage() {
                           </div>
 
                           {/* Body */}
-                          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+                          <div className="p-2.5 sm:p-4 space-y-2 sm:space-y-4">
                             {/* Stats */}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-                                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
+                                <div className="h-7 w-7 sm:h-8 sm:w-8 bg-zinc-900 rounded-lg flex items-center justify-center">
+                                  <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
                                 </div>
                                 <div>
-                                  <p className="text-[10px] text-zinc-500 uppercase font-semibold">Aktif</p>
-                                  <p className="text-sm font-bold text-zinc-900">{block.occupied}</p>
+                                  <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase font-semibold">Aktif</p>
+                                  <p className="text-xs sm:text-sm font-bold text-zinc-900">{block.occupied}</p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 bg-zinc-100 rounded-lg flex items-center justify-center border border-zinc-200">
-                                  <svg className="h-4 w-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
+                                <div className="h-7 w-7 sm:h-8 sm:w-8 bg-zinc-100 rounded-lg flex items-center justify-center border border-zinc-200">
+                                  <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                 </div>
                                 <div>
-                                  <p className="text-[10px] text-zinc-500 uppercase font-semibold">Boş</p>
-                                  <p className="text-sm font-bold text-zinc-900">{block.count - block.occupied}</p>
+                                  <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase font-semibold">Boş</p>
+                                  <p className="text-xs sm:text-sm font-bold text-zinc-900">{block.count - block.occupied}</p>
                                 </div>
                               </div>
                             </div>
@@ -535,7 +570,7 @@ export default function BuildingDetailPage() {
                                 <span>Doluluk</span>
                                 <span>%{block.occupancyRate}</span>
                               </div>
-                              <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
+                              <div className="h-1.5 sm:h-2 bg-zinc-200 rounded-full overflow-hidden">
                                 <div 
                                   className="h-full bg-zinc-900 rounded-full transition-all duration-500"
                                   style={{ width: `${block.occupancyRate}%` }}
@@ -544,32 +579,19 @@ export default function BuildingDetailPage() {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center gap-2 pt-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2 pt-1.5 sm:pt-2">
                               <Button
                                 size="sm"
                                 variant="secondary"
                                 className="flex-1 text-xs py-2 bg-zinc-100 hover:bg-zinc-200 border-zinc-300"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  exportBlockReport(block.name, 'pdf');
+                                  exportBlockReport(block.name);
                                 }}
                                 disabled={reportLoading === block.name}
                                 leftIcon={<FileText className="h-3.5 w-3.5" />}
                               >
                                 PDF
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                className="flex-1 text-xs py-2 bg-zinc-100 hover:bg-zinc-200 border-zinc-300"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  exportBlockReport(block.name, 'excel');
-                                }}
-                                disabled={reportLoading === block.name}
-                                leftIcon={<FileSpreadsheet className="h-3.5 w-3.5" />}
-                              >
-                                Excel
                               </Button>
                               <Button
                                 size="sm"
@@ -602,6 +624,17 @@ export default function BuildingDetailPage() {
           onSuccess={() => {
             setShowAddBlockModal(false);
             fetchBuilding(buildingId);
+          }}
+        />
+      )}
+
+      {reportPreview && (
+        <PdfPreviewModal
+          url={reportPreview.url}
+          fileName={reportPreview.fileName}
+          onClose={() => {
+            URL.revokeObjectURL(reportPreview.url);
+            setReportPreview(null);
           }}
         />
       )}
@@ -979,6 +1012,48 @@ function BlockVisual({ src, name }: { src?: string | null; name: string }) {
       <span className="text-[10px] font-semibold text-zinc-600 tracking-wider uppercase mt-1.5 truncate max-w-[80px] text-center">
         {name}
       </span>
+    </div>
+  );
+}
+
+function PdfPreviewModal({ url, fileName, onClose }: { url: string; fileName: string; onClose: () => void }) {
+  const handleDownload = () => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText className="h-4 w-4 text-zinc-700 flex-shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-zinc-900 truncate">Rapor Önizleme</h3>
+              <p className="text-[11px] text-zinc-500 truncate">{fileName}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 flex-shrink-0">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-0 bg-zinc-100">
+          <iframe src={url} title="PDF Önizleme" className="w-full h-[55vh] sm:h-[65vh]" />
+        </div>
+
+        <div className="flex items-center justify-end gap-2.5 px-4 py-3 border-t border-zinc-200">
+          <Button variant="secondary" size="sm" onClick={onClose}>Kapat</Button>
+          <Button variant="primary" size="sm" onClick={handleDownload} leftIcon={<Download className="h-3.5 w-3.5" />}>
+            İndir
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

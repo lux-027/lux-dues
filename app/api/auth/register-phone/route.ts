@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const phone = firebaseUser.phone_number;
     const email = `${phone.replace(/[^0-9]/g, '')}@phone.luxdues.local`;
 
-    const existingByPhone = await prisma.user.findUnique({
+    const existingByPhone = await prisma.user.findFirst({
       where: { phone },
     });
 

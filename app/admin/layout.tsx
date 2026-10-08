@@ -28,9 +28,9 @@ export default function AdminLayout({
       {/* Navigation Header */}
       <nav className="sticky top-0 z-40 bg-white border-b border-zinc-200 shadow-xs transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-wrap items-center justify-between min-h-16 py-2 sm:h-16 sm:py-0 sm:flex-nowrap">
             {/* Left: Brand, 3D Visual Portal Title & Navigation */}
-            <div className="flex items-center gap-4 sm:gap-6">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 sm:flex-nowrap">
               <Link href="/" className="flex items-center group">
                 <Logo size={40} />
               </Link>
@@ -38,8 +38,10 @@ export default function AdminLayout({
 
               <div className="h-5 w-px bg-zinc-200 hidden sm:block" />
 
-              {/* Portal Switcher Pill */}
-              <PortalSwitcher current="admin" />
+              {/* Portal Switcher Pill — on mobile drops to a full-width row under the logo */}
+              <div className="w-full sm:w-auto order-last sm:order-none">
+                <PortalSwitcher current="admin" />
+              </div>
 
               {/* Desktop Navigation Links */}
               <div className="hidden sm:flex items-center gap-1.5">
@@ -72,8 +74,8 @@ export default function AdminLayout({
               </div>
             </div>
 
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Right: Actions — stays pinned to the top row on mobile */}
+            <div className="flex items-center gap-2.5 sm:gap-3 self-start sm:self-center pt-1 sm:pt-0">
               <NotificationMenu />
               <ProfileMenu />
               
@@ -104,36 +106,36 @@ export default function AdminLayout({
               />
               
               {/* Small Modal */}
-              <div className="fixed top-16 right-4 z-50 sm:hidden bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-sm w-64 border border-zinc-200/50 animate-in slide-in-from-top-2 fade-in duration-200">
+              <div className="fixed top-[6.75rem] right-3 z-50 sm:hidden bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-52 border border-zinc-200/50 animate-in slide-in-from-top-2 fade-in duration-200">
                 {/* Menu Header */}
-                <div className="flex items-center justify-between p-4 border-b border-zinc-100/50 bg-gradient-to-r from-zinc-50 to-white rounded-t-3xl">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100/50 bg-gradient-to-r from-zinc-50 to-white rounded-t-2xl">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-zinc-900 text-sm">Menü</span>
+                    <span className="font-semibold text-zinc-900 text-xs">Menü</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 rounded-xl text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-all"
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-all"
                   >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
 
                 {/* Menu Content */}
-                <div className="p-2 space-y-1">
+                <div className="p-1.5 space-y-0.5">
                   <Link
                     href="/admin/buildings"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-2xl transition-all ${
+                    className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl transition-all ${
                       isBuildingsActive
                         ? 'bg-zinc-900 text-white shadow-lg shadow-zinc-900/20'
                         : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100'
                     }`}
                   >
-                    <div className={`p-2 rounded-xl ${isBuildingsActive ? 'bg-white/20' : 'bg-zinc-100'}`}>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className={`p-1.5 rounded-lg ${isBuildingsActive ? 'bg-white/20' : 'bg-zinc-100'}`}>
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </div>
@@ -142,14 +144,14 @@ export default function AdminLayout({
                   <Link
                     href="/admin/admins"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-2xl transition-all ${
+                    className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl transition-all ${
                       isAdminsActive
                         ? 'bg-zinc-900 text-white shadow-lg shadow-zinc-900/20'
                         : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100'
                     }`}
                   >
-                    <div className={`p-2 rounded-xl ${isAdminsActive ? 'bg-white/20' : 'bg-zinc-100'}`}>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className={`p-1.5 rounded-lg ${isAdminsActive ? 'bg-white/20' : 'bg-zinc-100'}`}>
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                       </svg>
                     </div>

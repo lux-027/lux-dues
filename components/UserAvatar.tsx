@@ -12,13 +12,7 @@ interface UserAvatarProps {
 export function UserAvatar({ name, avatarUrl, size = 40, className = '' }: UserAvatarProps) {
   const [error, setError] = useState(false);
 
-  const initials = name
-    .split(' ')
-    .map((n) => n[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials = name.trim().charAt(0).toUpperCase();
 
   const containerStyle = {
     width: size,
@@ -40,7 +34,7 @@ export function UserAvatar({ name, avatarUrl, size = 40, className = '' }: UserA
 
   return (
     <div
-      className={`rounded-full bg-zinc-100 text-zinc-900 flex items-center justify-center font-semibold flex-shrink-0 ${className}`}
+      className={`rounded-full bg-zinc-900 text-zinc-100 flex items-center justify-center font-semibold flex-shrink-0 ${className}`}
       style={containerStyle}
     >
       {initials || name.charAt(0).toUpperCase()}

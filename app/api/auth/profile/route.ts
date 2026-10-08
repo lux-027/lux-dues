@@ -27,15 +27,6 @@ export async function PATCH(request: NextRequest) {
           { status: 400 }
         );
       }
-      const existingUser = await prisma.user.findFirst({
-        where: { phone: normalized, NOT: { id: session.id } },
-      });
-      if (existingUser) {
-        return NextResponse.json(
-          { error: 'Bu telefon numarası başka bir hesaba kayıtlı' },
-          { status: 409 }
-        );
-      }
       data.phone = normalized;
     }
 

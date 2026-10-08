@@ -7,6 +7,7 @@ import { ConfirmModal } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
 import { formatAccountNumber } from '@/lib/userId';
 import { UserAvatar } from '@/components/UserAvatar';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 interface Building {
   id: string;
@@ -235,13 +236,7 @@ export default function AdminsPage() {
   }), [admins]);
 
   if (loading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen label="Yöneticiler yükleniyor" />;
   }
 
   return (

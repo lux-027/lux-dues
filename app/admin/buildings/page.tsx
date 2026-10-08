@@ -10,6 +10,7 @@ import { ConfirmModal } from '@/components/ui';
 import { BuildingType } from '@prisma/client';
 import { BUILDING_ARCHIVE_IMAGES } from '@/lib/buildingImages';
 import Link from 'next/link';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 interface UnitBrief {
   id: string;
@@ -152,6 +153,10 @@ export default function BuildingsPage() {
       loading: false,
     });
   };
+
+  if (loading) {
+    return <LoadingScreen label="Binalar yükleniyor" />;
+  }
 
   return (
     <div className="page-container space-y-6">
@@ -500,7 +505,7 @@ export default function BuildingsPage() {
                       </button>
                     </Link>
 
-                    <Link href={`/admin/buildings/${building.id}/dues`} className="w-full">
+                    <Link href={`/admin/buildings/${building.id}/residents`} className="w-full">
                       <button
                         type="button"
                         className="w-full inline-flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors"
@@ -761,25 +766,25 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center p-3 sm:p-4">
         <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
         
-        <div className="relative bg-white rounded-lg sm:rounded-xl shadow-xl w-full max-w-sm sm:max-w-lg transform transition-all my-8 max-h-[90vh] flex flex-col">
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200">
-            <h3 className="text-base sm:text-lg font-medium text-zinc-900">
+        <div className="relative bg-white rounded-lg sm:rounded-xl shadow-xl w-full max-w-xs sm:max-w-lg transform transition-all my-8 max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-4 border-b border-zinc-200">
+            <h3 className="text-sm sm:text-lg font-medium text-zinc-900">
               {formData.type === BuildingType.SITE ? 'Yeni Site / Kompleks Ekle' : 'Yeni Apartman Ekle'}
             </h3>
             <button
               onClick={onClose}
               className="text-zinc-400 hover:text-zinc-600 transition-colors"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
           
-          <form onSubmit={handleSubmit} className="px-4 sm:px-6 py-3 sm:py-4 overflow-y-auto space-y-3 sm:space-y-4">
+          <form onSubmit={handleSubmit} className="px-3.5 sm:px-6 py-2.5 sm:py-4 overflow-y-auto space-y-2.5 sm:space-y-4">
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {error}
@@ -809,9 +814,9 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                     setPreviewImage(formData.image);
                     setShowImagePicker(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs sm:text-sm font-medium transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-[11px] sm:text-sm font-medium transition-colors"
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -839,13 +844,13 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                 <button
                   type="button"
                   onClick={() => handleTypeChange(BuildingType.APARTMENT)}
-                  className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 font-medium text-xs sm:text-sm transition-all ${
+                  className={`flex items-center justify-center gap-1 sm:gap-2 p-1.5 sm:p-3 rounded-lg sm:rounded-xl border-2 font-medium text-[11px] sm:text-sm transition-all ${
                     formData.type === BuildingType.APARTMENT
                       ? 'bg-zinc-900 text-white border-zinc-900'
                       : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
                   }`}
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                   Tek Apartman
@@ -853,13 +858,13 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
                 <button
                   type="button"
                   onClick={() => handleTypeChange(BuildingType.SITE)}
-                  className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 font-medium text-xs sm:text-sm transition-all ${
+                  className={`flex items-center justify-center gap-1 sm:gap-2 p-1.5 sm:p-3 rounded-lg sm:rounded-xl border-2 font-medium text-[11px] sm:text-sm transition-all ${
                     formData.type === BuildingType.SITE
                       ? 'bg-zinc-900 text-white border-zinc-900'
                       : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
                   }`}
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h5V10H3v11zm7 0h5V6h-5v15zm7 0h5V10h-5v11z" />
                   </svg>
                   Çoklu Bloklu Site
@@ -929,16 +934,17 @@ function CreateBuildingModal({ initialType, onClose, onSuccess }: CreateBuilding
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-zinc-200">
+            <div className="flex items-center justify-end gap-2 sm:gap-3 pt-2.5 sm:pt-4 border-t border-zinc-200">
               <Button
                 type="button"
                 variant="secondary"
+                size="sm"
                 onClick={onClose}
                 disabled={loading}
               >
                 İptal
               </Button>
-              <Button type="submit" loading={loading}>
+              <Button type="submit" size="sm" loading={loading}>
                 {formData.type === BuildingType.SITE ? 'Siteyi Oluştur' : 'Binayı Oluştur'}
               </Button>
             </div>

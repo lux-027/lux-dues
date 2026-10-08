@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardBody, CardHeader } from '@/components/ui';
 import { Button, Badge } from '@/components/ui';
 import { formatPhoneNumber } from '@/lib/phone';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 interface ComplaintUser {
   id?: string;
@@ -120,13 +121,7 @@ export default function BuildingComplaintsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen label="Şikayetler yükleniyor" />;
   }
 
   return (
