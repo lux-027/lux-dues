@@ -545,3 +545,5 @@ Unknown argument `unit`. Did you mean `id`? Available options are marked with ?.
  GET /admin/buildings 200 in 130ms (next.js: 47ms, proxy.ts: 54ms, application-code: 29ms)
 ✓ Compiled in 102ms
  GET /admin/buildings 200 in 41ms (next.js: 15ms, proxy.ts: 4ms, application-code: 22ms)
+✓ Compiled in 106ms
+ GET /admin/buildings 200 in 53ms (next.js: 15ms, proxy.ts: 6ms, application-code: 32ms)
